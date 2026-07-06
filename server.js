@@ -624,17 +624,19 @@ async function addToKlaviyo({ email, firstName, lastName, source, listId, proper
 // ════════════════════════════════════════════════════════
 function makeEmailMessage({ to, subject, html }) {
   const boundary = 'compound_boundary';
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`;
   const raw = [
     `From: Adrienne at The Compound <adrienne@compoundoc.com>`,
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodedSubject}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     ``,
     `--${boundary}`,
     `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: base64`,
     ``,
-    html,
+    Buffer.from(html).toString('base64'),
     `--${boundary}--`,
   ].join('\n');
   return Buffer.from(raw).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -720,9 +722,14 @@ async function sendAutoReply({ to, firstName, practitioner, consultTime }) {
 // HELPER: Internal notification to adrienne@compoundoc.com
 // ════════════════════════════════════════════════════════
 async function sendInternalNotification(data) {
+  const labels = {
+    clientName: 'Client', clientEmail: 'Email', practitioner: 'Practitioner',
+    service: 'Service', date: 'Date', time: 'Time', amount: 'Amount',
+    notes: 'Notes', consultTime: 'Consult Time',
+  };
   const rows = Object.entries(data)
     .filter(([k]) => k !== 'type')
-    .map(([k, v]) => `<tr><td style="color:#9A8E84;padding-right:16px;padding-bottom:8px">${k}</td><td>${v || '—'}</td></tr>`)
+    .map(([k, v]) => `<tr><td style="color:#9A8E84;padding-right:16px;padding-bottom:8px">${labels[k] || k}</td><td>${v || '—'}</td></tr>`)
     .join('');
   await sendGmail({
     to: 'adrienne@compoundoc.com',
