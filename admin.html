@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<title>Admin — The Compound Wellness</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --ivory:#FAF7F2;--parchment:#F0EAE0;--linen:#E8DDD0;
+  --sand:#C4A882;--copper:#B8916A;--cognac:#8A6040;
+  --bark:#6B5248;--espresso:#2C2420;
+  --text-body:#7A6E64;--line:rgba(196,168,130,.3);
+  --green:#2C4235;--green-tint:#EFF4F1;--green-line:rgba(44,66,53,.2);
+  --red:#8B2E2E;--red-tint:#FDF0F0;
+  --blue:#1877F2;--blue-tint:#EFF4FF;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;color:var(--espresso);word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none}
+:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+
+/* ── LOGIN ─────────────────────────────────────────────── */
+#loginScreen{position:fixed;inset:0;background:var(--espresso);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:var(--ivory);padding:48px 40px;width:360px;max-width:90vw}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--espresso);margin-bottom:4px}
+.login-sub{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--copper);margin-bottom:32px;display:block}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.login-field label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body)}
+.login-field input{border:none;border-bottom:1px solid var(--linen);padding:9px 0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--espresso);background:transparent;outline:none;transition:border-color .2s}
+.login-field input:focus{border-color:var(--copper)}
+.login-err{font-size:11px;color:var(--red);min-height:16px;margin-bottom:8px}
+.login-attempts{font-size:10px;color:var(--text-body);margin-top:12px;text-align:center}
+
+/* ── APP SHELL ─────────────────────────────────────────── */
+#appShell{display:none;height:100vh;overflow:hidden;background:var(--parchment);flex-direction:row}
+#appShell.visible{display:flex}
+
+/* ── SIDEBAR ───────────────────────────────────────────── */
+.sidebar{width:196px;background:var(--espresso);display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-logo-the{font-size:7px;letter-spacing:.36em;text-transform:uppercase;color:var(--sand);display:block;margin-bottom:1px}
+.sidebar-logo-name{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--ivory);display:block}
+.sidebar-logo-tag{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.28);display:block;margin-top:3px}
+.nav-sec{padding:14px 0 6px;border-bottom:1px solid rgba(255,255,255,.05)}
+.nav-sec-lbl{font-size:7px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 18px;margin-bottom:5px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;transition:background .15s;color:rgba(255,255,255,.5);font-size:11px;letter-spacing:.06em;border:none;background:none;width:100%;text-align:left}
+.nav-btn:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8)}
+.nav-btn.active{background:rgba(196,168,130,.13);color:var(--sand);border-left:2px solid var(--sand)}
+.nav-btn svg{width:13px;height:13px;flex-shrink:0;opacity:.65}
+.nav-btn.active svg{opacity:1}
+.sidebar-foot{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.07)}
+.sidebar-foot a,.sidebar-foot button{display:block;font-size:10px;color:rgba(255,255,255,.28);text-decoration:none;background:none;border:none;cursor:pointer;padding:3px 0;text-align:left;width:100%;transition:color .2s;font-family:inherit}
+.sidebar-foot a:hover,.sidebar-foot button:hover{color:var(--sand)}
+.sidebar-user{font-size:10px;color:rgba(255,255,255,.35);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+
+/* ── MAIN ──────────────────────────────────────────────── */
+.main{flex:1;overflow-y:auto;height:100vh}
+.topbar{background:var(--ivory);border-bottom:1px solid var(--line);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:12px}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;color:var(--espresso);flex-shrink:0}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.topbar-date{font-size:10px;color:var(--text-body)}
+.content{padding:24px 28px}
+.panel{display:none}.panel.active{display:block}
+
+/* ── BUTTONS ───────────────────────────────────────────── */
+.btn{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;padding:8px 16px;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-primary{background:var(--copper);color:var(--ivory)}.btn-primary:hover{background:var(--cognac)}
+.btn-ghost{background:none;border:1px solid var(--line);color:var(--bark)}.btn-ghost:hover{border-color:var(--sand);color:var(--copper)}
+.btn-green{background:var(--green);color:var(--ivory)}.btn-green:hover{background:#1e2e25}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#0d65d9}
+.btn-red{background:none;border:1px solid rgba(139,46,46,.3);color:var(--red)}.btn-red:hover{background:var(--red-tint)}
+.btn-sm{padding:5px 10px;font-size:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ── STATS ─────────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.stat-card{background:var(--ivory);border:1px solid var(--line);padding:18px 20px}
+.stat-lbl{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-body);margin-bottom:6px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--espresso);line-height:1}
+.stat-chg{font-size:9px;margin-top:4px}.stat-chg.up{color:var(--green)}.stat-chg.dn{color:var(--red)}
+
+/* ── CHART CARDS ───────────────────────────────────────── */
+.chart-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px}
+.chart-row-half{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.chart-card{background:var(--ivory);border:1px solid var(--line);padding:18px 20px}
+.chart-ttl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.chart-wrap{position:relative;height:180px}
+
+/* ── TABLES ────────────────────────────────────────────── */
+.tcard{background:var(--ivory);border:1px solid var(--line);margin-bottom:14px}
+.thead{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.thead-title{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body)}
+.tcontrols{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.search{border:1px solid var(--line);background:var(--parchment);padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:300;color:var(--espresso);outline:none;width:180px}
+.search:focus{border-color:var(--sand)}
+.fsel{border:1px solid var(--line);background:var(--parchment);padding:6px 8px;font-size:11px;color:var(--bark);outline:none;cursor:pointer;font-family:inherit}
+.dtable{width:100%;border-collapse:collapse}
+.dtable th{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body);font-weight:500;padding:9px 14px;text-align:left;border-bottom:1px solid var(--line);background:var(--parchment);white-space:nowrap}
+.dtable td{font-size:12px;padding:11px 14px;border-bottom:1px solid var(--line);color:var(--bark);vertical-align:middle}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:var(--parchment)}
+.tfoot{padding:10px 14px;border-top:1px solid var(--line);font-size:10px;color:var(--text-body);display:flex;justify-content:space-between;align-items:center}
+.empty{padding:36px;text-align:center;color:var(--text-body);font-style:italic;font-size:12px}
+
+/* ── BADGES ────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 7px;font-size:7px;letter-spacing:.1em;text-transform:uppercase;border:1px solid;white-space:nowrap}
+.bg{color:var(--green);border-color:var(--green-line);background:var(--green-tint)}
+.bc{color:var(--cognac);border-color:rgba(184,145,106,.3);background:var(--parchment)}
+.br{color:var(--red);border-color:rgba(139,46,46,.2);background:var(--red-tint)}
+.bd{color:var(--text-body);border-color:var(--line);background:var(--parchment)}
+.bb{color:#1877F2;border-color:rgba(24,119,242,.2);background:var(--blue-tint)}
+
+/* ── PAGINATION ────────────────────────────────────────── */
+.pager{display:flex;gap:3px}
+.pgbtn{width:26px;height:26px;border:1px solid var(--line);background:none;cursor:pointer;font-size:11px;color:var(--bark);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.pgbtn:hover,.pgbtn.on{background:var(--espresso);color:var(--ivory);border-color:var(--espresso)}
+
+/* ── DRAWER ────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(44,36,32,.45);z-index:200;display:none}
+.overlay.open{display:block}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:400px;max-width:95vw;background:var(--ivory);border-left:1px solid var(--line);z-index:201;transform:translateX(100%);transition:transform .28s ease;overflow-y:auto;display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.dhead{padding:22px 24px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between}
+.dhead h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300}
+.dclose{background:none;border:none;cursor:pointer;color:var(--text-body);font-size:22px;line-height:1;padding:2px 4px}
+.dbody{padding:22px 24px;flex:1}
+.dr{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+.dr:last-child{border-bottom:none}
+.dl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body);width:100px;flex-shrink:0;padding-top:2px}
+.dv{font-size:12px;color:var(--bark);line-height:1.6;flex:1}
+.dact{padding:18px 24px;border-top:1px solid var(--line);display:flex;gap:7px;flex-wrap:wrap}
+
+/* ── FORMS ─────────────────────────────────────────────── */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.fg label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body)}
+.fg input,.fg select,.fg textarea{border:none;border-bottom:1px solid var(--linen);padding:8px 0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;color:var(--espresso);background:transparent;outline:none;transition:border-color .2s;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--copper)}
+.fg textarea{resize:vertical;min-height:80px;line-height:1.5}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── QR ────────────────────────────────────────────────── */
+.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.qr-box{background:var(--ivory);border:1px solid var(--line);padding:24px}
+.qr-display{width:160px;height:160px;margin:18px auto;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line)}
+.qr-display canvas,.qr-display img{max-width:100%;max-height:100%}
+.presets{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.preset{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border:1px solid var(--line);background:none;color:var(--bark);cursor:pointer;transition:all .15s}
+.preset:hover,.preset.on{background:var(--espresso);color:var(--ivory);border-color:var(--espresso)}
+.utm-out{background:var(--parchment);border:1px solid var(--line);padding:12px 14px;font-size:11px;color:var(--bark);word-break:break-all;line-height:1.6;min-height:40px}
+
+/* ── SOURCE BARS ───────────────────────────────────────── */
+.src-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.src-lbl{font-size:11px;color:var(--bark);width:120px;flex-shrink:0}
+.src-bar-wrap{flex:1;background:var(--linen);height:5px;border-radius:3px;overflow:hidden}
+.src-bar{height:100%;background:var(--copper);border-radius:3px}
+.src-pct{font-size:10px;color:var(--text-body);width:30px;text-align:right}
+
+/* ── BUFFER ────────────────────────────────────────────── */
+.buf-connect{border:2px dashed var(--line);padding:32px;text-align:center;background:var(--parchment)}
+.buf-connect h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:8px}
+.buf-connect p{font-size:12px;color:var(--text-body);max-width:420px;margin:0 auto 20px;line-height:1.7}
+.buf-profile-bar{display:flex;align-items:center;gap:10px;background:var(--ivory);border:1px solid var(--line);padding:12px 16px;margin-bottom:8px}
+.buf-profile-avatar{width:34px;height:34px;border-radius:50%;background:var(--linen);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.buf-profile-name{font-size:12px;color:var(--espresso);font-weight:400;flex:1}
+.buf-profile-handle{font-size:10px;color:var(--text-body)}
+.buf-profile-badge{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--green-line);color:var(--green);background:var(--green-tint)}
+.compose-area{background:var(--ivory);border:1px solid var(--line);padding:20px}
+.compose-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.char-count{font-size:10px;color:var(--text-body);white-space:nowrap;margin-top:4px}
+.char-count.warn{color:var(--red)}
+.net-toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.net-tog{display:flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);cursor:pointer;transition:all .15s;user-select:none;font-size:10px;color:var(--bark)}
+.net-tog.on{border-color:var(--copper);background:var(--parchment);color:var(--espresso)}
+.net-tog input[type=checkbox]{accent-color:var(--copper);cursor:pointer}
+.sched-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sched-row label{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body)}
+.sched-row input[type=datetime-local]{border:1px solid var(--line);background:var(--parchment);padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--bark);outline:none}
+.sched-row input:focus{border-color:var(--copper)}
+.queue-row{display:grid;grid-template-columns:80px 1fr auto auto;align-items:start;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.queue-row:last-child{border-bottom:none}
+.queue-date{font-size:10px;color:var(--text-body);line-height:1.5}
+.queue-text{font-size:12px;color:var(--bark);line-height:1.6}
+.queue-nets{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.queue-net{font-size:8px;padding:1px 5px;border:1px solid var(--line);color:var(--text-body)}
+.img-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.img-thumb{width:56px;height:56px;object-fit:cover;border:1px solid var(--line)}
+.buf-tip{font-size:11px;color:var(--text-body);line-height:1.7;background:var(--parchment);border-left:2px solid var(--sand);padding:10px 14px;margin-top:12px}
+
+/* ── MOBILE ────────────────────────────────────────────── */
+@media(max-width:768px){
+  /* Global */
+  *{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none}
+
+  /* App shell — allow vertical scroll on mobile */
+  #appShell{flex-direction:column;height:auto;min-height:100vh;overflow:visible}
+  .main{height:auto;overflow-y:visible}
+
+  /* Sidebar — icon-only strip at top */
+  .sidebar{width:100%;height:auto;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+  .sidebar-logo{display:none}
+  .nav-sec{padding:0;border-bottom:none;display:flex;flex-direction:row}
+  .nav-sec-lbl,.sidebar-foot,.sidebar-user,.nav-btn span,
+  .sidebar-logo-name,.sidebar-logo-the,.sidebar-logo-tag{display:none}
+  .nav-btn{padding:12px 14px;justify-content:center;min-height:44px;min-width:44px;border-bottom:none;flex-shrink:0}
+  .nav-btn.active{border-left:none;border-bottom:2px solid var(--sand)}
+
+  /* Topbar */
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:6px}
+  .topbar-title{font-size:16px}
+  .topbar-actions{flex-wrap:wrap;gap:6px}
+  .topbar-date{display:none}
+  .btn-sm{min-height:36px;padding:6px 12px}
+
+  /* Content */
+  .content{padding:14px}
+
+  /* Stat grids */
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  div.stat-grid[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+
+  /* Chart / layout grids — single column */
+  .chart-row,.chart-row-half,.qr-grid,.frow{grid-template-columns:1fr}
+  .chart-wrap{height:160px}
+
+  /* Tables — horizontal scroll */
+  .tcard{overflow-x:auto}
+  div[style*="overflow-x:auto"]{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .dtable{min-width:560px}
+  .dtable th,.dtable td{padding:8px 10px;font-size:11px}
+
+  /* Search & filter controls stack */
+  .thead{flex-direction:column;align-items:flex-start;gap:10px}
+  .tcontrols{flex-wrap:wrap;gap:6px;width:100%}
+  .search{width:100%}
+
+  /* Drawer — full width */
+  .drawer{width:100vw;max-width:100vw}
+  .dhead{padding:16px}
+  .dbody{padding:16px}
+  .dact{padding:14px 16px;flex-wrap:wrap;gap:6px}
+  .dact .btn{min-height:44px}
+  .dr{flex-wrap:wrap;gap:4px}
+  .dl{width:auto;min-width:80px}
+
+  /* Queue */
+  .queue-row{grid-template-columns:1fr auto}
+  .queue-date{grid-column:1/-1;font-size:9px}
+
+  /* Buffer compose */
+  .compose-bar{flex-direction:column;gap:6px}
+  .sched-row{flex-wrap:wrap;gap:8px}
+  .sched-row input[type=datetime-local]{width:100%}
+
+  /* QR box */
+  .qr-display{width:120px;height:120px}
+
+  /* UTM builder */
+  div[style*="grid-template-columns:repeat(auto-fill,minmax(180px"]{grid-template-columns:1fr!important}
+
+  /* Login box */
+  .login-box{padding:32px 24px;width:100%;max-width:100%}
+
+  /* Buttons */
+  .btn{min-height:44px}
+  .btn-primary,.btn-green,.btn-blue{min-height:44px;padding:10px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ════════════════════════════════════════════════ -->
+<div id="loginScreen" role="main" aria-label="Admin login">
+  <div class="login-box">
+    <div class="login-logo">The Compound Wellness</div>
+    <span class="login-sub">Admin Dashboard</span>
+    <div class="login-field">
+      <label for="au">Email</label>
+      <input type="email" id="au" autocomplete="username" placeholder="admin@thecompoundwellness.com"
+             onkeydown="if(event.key==='Enter')document.getElementById('ap').focus()">
+    </div>
+    <div class="login-field">
+      <label for="ap">Password</label>
+      <input type="password" id="ap" autocomplete="current-password" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr" role="alert" aria-live="assertive"></div>
+    <button class="btn btn-primary" onclick="doLogin()" style="width:100%;padding:13px;justify-content:center">Sign In</button>
+    <p class="login-attempts" id="lockMsg"></p>
+  </div>
+</div>
+
+<!-- ══ APP ══════════════════════════════════════════════════ -->
+<div id="appShell" role="application" aria-label="Admin Dashboard">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" role="navigation" aria-label="Admin navigation">
+    <div class="sidebar-logo">
+      <span class="sidebar-logo-the">The</span>
+      <span class="sidebar-logo-name">Compound Wellness</span>
+      <span class="sidebar-logo-tag">Admin</span>
+    </div>
+
+    <div class="nav-sec">
+      <div class="nav-sec-lbl">Overview</div>
+      <button class="nav-btn active" data-panel="analytics" onclick="showPanel('analytics')" aria-current="page">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="8" width="3" height="7"/><rect x="6" y="5" width="3" height="10"/><rect x="11" y="2" width="3" height="13"/></svg>
+        <span>Analytics</span>
+      </button>
+      <button class="nav-btn" data-panel="contacts" onclick="showPanel('contacts')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+        <span>Contacts</span>
+      </button>
+      <button class="nav-btn" data-panel="bookings" onclick="showPanel('bookings')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/></svg>
+        <span>Bookings</span>
+      </button>
+      <button class="nav-btn" data-panel="members" onclick="showPanel('members')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.5 2.2-4.5 5-4.5"/><circle cx="12" cy="10" r="3"/><path d="M9.5 13.5h5M12 7.5v6"/></svg>
+        <span>Members</span>
+      </button>
+    </div>
+
+    <div class="nav-sec">
+      <div class="nav-sec-lbl">Tools</div>
+      <button class="nav-btn" data-panel="social" onclick="showPanel('social')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4.5-2.5M6 9l4.5 2.5"/></svg>
+        <span>Social (Buffer)</span>
+      </button>
+      <button class="nav-btn" data-panel="qr" onclick="showPanel('qr')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="5" height="5"/><rect x="10" y="1" width="5" height="5"/><rect x="1" y="10" width="5" height="5"/><rect x="2.5" y="2.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="11.5" y="2.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="2.5" y="11.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="10" width="2" height="2" fill="currentColor" stroke="none"/><rect x="13" y="10" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="13" width="2" height="2" fill="currentColor" stroke="none"/><rect x="13" y="13" width="2" height="2" fill="currentColor" stroke="none"/></svg>
+        <span>QR Codes</span>
+      </button>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="sidebar-user" id="sidebarUser"></div>
+      <a href="index.html" target="_blank" rel="noopener">← View Site</a>
+      <a href="booking.html" target="_blank" rel="noopener">Booking Page</a>
+      <button onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" role="main" id="mainContent">
+    <div class="topbar">
+      <h1 class="topbar-title" id="panelTitle">Analytics</h1>
+      <div class="topbar-actions">
+        <span class="topbar-date" id="todayDate"></span>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="refreshData()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── ANALYTICS ────────────────────────────────────── -->
+      <div id="panel-analytics" class="panel active">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-lbl">Visitors</div><div class="stat-val" id="sv">—</div><div class="stat-chg up" id="sv-c"></div></div>
+          <div class="stat-card"><div class="stat-lbl">Bookings</div><div class="stat-val" id="sb">—</div><div class="stat-chg up" id="sb-c"></div></div>
+          <div class="stat-card"><div class="stat-lbl">Inquiries</div><div class="stat-val" id="si">—</div><div class="stat-chg up" id="si-c"></div></div>
+          <div class="stat-card"><div class="stat-lbl">Revenue</div><div class="stat-val" id="sr">—</div><div class="stat-chg up" id="sr-c"></div></div>
+          <div class="stat-card"><div class="stat-lbl">Contacts</div><div class="stat-val" id="sc">—</div><div class="stat-chg up"></div></div>
+          <div class="stat-card"><div class="stat-lbl">Members</div><div class="stat-val" id="sm">—</div><div class="stat-chg up"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-ttl">
+              <span>Traffic</span>
+              <select id="chartRange" onchange="drawCharts()" style="font-size:9px;border:1px solid var(--line);background:var(--parchment);padding:3px 7px;color:var(--bark);outline:none;cursor:pointer;font-family:inherit">
+                <option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option>
+              </select>
+            </div>
+            <div class="chart-wrap"><canvas id="cTraffic" aria-label="Traffic chart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-ttl"><span>Sources</span></div>
+            <div class="chart-wrap"><canvas id="cSources" aria-label="Traffic sources chart"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-row-half">
+          <div class="chart-card">
+            <div class="chart-ttl"><span>Top Pages</span></div>
+            <table class="dtable" aria-label="Top pages by views">
+              <thead><tr><th>Page</th><th>Views</th><th>%</th></tr></thead>
+              <tbody id="topPages"></tbody>
+            </table>
+          </div>
+          <div class="chart-card">
+            <div class="chart-ttl"><span>Source Detail</span></div>
+            <div id="srcBars"></div>
+          </div>
+        </div>
+        <!-- UTM Builder -->
+        <div class="tcard">
+          <div class="thead"><span class="thead-title">UTM Link Builder</span><span style="font-size:10px;color:var(--text-body)">Track where visitors come from</span></div>
+          <div style="padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+            <div class="fg"><label>Base URL</label><input id="uu" value="https://thecompoundwellness.com" oninput="buildUTM()"></div>
+            <div class="fg"><label>Source</label><input id="us" placeholder="instagram" oninput="buildUTM()"></div>
+            <div class="fg"><label>Medium</label><input id="um" placeholder="social" oninput="buildUTM()"></div>
+            <div class="fg"><label>Campaign</label><input id="uc" placeholder="womens-cohort-aug" oninput="buildUTM()"></div>
+            <div class="fg"><label>Content</label><input id="ut" placeholder="bio-link" oninput="buildUTM()"></div>
+          </div>
+          <div style="padding:0 18px 18px">
+            <div class="utm-out" id="utmOut">Fill in URL and Source to generate.</div>
+            <div style="display:flex;gap:7px;margin-top:9px">
+              <button class="btn btn-primary btn-sm" onclick="copyUTM()">Copy Link</button>
+              <button class="btn btn-ghost btn-sm" onclick="utmToQR()">→ QR Code</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONTACTS ──────────────────────────────────────── -->
+      <div id="panel-contacts" class="panel">
+        <div class="tcard">
+          <div class="thead">
+            <span class="thead-title">Contacts</span>
+            <div class="tcontrols">
+              <input class="search" placeholder="Name, email, city…" oninput="filterT('contacts',this.value)">
+              <select class="fsel" id="cf" onchange="filterT('contacts','')">
+                <option value="">All Sources</option><option>Booking</option><option>Inquiry</option><option>Member</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="dtable" aria-label="Contacts table">
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Practitioner</th><th>Source</th><th>Status</th><th>Date</th><th></th></tr></thead>
+              <tbody id="tContacts"></tbody>
+            </table>
+          </div>
+          <div class="tfoot"><span id="cCount">—</span><div class="pager" id="cPager"></div></div>
+        </div>
+      </div>
+
+      <!-- ── BOOKINGS ──────────────────────────────────────── -->
+      <div id="panel-bookings" class="panel">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val" id="bt">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">This Month</div><div class="stat-val" id="bm">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Revenue</div><div class="stat-val" id="br">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Avg Session</div><div class="stat-val" id="ba">—</div></div>
+        </div>
+        <div class="tcard">
+          <div class="thead">
+            <span class="thead-title">Bookings</span>
+            <div class="tcontrols">
+              <input class="search" placeholder="Name, service…" oninput="filterT('bookings',this.value)">
+              <select class="fsel" id="bf" onchange="filterT('bookings','')">
+                <option value="">All Practitioners</option>
+                <option>Adrienne Kruse</option><option>Dr. Angela Colombo</option>
+                <option>Dr. Andrew Adams</option><option>Christine Winnen</option>
+                <option>Coco Poovey</option><option>Branden Carrisalez</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Export</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="dtable" aria-label="Bookings table">
+              <thead><tr><th>Client</th><th>Practitioner</th><th>Service</th><th>Date</th><th>Amount</th><th>Status</th><th>Stripe ID</th><th></th></tr></thead>
+              <tbody id="tBookings"></tbody>
+            </table>
+          </div>
+          <div class="tfoot"><span id="bCount">—</span><div class="pager" id="bPager"></div></div>
+        </div>
+      </div>
+
+      <!-- ── MEMBERS ───────────────────────────────────────── -->
+      <div id="panel-members" class="panel">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card"><div class="stat-lbl">Total</div><div class="stat-val" id="mt">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Active</div><div class="stat-val" id="ma">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Cohort</div><div class="stat-val" id="mc">—</div></div>
+          <div class="stat-card"><div class="stat-lbl">Enclave</div><div class="stat-val" id="me">—</div></div>
+        </div>
+        <div class="tcard">
+          <div class="thead">
+            <span class="thead-title">Members</span>
+            <div class="tcontrols">
+              <input class="search" placeholder="Name, email…" oninput="filterT('members',this.value)">
+              <select class="fsel" id="mf" onchange="filterT('members','')">
+                <option value="">All Types</option>
+                <option>Concierge Medicine</option><option>Holistic Enclave</option>
+                <option>Women's Cohort</option><option>Executive Cohort</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openAddMember()">+ Add</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="dtable" aria-label="Members table">
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Membership</th><th>Start</th><th>Renews</th><th>Status</th><th></th></tr></thead>
+              <tbody id="tMembers"></tbody>
+            </table>
+          </div>
+          <div class="tfoot"><span id="mCount">—</span><div class="pager" id="mPager"></div></div>
+        </div>
+      </div>
+
+      <!-- ── SOCIAL / BUFFER ───────────────────────────────── -->
+      <div id="panel-social" class="panel">
+
+        <!-- Not connected state -->
+        <div id="bufNotConn" style="display:none">
+          <div class="buf-connect">
+            <h3>Connect Buffer</h3>
+            <p>Buffer is your social media scheduling tool. Connect it here to compose, schedule, and manage posts for Instagram, Facebook, LinkedIn, and X — without leaving the admin dashboard.</p>
+            <button class="btn btn-blue" onclick="startBufferOAuth()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+              Connect Buffer Account
+            </button>
+            <p style="margin-top:14px;font-size:10px;color:var(--text-body)">You'll be redirected to Buffer to authorise access. Your Buffer credentials are never stored here.</p>
+          </div>
+          <div class="buf-tip" style="margin-top:16px">
+            <strong style="font-weight:500">How to get your Buffer Access Token:</strong><br>
+            1. Go to <strong>buffer.com</strong> → Log in → click your avatar → Settings<br>
+            2. Click <strong>Apps & Integrations → Buffer API</strong><br>
+            3. Click <strong>Create an App</strong> (or use existing) → copy the <strong>Access Token</strong><br>
+            4. Paste it below, or add it as <code>BUFFER_ACCESS_TOKEN</code> in your Railway environment variables.
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;align-items:flex-end">
+            <div class="fg" style="flex:1;margin-bottom:0">
+              <label>Paste Buffer Access Token directly</label>
+              <input type="password" id="bufTokenInput" placeholder="bt1:…" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" onclick="connectBufferToken()">Connect</button>
+          </div>
+        </div>
+
+        <!-- Connected state -->
+        <div id="bufConn" style="display:none">
+
+          <!-- Connected profiles -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body);margin-bottom:4px">Connected Profiles</div>
+              <div id="bufProfiles"></div>
+            </div>
+            <button class="btn btn-red btn-sm" onclick="disconnectBuffer()">Disconnect Buffer</button>
+          </div>
+
+          <!-- Compose -->
+          <div class="tcard" style="margin-bottom:14px">
+            <div class="thead"><span class="thead-title">Compose & Schedule</span></div>
+            <div style="padding:18px">
+              <!-- Network toggles -->
+              <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body);margin-bottom:8px">Post to</div>
+              <div class="net-toggles" id="netToggles"></div>
+
+              <!-- Compose area -->
+              <div class="compose-area">
+                <div class="compose-bar">
+                  <div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body)">Caption</div>
+                  <span class="char-count" id="charCount">0 / 2200</span>
+                </div>
+                <textarea id="postText" rows="5" style="width:100%;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;color:var(--espresso);background:transparent;outline:none;resize:vertical;line-height:1.7;min-height:100px"
+                  placeholder="Write your caption here… Use [LINK] where you want the URL to appear."
+                  oninput="updateCharCount()"></textarea>
+
+                <!-- Caption templates -->
+                <div style="margin-top:10px">
+                  <div style="font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body);margin-bottom:6px">Quick Templates</div>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <button class="preset" onclick="useTemplate('event')">Sound Bath</button>
+                    <button class="preset" onclick="useTemplate('cohort')">Cohort Opening</button>
+                    <button class="preset" onclick="useTemplate('booking')">Booking Reminder</button>
+                    <button class="preset" onclick="useTemplate('concierge')">Concierge Medicine</button>
+                    <button class="preset" onclick="useTemplate('enclave')">Holistic Enclave</button>
+                  </div>
+                </div>
+
+                <!-- Image upload -->
+                <div style="margin-top:12px">
+                  <div style="font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-body);margin-bottom:6px">Images (optional)</div>
+                  <input type="file" id="postImages" accept="image/*" multiple onchange="previewImages()"
+                    style="font-size:11px;color:var(--text-body)">
+                  <div class="img-preview" id="imgPreview"></div>
+                </div>
+              </div>
+
+              <!-- Schedule -->
+              <div class="sched-row">
+                <label>Schedule for</label>
+                <input type="datetime-local" id="schedTime">
+                <span style="font-size:10px;color:var(--text-body)">or</span>
+                <button class="btn btn-ghost btn-sm" onclick="setNow()">Post Now</button>
+              </div>
+
+              <!-- Actions -->
+              <div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
+                <button class="btn btn-blue" onclick="sendToBuffer()">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+                  Send to Buffer
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="clearCompose()">Clear</button>
+              </div>
+              <div id="bufPostResult" style="margin-top:10px;font-size:11px;min-height:16px" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <!-- Scheduled queue -->
+          <div class="tcard">
+            <div class="thead">
+              <span class="thead-title">Scheduled Queue</span>
+              <button class="btn btn-ghost btn-sm" onclick="loadBufferQueue()">↻ Refresh</button>
+            </div>
+            <div style="padding:4px 0" id="bufQueue">
+              <div class="empty">Loading queue…</div>
+            </div>
+          </div>
+
+          <!-- Analytics summary -->
+          <div class="tcard" style="margin-top:14px">
+            <div class="thead"><span class="thead-title">Recent Post Performance</span><span style="font-size:10px;color:var(--text-body)">Last 10 posts via Buffer</span></div>
+            <div style="overflow-x:auto">
+              <table class="dtable" aria-label="Post performance table">
+                <thead><tr><th>Date</th><th>Network</th><th>Caption Preview</th><th>Likes</th><th>Comments</th><th>Reach</th><th>Status</th></tr></thead>
+                <tbody id="bufAnalytics"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /bufConn -->
+      </div><!-- /panel-social -->
+
+      <!-- ── QR CODES ───────────────────────────────────────── -->
+      <div id="panel-qr" class="panel">
+        <div class="qr-grid">
+          <div class="qr-box">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:4px">Generate QR Code</div>
+            <p style="font-size:11px;color:var(--text-body);margin-bottom:16px">Create QR codes for any page — for print, events, partnerships, or social.</p>
+            <div style="font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body);margin-bottom:7px">Quick Presets</div>
+            <div class="presets">
+              <button class="preset on" onclick="setPreset(this,'https://thecompoundwellness.com')">Home</button>
+              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html')">Booking</button>
+              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html?prac=angela')">Dr. Colombo</button>
+              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html?prac=coco')">Coco</button>
+              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/portal.html')">Member Portal</button>
+              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com#cohorts')">Cohorts</button>
+            </div>
+            <div class="fg"><label>URL</label><input id="qrUrl" value="https://thecompoundwellness.com" oninput="genQR()"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="fg"><label>Label</label><input id="qrLabel" placeholder="Business Card"></div>
+              <div class="fg">
+                <label>Size</label>
+                <select id="qrSize" onchange="genQR()" style="border:none;border-bottom:1px solid var(--linen);padding:8px 0;font-family:inherit;font-size:13px;background:transparent;outline:none;cursor:pointer">
+                  <option value="160">Small</option><option value="200" selected>Medium</option><option value="300">Large</option><option value="400">Print</option>
+                </select>
+              </div>
+            </div>
+            <div class="qr-display" id="qrDisplay" aria-label="Generated QR code" aria-live="polite"></div>
+            <div style="display:flex;gap:7px">
+              <button class="btn btn-primary" onclick="downloadQR()">Download PNG</button>
+              <button class="btn btn-ghost btn-sm" onclick="saveQR()">Save</button>
+            </div>
+          </div>
+          <div class="qr-box">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;margin-bottom:4px">Saved Codes</div>
+            <p style="font-size:11px;color:var(--text-body);margin-bottom:16px">Download or share at any time.</p>
+            <div id="qrLib"><div style="font-size:11px;color:var(--text-body);font-style:italic">No saved QR codes yet.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /appShell -->
+
+<!-- ── DRAWER ───────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+  <div class="dhead">
+    <div><h3 id="drawerTitle">—</h3><span id="drawerSub" style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--copper);display:block;margin-top:3px"></span></div>
+    <button class="dclose" onclick="closeDrawer()" aria-label="Close">×</button>
+  </div>
+  <div class="dbody" id="drawerBody"></div>
+  <div class="dact" id="drawerAct"></div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+// SECURITY — Login gate
+// ═══════════════════════════════════════════════════════════
+const ADMIN_SESSION_KEY = 'cw_admin_sess';
+const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
+let loginAttempts = 0;
+let lockedUntil = 0;
+
+// Credentials — in production these come from server-side auth
+// Change these immediately after first deploy
+const ADMIN_CREDS = [
+  { email: 'adrienne@thecompoundwellness.com', password: 'Compound2024!' },
+  // Add more admins here if needed
+];
+
+function doLogin() {
+  const now = Date.now();
+  if (lockedUntil > now) {
+    const secs = Math.ceil((lockedUntil - now) / 1000);
+    document.getElementById('loginErr').textContent = `Too many attempts. Try again in ${secs}s.`;
+    return;
+  }
+  const email = (document.getElementById('au').value || '').trim().toLowerCase();
+  const pass  = document.getElementById('ap').value || '';
+  const match = ADMIN_CREDS.find(c => c.email === email && c.password === pass);
+  if (!match) {
+    loginAttempts++;
+    if (loginAttempts >= 5) {
+      lockedUntil = now + 60000; // lock for 60s
+      loginAttempts = 0;
+      document.getElementById('loginErr').textContent = 'Too many failed attempts. Locked for 60 seconds.';
+      document.getElementById('lockMsg').textContent = '';
+      return;
+    }
+    const remaining = 5 - loginAttempts;
+    document.getElementById('loginErr').textContent = `Incorrect email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
+    document.getElementById('ap').value = '';
+    document.getElementById('ap').focus();
+    return;
+  }
+  // Success
+  loginAttempts = 0;
+  const session = { email, ts: now };
+  try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session)); } catch(e) {}
+  document.getElementById('loginErr').textContent = '';
+  launchApp(email);
+}
+
+function checkSession() {
+  try {
+    const raw = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (Date.now() - s.ts > SESSION_TTL) { sessionStorage.removeItem(ADMIN_SESSION_KEY); return false; }
+    launchApp(s.email);
+    return true;
+  } catch(e) { return false; }
+}
+
+function launchApp(email) {
+  document.getElementById('loginScreen').style.display = 'none';
+  const app = document.getElementById('appShell');
+  app.classList.add('visible');
+  document.getElementById('sidebarUser').textContent = email;
+  init();
+}
+
+function doLogout() {
+  try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch(e) {}
+  document.getElementById('appShell').classList.remove('visible');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('ap').value = '';
+  document.getElementById('au').focus();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const PG = 20;
+let DB = { contacts:[], bookings:[], members:[], qrLib:[] };
+let pg = { contacts:1, bookings:1, members:1 };
+
+function loadDB() {
+  try {
+    const s = localStorage.getItem('cw_admin_db');
+    if (s) Object.assign(DB, JSON.parse(s));
+  } catch(e) {}
+  if (!DB.contacts.length) seed();
+}
+function saveDB() {
+  try { localStorage.setItem('cw_admin_db', JSON.stringify(DB)); } catch(e) {}
+}
+function ago(n) {
+  const d = new Date(); d.setDate(d.getDate()-n);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function seed() {
+  DB.contacts = [
+    {id:'c1',name:'Katherine M.',email:'k.m@example.com',phone:'(949)555-0101',city:'Newport Beach',practitioner:'Adrienne Kruse',source:'Inquiry — Cohort',status:'New Lead',created:ago(2)},
+    {id:'c2',name:'Thomas R.',email:'t.r@example.com',phone:'(949)555-0102',city:'Laguna Beach',practitioner:'Dr. Angela Colombo',source:'Booking',status:'Booked',created:ago(5)},
+    {id:'c3',name:'Avery L.',email:'a.l@example.com',phone:'(949)555-0103',city:'Dana Point',practitioner:'Coco Poovey',source:'Booking',status:'Booked',created:ago(7)},
+    {id:'c4',name:'Claire D.',email:'c.d@example.com',phone:'(949)555-0104',city:'Irvine',practitioner:'Adrienne Kruse',source:'Inquiry — Executive Cohort',status:'Contacted',created:ago(10)},
+    {id:'c5',name:'Sarah P.',email:'s.p@example.com',phone:'(949)555-0105',city:'San Clemente',practitioner:"Adrienne Kruse",source:"Women's Cohort",status:'Booked',created:ago(14)},
+    {id:'c6',name:'Dr. M.H.',email:'m.h@example.com',phone:'(949)555-0106',city:'Mission Viejo',practitioner:'Branden Carrisalez',source:'Inquiry',status:'Contacted',created:ago(18)},
+    {id:'c7',name:'Jessica K.',email:'j.k@example.com',phone:'(949)555-0107',city:'Newport Beach',practitioner:'Adrienne Kruse',source:'Executive Cohort',status:'Booked',created:ago(21)},
+    {id:'c8',name:'Rachel B.',email:'r.b@example.com',phone:'(949)555-0108',city:'Laguna Niguel',practitioner:'Christine Winnen',source:'Booking',status:'Booked',created:ago(3)},
+  ];
+  DB.bookings = [
+    {id:'b1',name:'Thomas R.',practitioner:'Dr. Angela Colombo',service:'Concierge Consult',date:'Jun 8, 2026',amount:0,status:'Confirmed',stripe:'pi_demo_001'},
+    {id:'b2',name:'Avery L.',practitioner:'Coco Poovey',service:'Sound Bath · 60 min',date:'Jun 9, 2026',amount:150,status:'Confirmed',stripe:'pi_demo_002'},
+    {id:'b3',name:'Rachel B.',practitioner:'Christine Winnen',service:'IV Therapy',date:'Jun 10, 2026',amount:250,status:'Confirmed',stripe:'pi_demo_003'},
+    {id:'b4',name:'Sarah P.',practitioner:'Coco Poovey',service:'Reiki · 90 min',date:'Jun 11, 2026',amount:212,status:'Confirmed',stripe:'pi_demo_004'},
+    {id:'b5',name:'Dr. M.H.',practitioner:'Branden Carrisalez',service:'Structural Integration',date:'Jun 12, 2026',amount:0,status:'Inquiry',stripe:'—'},
+  ];
+  DB.members = [
+    {id:'m1',name:'Sarah P.',email:'s.p@example.com',phone:'(949)555-0105',type:"Women's Cohort",start:'Aug 2, 2026',renews:'Nov 2, 2026',status:'Upcoming'},
+    {id:'m2',name:'Jessica K.',email:'j.k@example.com',phone:'(949)555-0107',type:'Executive Cohort',start:'Jan 4, 2027',renews:'Apr 4, 2027',status:'Upcoming'},
+    {id:'m3',name:'Thomas R.',email:'t.r@example.com',phone:'(949)555-0102',type:'Concierge Medicine',start:'May 1, 2026',renews:'Jun 1, 2026',status:'Active'},
+    {id:'m4',name:'Avery L.',email:'a.l@example.com',phone:'(949)555-0103',type:'Holistic Enclave',start:'Apr 15, 2026',renews:'Jul 15, 2026',status:'Active'},
+  ];
+  saveDB();
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+function init() {
+  document.getElementById('todayDate').textContent =
+    new Date().toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+  loadDB();
+  renderAll();
+  drawCharts();
+  genQR();
+  renderQRLib();
+  initBuffer();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PANELS
+// ═══════════════════════════════════════════════════════════
+const TITLES = {analytics:'Analytics',contacts:'Contacts',bookings:'Bookings',members:'Members',social:'Social — Buffer',qr:'QR Codes'};
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+  const panel = document.getElementById('panel-'+id);
+  if (panel) panel.classList.add('active');
+  const btn = document.querySelector(`.nav-btn[data-panel="${id}"]`);
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current','page'); }
+  document.getElementById('panelTitle').textContent = TITLES[id] || id;
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════
+function renderAll() { renderContacts(); renderBookings(); renderMembers(); updateStats(); }
+function set(id,v) { const e=document.getElementById(id); if(e) e.textContent=v; }
+function updateStats() {
+  const rev = DB.bookings.reduce((s,b)=>s+(b.amount||0),0);
+  const inq = DB.contacts.filter(c=>(c.source||'').includes('Inquiry')).length;
+  set('sv','1,248'); set('sb', DB.bookings.length); set('si', inq);
+  set('sr','$'+rev.toLocaleString()); set('sc', DB.contacts.length); set('sm', DB.members.length);
+  set('sv-c','↑ 12% vs last month'); set('sb-c','↑ 8% vs last month');
+  set('si-c','↑ 23% vs last month'); set('sr-c','↑ 15% vs last month');
+  set('bt', DB.bookings.length); set('bm', DB.bookings.length);
+  set('br','$'+rev.toLocaleString());
+  const paid = DB.bookings.filter(b=>b.amount>0);
+  set('ba', paid.length ? '$'+Math.round(rev/paid.length) : '—');
+  set('mt', DB.members.length);
+  set('ma', DB.members.filter(m=>m.status==='Active').length);
+  set('mc', DB.members.filter(m=>(m.type||'').includes('Cohort')).length);
+  set('me', DB.members.filter(m=>(m.type||'').includes('Enclave')).length);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════
+let cT, cS;
+function drawCharts() {
+  const days = parseInt(document.getElementById('chartRange')?.value||30);
+  const labels=[], data=[], inq=[];
+  for(let i=days-1;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    data.push(Math.floor(20+Math.random()*80+(days-i)*.5));
+    inq.push(Math.floor(1+Math.random()*5));
+  }
+  const font={family:"'DM Sans',sans-serif",size:9};
+  const gc='rgba(196,168,130,.18)';
+  const tc=document.getElementById('cTraffic');
+  const sc=document.getElementById('cSources');
+  if(cT) cT.destroy();
+  if(cS) cS.destroy();
+  cT=new Chart(tc,{type:'line',data:{labels,datasets:[
+    {label:'Visitors',data,borderColor:'#B8916A',backgroundColor:'rgba(184,145,106,.07)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true},
+    {label:'Inquiries',data:inq,borderColor:'#2C4235',backgroundColor:'rgba(44,66,53,.06)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{font,color:'#7A6E64',boxWidth:8,padding:12}}},
+    scales:{x:{ticks:{font,color:'#9A8E84',maxTicksLimit:8},grid:{color:gc},border:{display:false}},
+            y:{ticks:{font,color:'#9A8E84'},grid:{color:gc},border:{display:false}}}}});
+  cS=new Chart(sc,{type:'doughnut',data:{
+    labels:['Direct','Instagram','Google','Email','Referral','QR'],
+    datasets:[{data:[32,28,20,10,7,3],backgroundColor:['#B8916A','#2C4235','#C4A882','#8A6040','#4A6858','#E8DDD0'],borderWidth:0,hoverOffset:3}]
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'66%',
+    plugins:{legend:{position:'bottom',labels:{font,color:'#7A6E64',padding:8,boxWidth:8}}}}});
+  const srcs=[{l:'Direct',p:32},{l:'Instagram',p:28},{l:'Google',p:20},{l:'Email',p:10},{l:'Referral',p:7},{l:'QR Code',p:3}];
+  document.getElementById('srcBars').innerHTML=srcs.map(s=>`
+    <div class="src-row"><span class="src-lbl">${s.l}</span>
+    <div class="src-bar-wrap"><div class="src-bar" style="width:${s.p}%"></div></div>
+    <span class="src-pct">${s.p}%</span></div>`).join('');
+  const pages=[['Home','412','33%'],['Practitioners','198','16%'],['Services','156','12%'],
+    ['Concierge Medicine','134','11%'],['Cohorts','98','8%'],['Booking','87','7%'],['About','64','5%'],['Contact','58','5%']];
+  document.getElementById('topPages').innerHTML=pages.map(([p,v,pct])=>`
+    <tr><td style="color:var(--bark)">${p}</td><td>${v}</td><td style="color:var(--text-body)">${pct}</td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TABLE RENDER
+// ═══════════════════════════════════════════════════════════
+function badge(cls,txt) { return `<span class="badge ${cls}">${txt}</span>`; }
+function bStatus(s) { return s==='Booked'||s==='Confirmed'||s==='Active'?'bg':s==='Cancelled'||s==='Inactive'?'br':'bc'; }
+
+function renderContacts(data, p) {
+  data=data||DB.contacts; p=p||pg.contacts;
+  const sl=data.slice((p-1)*PG,p*PG);
+  document.getElementById('tContacts').innerHTML=sl.length
+    ?sl.map(c=>`<tr>
+      <td><strong style="font-weight:400;color:var(--espresso)">${esc(c.name)}</strong></td>
+      <td><a href="mailto:${esc(c.email)}" style="color:var(--copper)">${esc(c.email)}</a></td>
+      <td>${esc(c.phone||'—')}</td><td>${esc(c.city||'—')}</td>
+      <td>${esc(c.practitioner||'—')}</td><td style="color:var(--text-body)">${esc(c.source||'—')}</td>
+      <td>${badge(bStatus(c.status),c.status)}</td><td>${esc(c.created||'—')}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openContactDrawer('${c.id}')">View</button></td>
+    </tr>`).join('')
+    :`<tr><td colspan="9" class="empty">No contacts yet. They'll appear here after the first booking or inquiry.</td></tr>`;
+  set('cCount', data.length+' contact'+(data.length!==1?'s':''));
+  renderPager('c', data.length, p, (p)=>renderContacts(DB.contacts.filter(x=>true),p));
+}
+
+function renderBookings(data, p) {
+  data=data||DB.bookings; p=p||pg.bookings;
+  const sl=data.slice((p-1)*PG,p*PG);
+  document.getElementById('tBookings').innerHTML=sl.length
+    ?sl.map(b=>`<tr>
+      <td><strong style="font-weight:400;color:var(--espresso)">${esc(b.name)}</strong></td>
+      <td>${esc(b.practitioner||'—')}</td><td>${esc(b.service||'—')}</td>
+      <td>${esc(b.date||'—')}</td>
+      <td>${b.amount>0?'$'+b.amount.toLocaleString():'—'}</td>
+      <td>${badge(bStatus(b.status),b.status)}</td>
+      <td style="font-size:10px;color:var(--text-body)">${esc(b.stripe||'—')}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openBookingDrawer('${b.id}')">View</button></td>
+    </tr>`).join('')
+    :`<tr><td colspan="8" class="empty">No bookings yet.</td></tr>`;
+  set('bCount', data.length+' booking'+(data.length!==1?'s':''));
+  renderPager('b', data.length, p, (p)=>renderBookings(DB.bookings.filter(x=>true),p));
+}
+
+function renderMembers(data, p) {
+  data=data||DB.members; p=p||pg.members;
+  const sl=data.slice((p-1)*PG,p*PG);
+  document.getElementById('tMembers').innerHTML=sl.length
+    ?sl.map(m=>`<tr>
+      <td><strong style="font-weight:400;color:var(--espresso)">${esc(m.name)}</strong></td>
+      <td><a href="mailto:${esc(m.email)}" style="color:var(--copper)">${esc(m.email)}</a></td>
+      <td>${esc(m.phone||'—')}</td>
+      <td>${badge(bStatus(m.status),m.type)}</td>
+      <td>${esc(m.start||'—')}</td><td>${esc(m.renews||'—')}</td>
+      <td>${badge(bStatus(m.status),m.status)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openMemberDrawer('${m.id}')">View</button></td>
+    </tr>`).join('')
+    :`<tr><td colspan="8" class="empty">No members yet.</td></tr>`;
+  set('mCount', data.length+' member'+(data.length!==1?'s':''));
+  renderPager('m', data.length, p, (p)=>renderMembers(DB.members.filter(x=>true),p));
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderPager(prefix, total, current, fn) {
+  const pages=Math.ceil(total/PG);
+  const el=document.getElementById(prefix+'Pager');
+  if(!el) return;
+  if(pages<=1){el.innerHTML='';return;}
+  el.innerHTML=Array.from({length:pages},(_,i)=>i+1)
+    .map(i=>`<button class="pgbtn${i===current?' on':''}" onclick="(${fn.toString()})(${i})">${i}</button>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FILTER
+// ═══════════════════════════════════════════════════════════
+function filterT(type, q) {
+  q=(q||'').toLowerCase();
+  if(type==='contacts'){
+    const f=document.getElementById('cf')?.value?.toLowerCase()||'';
+    const d=DB.contacts.filter(c=>(!q||[c.name,c.email,c.city,c.practitioner].join(' ').toLowerCase().includes(q))&&(!f||(c.source||'').toLowerCase().includes(f)));
+    pg.contacts=1; renderContacts(d,1);
+  } else if(type==='bookings'){
+    const f=document.getElementById('bf')?.value?.toLowerCase()||'';
+    const d=DB.bookings.filter(b=>(!q||[b.name,b.service,b.practitioner].join(' ').toLowerCase().includes(q))&&(!f||(b.practitioner||'').toLowerCase().includes(f)));
+    pg.bookings=1; renderBookings(d,1);
+  } else if(type==='members'){
+    const f=document.getElementById('mf')?.value?.toLowerCase()||'';
+    const d=DB.members.filter(m=>(!q||[m.name,m.email,m.type].join(' ').toLowerCase().includes(q))&&(!f||(m.type||'').toLowerCase().includes(f)));
+    pg.members=1; renderMembers(d,1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAWERS
+// ═══════════════════════════════════════════════════════════
+function dr(label, value) {
+  return `<div class="dr"><span class="dl">${label}</span><span class="dv">${value}</span></div>`;
+}
+function openDrawer(title, sub, body, actions) {
+  set('drawerTitle', title); set('drawerSub', sub||'');
+  document.getElementById('drawerBody').innerHTML = body;
+  document.getElementById('drawerAct').innerHTML = actions||'';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+function openContactDrawer(id) {
+  const c=DB.contacts.find(x=>x.id===id); if(!c) return;
+  openDrawer(c.name, c.source||'Contact',
+    dr('Email',`<a href="mailto:${esc(c.email)}" style="color:var(--copper)">${esc(c.email)}</a>`)+
+    dr('Phone',esc(c.phone||'—'))+dr('City',esc(c.city||'—'))+dr('Practitioner',esc(c.practitioner||'—'))+
+    dr('Source',esc(c.source||'—'))+dr('Status',badge(bStatus(c.status),c.status))+dr('Added',esc(c.created||'—'))+
+    (c.notes?dr('Notes',`<em style="color:var(--text-body)">${esc(c.notes)}</em>`):''),
+    `<a href="mailto:${esc(c.email)}" class="btn btn-primary btn-sm">Email</a>
+     ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-ghost btn-sm">Call</a>`:''}
+     <button class="btn btn-red btn-sm" onclick="delContact('${id}');closeDrawer()">Remove</button>`);
+}
+function openBookingDrawer(id) {
+  const b=DB.bookings.find(x=>x.id===id); if(!b) return;
+  openDrawer(b.name, b.practitioner||'',
+    dr('Service',esc(b.service||'—'))+dr('Date',esc(b.date||'—'))+
+    dr('Amount',b.amount>0?'$'+b.amount.toLocaleString()+' USD':'—')+
+    dr('Status',badge(bStatus(b.status),b.status))+
+    dr('Stripe',`<code style="font-size:10px">${esc(b.stripe||'—')}</code>`),
+    `<button class="btn btn-red btn-sm" onclick="cancelBooking('${id}');closeDrawer()">Cancel Booking</button>`);
+}
+function openMemberDrawer(id) {
+  const m=DB.members.find(x=>x.id===id); if(!m) return;
+  openDrawer(m.name, m.type||'Member',
+    dr('Email',`<a href="mailto:${esc(m.email)}" style="color:var(--copper)">${esc(m.email)}</a>`)+
+    dr('Phone',esc(m.phone||'—'))+dr('Membership',esc(m.type||'—'))+
+    dr('Start',esc(m.start||'—'))+dr('Renews',esc(m.renews||'—'))+dr('Status',badge(bStatus(m.status),m.status)),
+    `<a href="mailto:${esc(m.email)}" class="btn btn-primary btn-sm">Email</a>
+     <button class="btn btn-red btn-sm" onclick="delMember('${id}');closeDrawer()">Remove</button>`);
+}
+
+function delContact(id) { DB.contacts=DB.contacts.filter(c=>c.id!==id); saveDB(); renderContacts(); updateStats(); }
+function cancelBooking(id) { const b=DB.bookings.find(b=>b.id===id); if(b){b.status='Cancelled';saveDB();renderBookings();updateStats();} }
+function delMember(id) { DB.members=DB.members.filter(m=>m.id!==id); saveDB(); renderMembers(); updateStats(); }
+
+// ─── Add Contact ───────────────────────────────────────────
+function openAddContact() {
+  openDrawer('Add Contact','Manual entry',
+    `<div class="frow"><div class="fg"><label>First Name *</label><input id="nc1" type="text"></div>
+     <div class="fg"><label>Last Name *</label><input id="nc2" type="text"></div></div>
+     <div class="fg"><label>Email *</label><input id="nc3" type="email"></div>
+     <div class="fg"><label>Phone</label><input id="nc4" type="tel"></div>
+     <div class="fg"><label>City</label><input id="nc5" type="text"></div>
+     <div class="fg"><label>Practitioner</label>
+       <select id="nc6" style="border:none;border-bottom:1px solid var(--linen);padding:8px 0;font-family:inherit;font-size:13px;background:transparent;outline:none">
+         <option value="">Select…</option><option>Adrienne Kruse</option><option>Dr. Angela Colombo</option>
+         <option>Dr. Andrew Adams</option><option>Christine Winnen</option><option>Coco Poovey</option><option>Branden Carrisalez</option>
+       </select>
+     </div>
+     <div class="fg"><label>Notes</label><textarea id="nc7"></textarea></div>`,
+    `<button class="btn btn-primary" onclick="saveContact()">Save</button>
+     <button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Cancel</button>`);
+}
+function saveContact() {
+  const f=document.getElementById('nc1')?.value?.trim();
+  const l=document.getElementById('nc2')?.value?.trim();
+  const e=document.getElementById('nc3')?.value?.trim();
+  if(!f||!e){alert('Name and email required.');return;}
+  DB.contacts.unshift({id:'c'+Date.now(),name:(f+' '+l).trim(),email:e,
+    phone:document.getElementById('nc4')?.value||'',city:document.getElementById('nc5')?.value||'',
+    practitioner:document.getElementById('nc6')?.value||'',notes:document.getElementById('nc7')?.value||'',
+    source:'Manual Entry',status:'New Lead',
+    created:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})});
+  saveDB();closeDrawer();renderContacts();updateStats();
+}
+
+// ─── Add Member ────────────────────────────────────────────
+function openAddMember() {
+  openDrawer('Add Member','Manual entry',
+    `<div class="frow"><div class="fg"><label>First Name *</label><input id="nm1" type="text"></div>
+     <div class="fg"><label>Last Name</label><input id="nm2" type="text"></div></div>
+     <div class="fg"><label>Email *</label><input id="nm3" type="email"></div>
+     <div class="fg"><label>Phone</label><input id="nm4" type="tel"></div>
+     <div class="fg"><label>Membership Type</label>
+       <select id="nm5" style="border:none;border-bottom:1px solid var(--linen);padding:8px 0;font-family:inherit;font-size:13px;background:transparent;outline:none">
+         <option>Concierge Medicine</option><option>Holistic Enclave</option>
+         <option>Women's Cohort</option><option>Executive Cohort</option>
+       </select>
+     </div>
+     <div class="frow"><div class="fg"><label>Start Date</label><input id="nm6" placeholder="Aug 2, 2026"></div>
+     <div class="fg"><label>Renewal Date</label><input id="nm7" placeholder="Nov 2, 2026"></div></div>`,
+    `<button class="btn btn-primary" onclick="saveMember()">Save</button>
+     <button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Cancel</button>`);
+}
+function saveMember() {
+  const f=document.getElementById('nm1')?.value?.trim();
+  const e=document.getElementById('nm3')?.value?.trim();
+  if(!f||!e){alert('Name and email required.');return;}
+  DB.members.unshift({id:'m'+Date.now(),name:(f+' '+(document.getElementById('nm2')?.value||'')).trim(),
+    email:e,phone:document.getElementById('nm4')?.value||'',
+    type:document.getElementById('nm5')?.value||'',
+    start:document.getElementById('nm6')?.value||'',renews:document.getElementById('nm7')?.value||'',status:'Active'});
+  saveDB();closeDrawer();renderMembers();updateStats();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUFFER INTEGRATION
+// ═══════════════════════════════════════════════════════════
+let bufToken = null;
+let bufProfiles = [];
+
+const POST_TEMPLATES = {
+  event:     "The kind of evening that changes something in you. ✨\n\nJoin us for a private sound bath with Coco — crystal bowls, Reiki, and community under the California sky.\n\nLimited spots. Link in bio to book. 🌙\n\n#SoundBath #TheCompoundWellness #OrangeCounty #Wellness #HolisticHealth",
+  cohort:    "The Women's Cohort begins August 2nd. 12 women. 3 months. Something real.\n\nFor the ones who pour into everyone else and have very little poured back in.\n\nIf this is you — it's for you. Link in bio to learn more and apply.\n\n#WomensCohort #TheCompoundWellness #BurnoutRecovery #Community",
+  booking:   "Your home is the clinic. 🏡\n\nEvery service — from IV therapy to sound baths to concierge medicine — delivered to you. No commute. No waiting rooms. Just care, at your pace.\n\nBooking is open. Link in bio.\n\n#ConciergeWellness #InHomeWellness #OrangeCounty #TheCompoundWellness",
+  concierge: "What if your doctor actually knew you?\n\nDr. Angela Colombo offers 24/7 concierge medicine — labs drawn at home, in-home diagnostics, hormone support, pregnancy & postpartum care, and a physician who fights for you at every specialist.\n\nFree 15-minute consultation. Link in bio.\n\n#ConciergeМedicine #DrColombo #TheCompoundWellness #OrangeCounty",
+  enclave:   "The Holistic Enclave is a membership for those who want wellness woven into life — not squeezed into a schedule.\n\nPrivate yoga. Massage. Breathwork. Sound baths. Community events. All in-home, all yours.\n\nInquire via link in bio. ✨\n\n#HolisticEnclave #TheCompoundWellness #Membership #WellnessLifestyle",
+};
+
+function initBuffer() {
+  try {
+    const t = sessionStorage.getItem('buf_token');
+    if (t) { bufToken = t; showBufferConnected(); loadBufferProfiles(); return; }
+  } catch(e) {}
+  document.getElementById('bufNotConn').style.display = 'block';
+  document.getElementById('bufConn').style.display = 'none';
+}
+
+function connectBufferToken() {
+  const t = document.getElementById('bufTokenInput')?.value?.trim();
+  if (!t) { alert('Please paste your Buffer access token.'); return; }
+  bufToken = t;
+  try { sessionStorage.setItem('buf_token', t); } catch(e) {}
+  showBufferConnected();
+  loadBufferProfiles();
+}
+
+function startBufferOAuth() {
+  // In production, your server.js handles the OAuth flow:
+  // GET /auth/buffer → redirects to Buffer, Buffer redirects back to /auth/buffer/callback
+  // The callback exchanges the code for an access token and stores it server-side
+  alert('OAuth flow requires a deployed server.\n\nFor now, paste your Buffer Access Token directly:\n\nbuffer.com → Settings → Apps & Integrations → Access Token');
+}
+
+function showBufferConnected() {
+  document.getElementById('bufNotConn').style.display = 'none';
+  document.getElementById('bufConn').style.display = 'block';
+  loadBufferQueue();
+  renderBufferAnalytics();
+}
+
+function disconnectBuffer() {
+  if (!confirm('Disconnect Buffer? You can reconnect at any time.')) return;
+  bufToken = null; bufProfiles = [];
+  try { sessionStorage.removeItem('buf_token'); } catch(e) {}
+  document.getElementById('bufNotConn').style.display = 'block';
+  document.getElementById('bufConn').style.display = 'none';
+}
+
+async function loadBufferProfiles() {
+  if (!bufToken) return;
+  const profilesEl = document.getElementById('bufProfiles');
+  const togglesEl = document.getElementById('netToggles');
+  profilesEl.innerHTML = '<span style="font-size:11px;color:var(--text-body)">Loading profiles…</span>';
+
+  try {
+    // Buffer API v1: GET https://api.bufferapp.com/1/profiles.json
+    const res = await fetch('https://api.bufferapp.com/1/profiles.json?access_token=' + encodeURIComponent(bufToken));
+    if (!res.ok) throw new Error('Buffer API returned '+res.status+'. Check your access token.');
+    bufProfiles = await res.json();
+    if (!Array.isArray(bufProfiles) || !bufProfiles.length) throw new Error('No profiles found in your Buffer account.');
+
+    profilesEl.innerHTML = bufProfiles.map(p => `
+      <div class="buf-profile-bar">
+        <div class="buf-profile-avatar">${netIcon(p.service)}</div>
+        <div style="flex:1">
+          <div class="buf-profile-name">${esc(p.formatted_username||p.service)}</div>
+          <div class="buf-profile-handle">${esc(p.service)}</div>
+        </div>
+        <span class="buf-profile-badge">Connected</span>
+      </div>`).join('');
+
+    togglesEl.innerHTML = bufProfiles.map(p => `
+      <label class="net-tog on">
+        <input type="checkbox" checked value="${esc(p.id)}" style="accent-color:var(--copper)">
+        ${netIcon(p.service)} ${esc(p.formatted_username||p.service)}
+      </label>`).join('');
+  } catch(err) {
+    profilesEl.innerHTML = `<div style="font-size:11px;color:var(--red);padding:10px 0">⚠ ${esc(err.message)}</div>`;
+    togglesEl.innerHTML = '<span style="font-size:11px;color:var(--text-body)">Connect profiles to select networks.</span>';
+  }
+}
+
+function netIcon(svc) {
+  const icons = { instagram:'📸', facebook:'📘', twitter:'🐦', linkedin:'💼', tiktok:'🎵', pinterest:'📌' };
+  return icons[(svc||'').toLowerCase()] || '🌐';
+}
+
+async function loadBufferQueue() {
+  if (!bufToken) return;
+  const el = document.getElementById('bufQueue');
+  el.innerHTML = '<div class="empty">Loading queue…</div>';
+  try {
+    // Get updates for all profiles
+    const allUpdates = [];
+    for (const prof of bufProfiles) {
+      const res = await fetch(`https://api.bufferapp.com/1/profiles/${prof.id}/updates/pending.json?access_token=${encodeURIComponent(bufToken)}&count=10`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const updates = data.updates || [];
+      updates.forEach(u => allUpdates.push({ ...u, _service: prof.service, _handle: prof.formatted_username }));
+    }
+    allUpdates.sort((a,b) => (a.scheduled_at||0) - (b.scheduled_at||0));
+
+    if (!allUpdates.length) {
+      el.innerHTML = '<div class="empty">Queue is empty. Schedule your first post above.</div>';
+      return;
+    }
+    el.innerHTML = '<div style="padding:0 18px">' + allUpdates.map(u => {
+      const dt = u.scheduled_at ? new Date(u.scheduled_at*1000).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : 'Now';
+      const txt = u.text || '';
+      const media = (u.media||[]).filter(m=>m.thumbnail||m.picture);
+      return `<div class="queue-row">
+        <div class="queue-date">${esc(dt)}</div>
+        <div>
+          <div class="queue-text">${esc(txt.length>120?txt.slice(0,120)+'…':txt)}</div>
+          <div class="queue-nets"><span class="queue-net">${netIcon(u._service)} ${esc(u._handle||u._service)}</span></div>
+          ${media.length?`<div class="img-preview">${media.map(m=>`<img src="${esc(m.thumbnail||m.picture)}" class="img-thumb" alt="">`).join('')}</div>`:''}
+        </div>
+        <span class="badge bc">Scheduled</span>
+        <button class="btn btn-red btn-sm" onclick="deleteBufferUpdate('${esc(u.id)}')">✕</button>
+      </div>`;
+    }).join('') + '</div>';
+  } catch(err) {
+    el.innerHTML = `<div class="empty" style="color:var(--red)">Error loading queue: ${esc(err.message)}</div>`;
+  }
+}
+
+async function sendToBuffer() {
+  if (!bufToken) { alert('Connect Buffer first.'); return; }
+  const text = document.getElementById('postText')?.value?.trim();
+  if (!text) { alert('Write a caption first.'); return; }
+
+  const selected = Array.from(document.querySelectorAll('#netToggles input:checked')).map(i=>i.value);
+  if (!selected.length) { alert('Select at least one network.'); return; }
+
+  const schedInput = document.getElementById('schedTime')?.value;
+  const schedAt = schedInput ? Math.floor(new Date(schedInput).getTime()/1000) : null;
+
+  const resultEl = document.getElementById('bufPostResult');
+  resultEl.textContent = 'Sending to Buffer…';
+  resultEl.style.color = 'var(--text-body)';
+
+  let ok = 0, fail = 0;
+  for (const profileId of selected) {
+    try {
+      const body = new URLSearchParams();
+      body.append('text', text);
+      body.append('profile_ids[]', profileId);
+      if (schedAt) body.append('scheduled_at', schedAt);
+      body.append('now', schedAt ? 'false' : 'true');
+
+      const res = await fetch('https://api.bufferapp.com/1/updates/create.json?access_token='+encodeURIComponent(bufToken), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+      const data = await res.json();
+      if (data.success || data.native_id) ok++;
+      else throw new Error(data.message || 'Unknown error');
+    } catch(e) { fail++; }
+  }
+
+  if (ok > 0) {
+    resultEl.textContent = `✓ Sent to ${ok} network${ok!==1?'s':''}${fail>0?` (${fail} failed)`:''}. Refreshing queue…`;
+    resultEl.style.color = 'var(--green)';
+    clearCompose();
+    setTimeout(loadBufferQueue, 1500);
+  } else {
+    resultEl.textContent = '✗ Failed to send. Check your access token and try again.';
+    resultEl.style.color = 'var(--red)';
+  }
+}
+
+async function deleteBufferUpdate(updateId) {
+  if (!bufToken || !confirm('Remove this post from the queue?')) return;
+  try {
+    const res = await fetch(`https://api.bufferapp.com/1/updates/${updateId}/destroy.json?access_token=${encodeURIComponent(bufToken)}`, { method:'POST' });
+    const d = await res.json();
+    if (d.success) loadBufferQueue();
+    else alert('Could not delete: ' + (d.message||'unknown error'));
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+function useTemplate(key) {
+  const t = document.getElementById('postText');
+  if (t) { t.value = POST_TEMPLATES[key]||''; updateCharCount(); }
+}
+function updateCharCount() {
+  const t = document.getElementById('postText')?.value||'';
+  const el = document.getElementById('charCount');
+  if (!el) return;
+  el.textContent = t.length + ' / 2200';
+  el.className = 'char-count' + (t.length > 2000 ? ' warn' : '');
+}
+function clearCompose() {
+  const t = document.getElementById('postText');
+  if (t) t.value='';
+  const s = document.getElementById('schedTime');
+  if (s) s.value='';
+  const p = document.getElementById('imgPreview');
+  if (p) p.innerHTML='';
+  updateCharCount();
+}
+function setNow() { const s=document.getElementById('schedTime'); if(s) s.value=''; }
+function previewImages() {
+  const files = document.getElementById('postImages')?.files;
+  const preview = document.getElementById('imgPreview');
+  if (!files || !preview) return;
+  preview.innerHTML = '';
+  Array.from(files).forEach(file => {
+    const url = URL.createObjectURL(file);
+    const img = document.createElement('img');
+    img.src = url; img.className = 'img-thumb'; img.alt = file.name;
+    preview.appendChild(img);
+  });
+}
+
+function renderBufferAnalytics() {
+  // Demo analytics — replace with real Buffer Analytics API calls
+  const demo = [
+    {d:'Jun 12',n:'instagram',t:'The kind of evening that changes something…',l:48,c:7,r:1240,s:'Sent'},
+    {d:'Jun 10',n:'instagram',t:'Your home is the clinic. Every service…',l:62,c:12,r:1890,s:'Sent'},
+    {d:'Jun 8', n:'facebook', t:'What if your doctor actually knew you?…',l:31,c:5,r:840,s:'Sent'},
+    {d:'Jun 6', n:'instagram',t:'The Women\'s Cohort begins August 2nd…',l:94,c:18,r:2340,s:'Sent'},
+    {d:'Jun 4', n:'linkedin', t:'Leaders wear many hats simultaneously…',l:22,c:4,r:560,s:'Sent'},
+  ];
+  document.getElementById('bufAnalytics').innerHTML = demo.map(p=>`
+    <tr><td>${esc(p.d)}</td><td>${netIcon(p.n)} ${esc(p.n)}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.t)}</td>
+    <td>${p.l}</td><td>${p.c}</td><td>${p.r.toLocaleString()}</td>
+    <td>${badge('bg',p.s)}</td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// QR CODE
+// ═══════════════════════════════════════════════════════════
+let qrInst = null;
+function genQR() {
+  const url = document.getElementById('qrUrl')?.value?.trim();
+  const size = Math.min(parseInt(document.getElementById('qrSize')?.value||200), 240);
+  const d = document.getElementById('qrDisplay');
+  if (!url || !d) return;
+  d.innerHTML = '';
+  d.style.width = size+'px'; d.style.height = size+'px';
+  try {
+    qrInst = new QRCode(d, { text:url, width:size, height:size,
+      colorDark:'#2C2420', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+  } catch(e) { d.innerHTML='<span style="font-size:10px;color:var(--text-body);padding:20px;display:block;text-align:center">Loading…</span>'; }
+}
+function setPreset(btn, url) {
+  document.querySelectorAll('.preset').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const el = document.getElementById('qrUrl');
+  if(el){el.value=url; genQR();}
+}
+function downloadQR() {
+  const c = document.querySelector('#qrDisplay canvas');
+  if (!c) { alert('Generate a QR code first.'); return; }
+  const a = document.createElement('a');
+  a.download = (document.getElementById('qrLabel')?.value||'compound-wellness-qr')+'.png';
+  a.href = c.toDataURL('image/png'); a.click();
+}
+function saveQR() {
+  const url=document.getElementById('qrUrl')?.value?.trim();
+  const label=document.getElementById('qrLabel')?.value?.trim()||url;
+  const c=document.querySelector('#qrDisplay canvas');
+  if(!c||!url){alert('Generate a QR code first.');return;}
+  DB.qrLib.unshift({id:Date.now(),label,url,dataUrl:c.toDataURL('image/png'),date:new Date().toLocaleDateString()});
+  saveDB(); renderQRLib(); alert('Saved.');
+}
+function renderQRLib() {
+  const el=document.getElementById('qrLib');
+  if(!el) return;
+  if(!DB.qrLib.length){el.innerHTML='<div style="font-size:11px;color:var(--text-body);font-style:italic">No saved QR codes yet.</div>';return;}
+  el.innerHTML=DB.qrLib.map(q=>`
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);padding:10px 12px;margin-bottom:7px;background:var(--parchment)">
+      <img src="${q.dataUrl}" width="44" height="44" alt="QR for ${esc(q.label)}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:400;color:var(--espresso)">${esc(q.label)}</div>
+        <div style="font-size:9px;color:var(--text-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(q.url)}</div>
+        <div style="font-size:8px;color:var(--text-dim);margin-top:2px">${esc(q.date)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <a href="${q.dataUrl}" download="${esc(q.label)}.png" class="btn btn-ghost btn-sm">↓</a>
+        <button class="btn btn-red btn-sm" onclick="delQR(${q.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+function delQR(id){DB.qrLib=DB.qrLib.filter(q=>q.id!==id);saveDB();renderQRLib();}
+function utmToQR(){const u=document.getElementById('utmOut')?.textContent;if(u&&!u.startsWith('Fill')){const el=document.getElementById('qrUrl');if(el){el.value=u;showPanel('qr');genQR();}}}
+
+// ═══════════════════════════════════════════════════════════
+// UTM BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildUTM(){
+  const b=document.getElementById('uu')?.value?.trim()||'';
+  const s=document.getElementById('us')?.value?.trim();
+  const m=document.getElementById('um')?.value?.trim();
+  const c=document.getElementById('uc')?.value?.trim();
+  const t=document.getElementById('ut')?.value?.trim();
+  const el=document.getElementById('utmOut');
+  if(!el) return;
+  if(!b||!s){el.textContent='Fill in URL and Source to generate.';return;}
+  const p=new URLSearchParams();
+  if(s) p.set('utm_source',s);
+  if(m) p.set('utm_medium',m);
+  if(c) p.set('utm_campaign',c);
+  if(t) p.set('utm_content',t);
+  el.textContent=b+(b.includes('?')?'&':'?')+p.toString();
+}
+function copyUTM(){
+  const u=document.getElementById('utmOut')?.textContent;
+  if(!u||u.startsWith('Fill')){alert('Build a URL first.');return;}
+  navigator.clipboard?.writeText(u).then(()=>alert('Copied.')).catch(()=>alert('Select and copy manually.'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════════
+function exportCSV(){
+  const active=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  let rows,headers,fname;
+  if(active==='contacts'||active==='analytics'){
+    headers=['Name','Email','Phone','City','Practitioner','Source','Status','Created'];
+    rows=DB.contacts.map(c=>[c.name,c.email,c.phone,c.city,c.practitioner,c.source,c.status,c.created]);
+    fname='contacts.csv';
+  } else if(active==='bookings'){
+    headers=['Name','Practitioner','Service','Date','Amount','Status','Stripe ID'];
+    rows=DB.bookings.map(b=>[b.name,b.practitioner,b.service,b.date,'$'+(b.amount||0),b.status,b.stripe]);
+    fname='bookings.csv';
+  } else if(active==='members'){
+    headers=['Name','Email','Phone','Membership','Start','Renews','Status'];
+    rows=DB.members.map(m=>[m.name,m.email,m.phone,m.type,m.start,m.renews,m.status]);
+    fname='members.csv';
+  } else { alert('Switch to Contacts, Bookings, or Members to export.'); return; }
+  const csv=[headers,...rows].map(r=>r.map(v=>'"'+(v||'').toString().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=fname; a.click();
+}
+
+function refreshData(){
+  const btn=event.target; btn.textContent='↻ Loading…'; btn.disabled=true;
+  setTimeout(()=>{updateStats();drawCharts();renderAll();btn.textContent='↻ Refresh';btn.disabled=false;},700);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+if (!checkSession()) {
+  document.getElementById('au').focus();
+}
+</script>
+</body>
+</html>
