@@ -40,8 +40,9 @@ const oauth2Client = new google.auth.OAuth2(
 if (process.env.GOOGLE_REFRESH_TOKEN) {
   oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
 }
-const gmail    = google.gmail({ version: 'v1', auth: oauth2Client });
-const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+const gmail      = google.gmail({ version: 'v1', auth: oauth2Client });
+const calendar   = google.calendar({ version: 'v3', auth: oauth2Client });
+const analyticsdata = google.analyticsdata({ version: 'v1beta', auth: oauth2Client });
 
 // ── Airtable setup ───────────────────────────────────────
 const base = process.env.AIRTABLE_API_KEY
@@ -344,6 +345,82 @@ app.get('/api/admin/bookings', adminAuth, async (req, res) => {
   } catch (err) {
     console.error('Admin bookings error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/ga4', adminAuth, async (req, res) => {
+  const propertyId = process.env.GOOGLE_GA4_PROPERTY_ID;
+  if (!propertyId || !process.env.GOOGLE_REFRESH_TOKEN) {
+    return res.json({ configured: false });
+  }
+  try {
+    const days = parseInt(req.query.days || '30');
+    const startDate = `${days}daysAgo`;
+
+    const [trafficRes, sourcesRes, pagesRes] = await Promise.all([
+      // Daily sessions over time
+      analyticsdata.properties.runReport({
+        property: `properties/${propertyId}`,
+        requestBody: {
+          dateRanges: [{ startDate, endDate: 'today' }],
+          dimensions: [{ name: 'date' }],
+          metrics: [{ name: 'sessions' }, { name: 'totalUsers' }],
+          orderBys: [{ dimension: { dimensionName: 'date' } }],
+        },
+      }),
+      // Traffic sources
+      analyticsdata.properties.runReport({
+        property: `properties/${propertyId}`,
+        requestBody: {
+          dateRanges: [{ startDate, endDate: 'today' }],
+          dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+          metrics: [{ name: 'sessions' }],
+          orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+          limit: 6,
+        },
+      }),
+      // Top pages
+      analyticsdata.properties.runReport({
+        property: `properties/${propertyId}`,
+        requestBody: {
+          dateRanges: [{ startDate, endDate: 'today' }],
+          dimensions: [{ name: 'pageTitle' }],
+          metrics: [{ name: 'screenPageViews' }],
+          orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+          limit: 8,
+        },
+      }),
+    ]);
+
+    // Format traffic timeline
+    const totalSessions = trafficRes.data.rows?.reduce((s, r) => s + parseInt(r.metricValues[0].value || 0), 0) || 0;
+    const traffic = (trafficRes.data.rows || []).map(r => ({
+      date: r.dimensionValues[0].value, // YYYYMMDD
+      sessions: parseInt(r.metricValues[0].value || 0),
+      users: parseInt(r.metricValues[1].value || 0),
+    }));
+
+    // Format sources
+    const sourceRows = sourcesRes.data.rows || [];
+    const sourceTotal = sourceRows.reduce((s, r) => s + parseInt(r.metricValues[0].value || 0), 0) || 1;
+    const sources = sourceRows.map(r => ({
+      label: r.dimensionValues[0].value,
+      sessions: parseInt(r.metricValues[0].value || 0),
+      pct: Math.round((parseInt(r.metricValues[0].value || 0) / sourceTotal) * 100),
+    }));
+
+    // Format pages
+    const pageTotal = pagesRes.data.rows?.reduce((s, r) => s + parseInt(r.metricValues[0].value || 0), 0) || 1;
+    const pages = (pagesRes.data.rows || []).map(r => ({
+      title: r.dimensionValues[0].value,
+      views: parseInt(r.metricValues[0].value || 0),
+      pct: Math.round((parseInt(r.metricValues[0].value || 0) / pageTotal) * 100),
+    }));
+
+    res.json({ configured: true, totalSessions, traffic, sources, pages });
+  } catch (err) {
+    console.error('GA4 error:', err.message);
+    res.json({ configured: false, error: err.message });
   }
 });
 

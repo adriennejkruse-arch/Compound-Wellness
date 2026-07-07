@@ -851,45 +851,84 @@ function updateStats() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// CHARTS
+// CHARTS — real GA4 data
 // ═══════════════════════════════════════════════════════════
 let cT, cS;
-function drawCharts() {
+const GA4_COLORS = ['#B8916A','#2C4235','#C4A882','#8A6040','#4A6858','#E8DDD0'];
+
+async function drawCharts() {
   const days = parseInt(document.getElementById('chartRange')?.value||30);
-  const labels=[], data=[], inq=[];
-  for(let i=days-1;i>=0;i--) {
-    const d=new Date(); d.setDate(d.getDate()-i);
-    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-    data.push(Math.floor(20+Math.random()*80+(days-i)*.5));
-    inq.push(Math.floor(1+Math.random()*5));
-  }
   const font={family:"'DM Sans',sans-serif",size:9};
   const gc='rgba(196,168,130,.18)';
   const tc=document.getElementById('cTraffic');
   const sc=document.getElementById('cSources');
+
+  let ga4 = null;
+  try {
+    const r = await fetch(`/api/admin/ga4?days=${days}`, { headers: adminHeaders() });
+    if (r.ok) ga4 = await r.json();
+  } catch(e) {}
+
+  // Build labels/data from GA4 or fallback to simulated
+  let labels=[], sessions=[], users=[];
+  if (ga4?.configured && ga4.traffic?.length) {
+    ga4.traffic.forEach(row => {
+      const d = row.date; // YYYYMMDD
+      const dt = new Date(+d.slice(0,4), +d.slice(4,6)-1, +d.slice(6,8));
+      labels.push(dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+      sessions.push(row.sessions);
+      users.push(row.users);
+    });
+    set('sv', ga4.totalSessions.toLocaleString());
+  } else {
+    for(let i=days-1;i>=0;i--) {
+      const d=new Date(); d.setDate(d.getDate()-i);
+      labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+      sessions.push(Math.floor(20+Math.random()*60));
+      users.push(Math.floor(15+Math.random()*45));
+    }
+  }
+
   if(cT) cT.destroy();
   if(cS) cS.destroy();
+
   cT=new Chart(tc,{type:'line',data:{labels,datasets:[
-    {label:'Visitors',data,borderColor:'#B8916A',backgroundColor:'rgba(184,145,106,.07)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true},
-    {label:'Inquiries',data:inq,borderColor:'#2C4235',backgroundColor:'rgba(44,66,53,.06)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true}
+    {label:'Sessions',data:sessions,borderColor:'#B8916A',backgroundColor:'rgba(184,145,106,.07)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true},
+    {label:'Users',data:users,borderColor:'#2C4235',backgroundColor:'rgba(44,66,53,.06)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true}
   ]},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{font,color:'#7A6E64',boxWidth:8,padding:12}}},
     scales:{x:{ticks:{font,color:'#9A8E84',maxTicksLimit:8},grid:{color:gc},border:{display:false}},
             y:{ticks:{font,color:'#9A8E84'},grid:{color:gc},border:{display:false}}}}});
+
+  // Sources
+  let srcs = ga4?.configured && ga4.sources?.length
+    ? ga4.sources.map(s => ({ l: s.label, p: s.pct }))
+    : [{l:'Direct',p:32},{l:'Instagram',p:28},{l:'Google',p:20},{l:'Email',p:10},{l:'Referral',p:7},{l:'Other',p:3}];
+
   cS=new Chart(sc,{type:'doughnut',data:{
-    labels:['Direct','Instagram','Google','Email','Referral','QR'],
-    datasets:[{data:[32,28,20,10,7,3],backgroundColor:['#B8916A','#2C4235','#C4A882','#8A6040','#4A6858','#E8DDD0'],borderWidth:0,hoverOffset:3}]
+    labels: srcs.map(s=>s.l),
+    datasets:[{data:srcs.map(s=>s.p),backgroundColor:GA4_COLORS,borderWidth:0,hoverOffset:3}]
   },options:{responsive:true,maintainAspectRatio:false,cutout:'66%',
     plugins:{legend:{position:'bottom',labels:{font,color:'#7A6E64',padding:8,boxWidth:8}}}}});
-  const srcs=[{l:'Direct',p:32},{l:'Instagram',p:28},{l:'Google',p:20},{l:'Email',p:10},{l:'Referral',p:7},{l:'QR Code',p:3}];
+
   document.getElementById('srcBars').innerHTML=srcs.map(s=>`
-    <div class="src-row"><span class="src-lbl">${s.l}</span>
+    <div class="src-row"><span class="src-lbl">${esc(s.l)}</span>
     <div class="src-bar-wrap"><div class="src-bar" style="width:${s.p}%"></div></div>
     <span class="src-pct">${s.p}%</span></div>`).join('');
-  const pages=[['Home','412','33%'],['Practitioners','198','16%'],['Services','156','12%'],
-    ['Concierge Medicine','134','11%'],['Cohorts','98','8%'],['Booking','87','7%'],['About','64','5%'],['Contact','58','5%']];
+
+  // Top pages
+  let pages = ga4?.configured && ga4.pages?.length
+    ? ga4.pages.map(p => [p.title.replace(' — The Compound Wellness','').replace(' - The Compound Wellness',''), p.views.toLocaleString(), p.pct+'%'])
+    : [['Home','—','—'],['Practitioners','—','—'],['Services','—','—'],['Booking','—','—']];
+
   document.getElementById('topPages').innerHTML=pages.map(([p,v,pct])=>`
-    <tr><td style="color:var(--bark)">${p}</td><td>${v}</td><td style="color:var(--text-body)">${pct}</td></tr>`).join('');
+    <tr><td style="color:var(--bark)">${esc(p)}</td><td>${v}</td><td style="color:var(--text-body)">${pct}</td></tr>`).join('');
+
+  if (!ga4?.configured) {
+    const note = `<div style="font-size:10px;color:var(--text-body);padding:8px 0;font-style:italic">
+      GA4 not connected — add GOOGLE_GA4_PROPERTY_ID to Railway for live data.</div>`;
+    document.getElementById('srcBars').insertAdjacentHTML('beforeend', note);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
