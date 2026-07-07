@@ -349,16 +349,16 @@ h1 em{font-style:italic;color:var(--copper)}
 <a href="#booking-main" class="skip-link">Skip to booking</a>
 <nav class="nav" role="navigation" aria-label="Site navigation">
   <a href="index.html" class="nav-logo">
-    <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-      <path d="M 24.4,20 A 12,12 0 1,0 24.4,8" stroke="#C4A882" stroke-width=".9" stroke-linecap="round"/>
-      <circle cx="14" cy="14" r="6.5" stroke="#C4A882" stroke-width=".7"/>
-      <line x1="2" y1="14" x2="26" y2="14" stroke="#C4A882" stroke-width=".5" opacity=".55"/>
-      <line x1="14" y1="2" x2="14" y2="26" stroke="#C4A882" stroke-width=".5" opacity=".55"/>
-      <circle cx="14" cy="2.2" r=".9" fill="#C4A882"/>
-      <circle cx="14" cy="25.8" r=".9" fill="#C4A882"/>
-      <circle cx="2.2" cy="14" r=".9" fill="#C4A882"/>
-      <circle cx="25.8" cy="14" r=".9" fill="#C4A882"/>
-      <circle cx="14" cy="14" r="1.9" fill="#B8916A"/>
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Open C arc — large, prominent -->
+      <path d="M 78,22 A 40,40 0 1,0 78,78" stroke="#C4A882" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <!-- Inner circle -->
+      <circle cx="50" cy="50" r="20" stroke="#C4A882" stroke-width="3.5" fill="none"/>
+      <!-- Crosshairs -->
+      <line x1="5" y1="50" x2="95" y2="50" stroke="#C4A882" stroke-width="2.2"/>
+      <line x1="50" y1="5" x2="50" y2="95" stroke="#C4A882" stroke-width="2.2"/>
+      <!-- Center dot -->
+      <circle cx="50" cy="50" r="5" fill="#C4A882"/>
     </svg>
     <div class="nav-logo-text">
       <span class="nav-logo-the">The</span>
@@ -809,8 +809,6 @@ const SVCS = {
     {id:'comb', cat:'Integrated',  name:'Sound Bath + Reiki',dur:'120 min', price:275, desc:'A full ceremonial journey combining sound bath therapy and Reiki for deep mind-body integration.'},
     {id:'y60',  cat:'Yoga',        name:'Private Yoga',      dur:'60 min',  price:150, desc:'In-home yoga tailored to your body, goals, and current state — deeply personal.'},
     {id:'y90',  cat:'Yoga',        name:'Private Yoga',      dur:'90 min',  price:212, desc:'Extended private yoga with pranayama, deep stretching, and meditation.'},
-    {id:'bw60', cat:'Bodywork',    name:'Bodywork',          dur:'60 min',  price:250, desc:'Targeted bodywork addressing tension, discomfort, and energetic stagnation.'},
-    {id:'bw90', cat:'Bodywork',    name:'Bodywork',          dur:'90 min',  price:362, desc:'Extended bodywork session with deeper tissue work and full-body integration.'},
   ],
   andrew: [
     {id:'soma60',  cat:'SOMA Therapy', name:'SOMA Session',          dur:'60 min',  price:200, desc:'Somatic movement therapy integrating breath, posture, and nervous system regulation for deep structural release.'},
@@ -866,6 +864,9 @@ const PANELS = ['s1','s2','s3','s4','s5','sAngela','sInquiry','sAdrienne'];
 function showPanel(id) {
   PANELS.forEach(p => document.getElementById(p).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+  // Hide events section once user enters the booking flow
+  const evSec = document.getElementById('eventsSection');
+  if (evSec) evSec.style.display = id === 's1' ? '' : 'none';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
