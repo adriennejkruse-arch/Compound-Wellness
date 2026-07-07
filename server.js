@@ -279,34 +279,75 @@ app.post('/api/submit-inquiry', async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════
+// EVENT CAPACITY — Returns RSVP count per event
+// ════════════════════════════════════════════════════════
+app.get('/api/event-capacity', async (req, res) => {
+  if (!base) return res.json({ counts: {}, limit: EVENT_CAPACITY_LIMIT });
+  try {
+    const records = await base('Booking Requests').select({
+      filterByFormula: `FIND("EventID:", {Inquiry Details})`,
+      fields: ['Inquiry Details'],
+      maxRecords: 1000,
+    }).all();
+    const counts = {};
+    for (const rec of records) {
+      const details = rec.fields['Inquiry Details'] || '';
+      const match = details.match(/EventID:\s*(\S+)/);
+      if (match) {
+        const id = match[1];
+        counts[id] = (counts[id] || 0) + 1;
+      }
+    }
+    res.json({ counts, limit: EVENT_CAPACITY_LIMIT });
+  } catch (err) {
+    console.error('event-capacity error:', err.message);
+    res.json({ counts: {}, limit: EVENT_CAPACITY_LIMIT });
+  }
+});
+
+const EVENT_CAPACITY_LIMIT = 10;
+
+// ════════════════════════════════════════════════════════
 // EVENT RSVP — Community group event booking
 // ════════════════════════════════════════════════════════
 app.post('/api/book-event', async (req, res) => {
   try {
     const { firstName, lastName, email, phone, eventId, eventTitle, eventDate, eventTime, eventLocation } = req.body;
 
-    if (!firstName || !email) {
-      return res.status(400).json({ error: 'Name and email are required.' });
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    const fullName = `${firstName} ${lastName || ''}`.trim();
+    // Enforce capacity limit
+    if (base) {
+      const existing = await base('Booking Requests').select({
+        filterByFormula: `FIND("EventID: ${eventId}", {Inquiry Details})`,
+        fields: ['Inquiry Details'],
+        maxRecords: EVENT_CAPACITY_LIMIT + 1,
+      }).all();
+      if (existing.length >= EVENT_CAPACITY_LIMIT) {
+        return res.status(409).json({ error: 'This event is fully booked.' });
+      }
+    }
+
+    const fullName = `${firstName} ${lastName}`.trim();
 
     // Save contact
     const contactRecord = await saveToAirtable('Contacts', {
       'Name':            fullName,
       'Email':           email,
-      'Phone':           phone || '',
+      'Phone':           phone,
       'Source Form':     'Event',
       'Submission Date': nowPST(),
     });
 
-    // Save RSVP as a booking request
+    // Save RSVP — embed eventId and email so reminder queries can find them
     const bookingFields = {
       'Request Name':           `${fullName} — ${eventTitle} ${eventDate}`,
       'Client Name':            fullName,
       'Requested Practitioner': 'Community Event',
       'Requested Time':         eventTime,
-      'Inquiry Details':        `Event RSVP: ${eventTitle}\nDate: ${eventDate}\nTime: ${eventTime}\nLocation: ${eventLocation}`,
+      'Inquiry Details':        `Event RSVP: ${eventTitle}\nDate: ${eventDate}\nTime: ${eventTime}\nLocation: ${eventLocation}\nEventID: ${eventId}\nAttendeeEmail: ${email}\nAttendeeFirst: ${firstName}`,
       'Submission Date (PST)':  nowPST(),
       'Status':                 'Confirmed',
     };
@@ -317,7 +358,7 @@ app.post('/api/book-event', async (req, res) => {
     await addToKlaviyo({
       email,
       firstName,
-      lastName:   lastName || '',
+      lastName,
       source:     'Event RSVP — ' + eventTitle,
       listId:     process.env.KLAVIYO_LIST_ID,
       properties: { eventTitle, eventDate, eventLocation },
@@ -860,27 +901,48 @@ async function addToKlaviyo({ email, firstName, lastName, source, listId, proper
 // ════════════════════════════════════════════════════════
 // HELPER: Send email via Gmail API (from adrienne@compoundoc.com)
 // ════════════════════════════════════════════════════════
-function makeEmailMessage({ to, subject, html }) {
+function makeEmailMessage({ to, subject, html, attachments = [] }) {
   const boundary = 'compound_boundary';
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`;
-  const raw = [
+  const lines = [
     `From: Adrienne at The Compound <adrienne@compoundoc.com>`,
     `To: ${to}`,
     `Subject: ${encodedSubject}`,
     `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
     ``,
     `--${boundary}`,
     `Content-Type: text/html; charset=UTF-8`,
     `Content-Transfer-Encoding: base64`,
     ``,
     Buffer.from(html).toString('base64'),
-    `--${boundary}--`,
-  ].join('\n');
+  ];
+  for (const att of attachments) {
+    lines.push(`--${boundary}`);
+    lines.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
+    lines.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+    lines.push(`Content-Transfer-Encoding: base64`);
+    lines.push(``);
+    lines.push(att.data);
+  }
+  lines.push(`--${boundary}--`);
+  const raw = lines.join('\n');
   return Buffer.from(raw).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-async function sendGmail({ to, subject, html }) {
+// Load the event flier PDF once at startup (if present)
+const fs = require('fs');
+const EVENT_FLIER_PATH = process.env.EVENT_FLIER_PATH || './event-flier.pdf';
+let eventFlierAttachment = null;
+try {
+  const data = fs.readFileSync(EVENT_FLIER_PATH).toString('base64');
+  eventFlierAttachment = { filename: 'July-Events-The-Compound.pdf', mimeType: 'application/pdf', data };
+  console.log('✓ Event flier loaded for email attachment');
+} catch (_) {
+  console.log('ℹ Event flier not found — emails will send without attachment (drop event-flier.pdf in project root to enable)');
+}
+
+async function sendGmail({ to, subject, html, attachments = [] }) {
   if (!process.env.GOOGLE_REFRESH_TOKEN) {
     console.warn('Gmail not configured — skipping email');
     return;
@@ -888,7 +950,7 @@ async function sendGmail({ to, subject, html }) {
   try {
     await gmail.users.messages.send({
       userId: 'me',
-      requestBody: { raw: makeEmailMessage({ to, subject, html }) },
+      requestBody: { raw: makeEmailMessage({ to, subject, html, attachments }) },
     });
     console.log(`✓ Gmail sent to ${to}`);
   } catch (err) {
@@ -935,6 +997,10 @@ async function sendConfirmationEmail({ to, clientName, practitioner, service, da
 // HELPER: Send auto-reply to inquiry submission
 // ════════════════════════════════════════════════════════
 async function sendEventConfirmationEmail({ to, firstName, eventTitle, eventDate, eventTime, eventLocation }) {
+  const attachments = eventFlierAttachment ? [eventFlierAttachment] : [];
+  const attachNote = attachments.length
+    ? `<p style="font-size:13px;color:#7A6E64;line-height:1.7;margin-bottom:24px">We've attached the full event details to this email. You'll also receive a reminder the morning of the event.</p>`
+    : '';
   await sendGmail({
     to,
     subject: `You're confirmed — ${eventTitle} · ${eventDate}`,
@@ -951,13 +1017,105 @@ async function sendEventConfirmationEmail({ to, firstName, eventTitle, eventDate
             <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Location</td><td>${eventLocation}</td></tr>
           </table>
         </div>
+        ${attachNote}
         <p style="font-size:13px;color:#7A6E64;line-height:1.7;margin-bottom:24px">If you have any questions or need to cancel, simply reply to this email.</p>
+        <p style="font-size:13px;color:#7A6E64">— Adrienne &amp; The Compound Team</p>
+        <p style="font-size:12px;color:#9A8E84;margin-top:24px">The Compound Wellness · Newport Beach, CA · compoundoc.com</p>
+      </div>
+    `,
+    attachments,
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// EVENT REMINDERS — Day-of email to all RSVPs
+// ════════════════════════════════════════════════════════
+const REMINDER_EVENTS = [
+  { id:'fri-jul-10',  isoDate:'2026-07-10', label:'Fri, Jul 10', title:'Community Night',        time:'6:30–8:00 PM', location:'Newport Beach' },
+  { id:'wed-jul-15',  isoDate:'2026-07-15', label:'Wed, Jul 15', title:'Evening Transformation', time:'6:30–8:00 PM', location:'Laguna Beach' },
+  { id:'fri-jul-17',  isoDate:'2026-07-17', label:'Fri, Jul 17', title:'Community Night',        time:'6:30–8:00 PM', location:'Newport Beach' },
+  { id:'wed-jul-22',  isoDate:'2026-07-22', label:'Wed, Jul 22', title:'Evening Transformation', time:'6:30–8:00 PM', location:'Laguna Beach' },
+  { id:'fri-jul-24',  isoDate:'2026-07-24', label:'Fri, Jul 24', title:'Community Night',        time:'6:30–8:00 PM', location:'Newport Beach' },
+  { id:'wed-jul-29',  isoDate:'2026-07-29', label:'Wed, Jul 29', title:'Evening Transformation', time:'6:30–8:00 PM', location:'Laguna Beach' },
+];
+
+async function sendEventReminderEmail({ to, firstName, eventTitle, eventDate, eventTime, eventLocation }) {
+  await sendGmail({
+    to,
+    subject: `See you tonight — ${eventTitle}`,
+    html: `
+      <div style="font-family:'Georgia',serif;max-width:560px;margin:0 auto;color:#2C2420;background:#FAF7F2;padding:40px 32px">
+        <p style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A5E38;margin-bottom:24px">The Compound Wellness</p>
+        <h1 style="font-size:28px;font-weight:300;line-height:1.1;margin-bottom:20px">See you <em>tonight.</em></h1>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:32px">Hi ${firstName}, just a reminder that tonight's event is coming up — we're looking forward to seeing you.</p>
+        <div style="border:1px solid rgba(196,168,130,.3);padding:24px;background:#F0EAE0;margin-bottom:32px">
+          <table style="width:100%;font-size:13px;line-height:2">
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Event</td><td><strong>${eventTitle}</strong></td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Tonight</td><td>${eventDate}</td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Time</td><td>${eventTime}</td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Location</td><td>${eventLocation}</td></tr>
+          </table>
+        </div>
+        <p style="font-size:13px;color:#7A6E64;line-height:1.7;margin-bottom:24px">If you can no longer make it, please reply and let us know so we can open your spot to someone else.</p>
         <p style="font-size:13px;color:#7A6E64">— Adrienne &amp; The Compound Team</p>
         <p style="font-size:12px;color:#9A8E84;margin-top:24px">The Compound Wellness · Newport Beach, CA · compoundoc.com</p>
       </div>
     `,
   });
 }
+
+async function runEventReminders() {
+  if (!base) return;
+  const todayPST = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD
+  const todayEvents = REMINDER_EVENTS.filter(e => e.isoDate === todayPST);
+  if (!todayEvents.length) return;
+
+  for (const ev of todayEvents) {
+    console.log(`📅 Sending day-of reminders for ${ev.title} (${ev.label})`);
+    try {
+      const records = await base('Booking Requests').select({
+        filterByFormula: `FIND("EventID: ${ev.id}", {Inquiry Details})`,
+        fields: ['Inquiry Details'],
+        maxRecords: 500,
+      }).all();
+
+      for (const rec of records) {
+        const details = rec.fields['Inquiry Details'] || '';
+        const emailMatch = details.match(/AttendeeEmail:\s*(.+)/);
+        const firstMatch  = details.match(/AttendeeFirst:\s*(.+)/);
+        if (!emailMatch) continue;
+        const to        = emailMatch[1].trim();
+        const firstName = firstMatch ? firstMatch[1].trim() : 'Friend';
+        await sendEventReminderEmail({ to, firstName, eventTitle: ev.title, eventDate: ev.label, eventTime: ev.time, eventLocation: ev.location });
+        console.log(`  ✓ Reminder sent to ${to}`);
+      }
+    } catch (err) {
+      console.error(`Reminder error for ${ev.id}:`, err.message);
+    }
+  }
+}
+
+// Schedule reminder at 8:00 AM PST each day
+function scheduleEventReminders() {
+  function msUntilNext8amPST() {
+    const now = new Date();
+    const nowPSTStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+    const nowPSTDate = new Date(nowPSTStr);
+    const next = new Date(nowPSTDate);
+    next.setHours(8, 0, 0, 0);
+    if (next <= nowPSTDate) next.setDate(next.getDate() + 1);
+    return next - nowPSTDate;
+  }
+
+  const delay = msUntilNext8amPST();
+  console.log(`⏰ Event reminders scheduled — first run in ${Math.round(delay / 60000)} min`);
+  setTimeout(function tick() {
+    runEventReminders();
+    setTimeout(tick, 24 * 60 * 60 * 1000);
+  }, delay);
+}
+
+scheduleEventReminders();
 
 async function sendAutoReply({ to, firstName, practitioner, consultTime }) {
   const consultNote = consultTime

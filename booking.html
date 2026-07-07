@@ -331,6 +331,9 @@ h1 em{font-style:italic;color:var(--copper)}
 
 .events-divider{display:flex;align-items:center;gap:16px;margin:44px 0 36px;color:var(--sand);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
 .events-divider::before,.events-divider::after{content:'';flex:1;height:1px;background:var(--line)}
+.event-card.full{opacity:.7}
+.event-full-badge{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:11px 20px;background:var(--linen);color:var(--sand);cursor:not-allowed;min-height:44px;margin-top:auto;align-self:flex-start;border:none;display:inline-block}
+.event-spots-left{font-size:10px;color:var(--copper);letter-spacing:.08em;margin-bottom:6px;font-weight:500}
 
 /* ── EVENT RSVP MODAL ──────────────────────────────────── */
 .event-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -765,8 +768,8 @@ h1 em{font-style:italic;color:var(--copper)}
           <input id="ev-first" type="text" required autocomplete="given-name" placeholder="Jane">
         </div>
         <div class="form-group">
-          <label for="ev-last">Last Name</label>
-          <input id="ev-last" type="text" autocomplete="family-name" placeholder="Smith">
+          <label for="ev-last">Last Name *</label>
+          <input id="ev-last" type="text" required autocomplete="family-name" placeholder="Last name">
         </div>
       </div>
       <div class="form-row full">
@@ -777,8 +780,8 @@ h1 em{font-style:italic;color:var(--copper)}
       </div>
       <div class="form-row full">
         <div class="form-group">
-          <label for="ev-phone">Phone</label>
-          <input id="ev-phone" type="tel" autocomplete="tel" placeholder="(949) 555-0100">
+          <label for="ev-phone">Phone *</label>
+          <input id="ev-phone" type="tel" required autocomplete="tel" placeholder="(949) 555-0100">
         </div>
       </div>
       <div class="btn-row">
@@ -1392,8 +1395,10 @@ const COMMUNITY_EVENTS = [
 ];
 
 let activeEvent = null;
+const EVENT_LIMIT = 10;
+let capacityCounts = {};
 
-(function renderEvents() {
+function renderEventCards(counts) {
   const today = new Date();
   today.setHours(0,0,0,0);
   const grid = document.getElementById('eventsGrid');
@@ -1403,24 +1408,48 @@ let activeEvent = null;
     grid.innerHTML = '<p style="font-size:13px;color:var(--text-dim);font-style:italic">No upcoming events scheduled. Check back soon.</p>';
     return;
   }
-  grid.innerHTML = upcoming.map(ev => `
-    <div class="event-card type-${ev.type} fade">
-      <span class="event-type-badge">${ev.type === 'transformation' ? 'Evening Transformation' : 'Community Night'}</span>
-      <div class="event-date">${ev.label}</div>
-      <div class="event-name">${ev.title}</div>
-      <div class="event-detail">${ev.detail}</div>
-      <div class="event-meta">
-        <span>⏱ ${ev.time}</span>
-        <span>📍 ${ev.location}</span>
-      </div>
-      <button class="event-book-btn" onclick="openEventModal('${ev.id}')">Reserve My Spot →</button>
-    </div>
-  `).join('');
+  grid.innerHTML = upcoming.map(ev => {
+    const count = counts[ev.id] || 0;
+    const isFull = count >= EVENT_LIMIT;
+    const spotsLeft = EVENT_LIMIT - count;
+    const spotsNote = !isFull && spotsLeft <= 3
+      ? `<div class="event-spots-left">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} remaining</div>`
+      : '';
+    const cta = isFull
+      ? `<span class="event-full-badge">Event Full</span>`
+      : `<button class="event-book-btn" onclick="openEventModal('${ev.id}')">Reserve My Spot →</button>`;
+    return `
+      <div class="event-card type-${ev.type} fade${isFull ? ' full' : ''}">
+        <span class="event-type-badge">${ev.type === 'transformation' ? 'Evening Transformation' : 'Community Night'}</span>
+        <div class="event-date">${ev.label}</div>
+        <div class="event-name">${ev.title}</div>
+        <div class="event-detail">${ev.detail}</div>
+        <div class="event-meta">
+          <span>⏱ ${ev.time}</span>
+          <span>📍 ${ev.location}</span>
+        </div>
+        ${spotsNote}
+        ${cta}
+      </div>`;
+  }).join('');
+}
+
+(async function initEvents() {
+  renderEventCards({});
+  try {
+    const r = await fetch('/api/event-capacity');
+    if (r.ok) {
+      const data = await r.json();
+      capacityCounts = data.counts || {};
+      renderEventCards(capacityCounts);
+    }
+  } catch(e) { /* fail silently — cards already rendered */ }
 })();
 
 function openEventModal(eventId) {
   activeEvent = COMMUNITY_EVENTS.find(e => e.id === eventId);
   if (!activeEvent) return;
+  if ((capacityCounts[eventId] || 0) >= EVENT_LIMIT) return;
   document.getElementById('eventModalName').textContent = `${activeEvent.label} · ${activeEvent.title} · ${activeEvent.time}`;
   document.getElementById('eventRsvpForm').classList.remove('hidden');
   document.getElementById('eventModalSuccess').classList.add('hidden');
@@ -1452,7 +1481,10 @@ async function submitEventRsvp(e) {
   const lastName  = document.getElementById('ev-last').value.trim();
   const email     = document.getElementById('ev-email').value.trim();
   const phone     = document.getElementById('ev-phone').value.trim();
-  if (!firstName || !email) return;
+  if (!firstName || !lastName || !email || !phone) {
+    alert('Please fill in all fields — they are all required.');
+    return;
+  }
   const btn = document.getElementById('evSubmitBtn');
   btn.textContent = 'Reserving…';
   btn.disabled = true;
@@ -1469,9 +1501,22 @@ async function submitEventRsvp(e) {
         eventLocation: activeEvent.location,
       }),
     });
-    if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+    if (!res.ok) {
+      const err = await res.json();
+      if (res.status === 409) {
+        // Event just filled up — update UI
+        capacityCounts[activeEvent.id] = EVENT_LIMIT;
+        renderEventCards(capacityCounts);
+        closeEventModal();
+        alert('Sorry, this event just filled up. Please check other dates.');
+        return;
+      }
+      throw new Error(err.error || 'Failed');
+    }
+    // Update local count optimistically
+    capacityCounts[activeEvent.id] = (capacityCounts[activeEvent.id] || 0) + 1;
+    renderEventCards(capacityCounts);
   } catch(err) {
-    // show success anyway — don't let a server hiccup block the user
     console.warn('Event RSVP error:', err.message);
   }
   document.getElementById('eventRsvpForm').classList.add('hidden');
