@@ -349,7 +349,6 @@ app.post('/api/book-event', async (req, res) => {
       'Requested Time':         eventTime,
       'Inquiry Details':        `Event RSVP: ${eventTitle}\nDate: ${eventDate}\nTime: ${eventTime}\nLocation: ${eventLocation}\nEventID: ${eventId}\nAttendeeEmail: ${email}\nAttendeeFirst: ${firstName}`,
       'Submission Date (PST)':  nowPST(),
-      'Status':                 'Confirmed',
     };
     if (contactRecord) bookingFields['Related Contact'] = [contactRecord.id];
     await saveToAirtable('Booking Requests', bookingFields);
