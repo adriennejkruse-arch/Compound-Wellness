@@ -900,31 +900,71 @@ async function addToKlaviyo({ email, firstName, lastName, source, listId, proper
 // ════════════════════════════════════════════════════════
 // HELPER: Send email via Gmail API (from adrienne@compoundoc.com)
 // ════════════════════════════════════════════════════════
+function htmlToPlainText(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, '  ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function makeEmailMessage({ to, subject, html, attachments = [] }) {
-  const boundary = 'compound_boundary';
+  const outerBoundary = 'compound_outer';
+  const altBoundary   = 'compound_alt';
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`;
+  const plainText = htmlToPlainText(html);
+  const hasAttachments = attachments.length > 0;
+
   const lines = [
     `From: Adrienne at The Compound <adrienne@compoundoc.com>`,
     `To: ${to}`,
     `Subject: ${encodedSubject}`,
     `MIME-Version: 1.0`,
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    `Content-Type: multipart/${hasAttachments ? 'mixed' : 'alternative'}; boundary="${hasAttachments ? outerBoundary : altBoundary}"`,
     ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    Buffer.from(html).toString('base64'),
   ];
-  for (const att of attachments) {
-    lines.push(`--${boundary}`);
-    lines.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
-    lines.push(`Content-Disposition: attachment; filename="${att.filename}"`);
-    lines.push(`Content-Transfer-Encoding: base64`);
+
+  if (hasAttachments) {
+    // Outer mixed wraps the alternative block + attachments
+    lines.push(`--${outerBoundary}`);
+    lines.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
     lines.push(``);
-    lines.push(att.data);
   }
-  lines.push(`--${boundary}--`);
+
+  // Plain text part
+  lines.push(`--${altBoundary}`);
+  lines.push(`Content-Type: text/plain; charset=UTF-8`);
+  lines.push(`Content-Transfer-Encoding: base64`);
+  lines.push(``);
+  lines.push(Buffer.from(plainText).toString('base64'));
+
+  // HTML part
+  lines.push(`--${altBoundary}`);
+  lines.push(`Content-Type: text/html; charset=UTF-8`);
+  lines.push(`Content-Transfer-Encoding: base64`);
+  lines.push(``);
+  lines.push(Buffer.from(html).toString('base64'));
+  lines.push(`--${altBoundary}--`);
+
+  if (hasAttachments) {
+    for (const att of attachments) {
+      lines.push(`--${outerBoundary}`);
+      lines.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
+      lines.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+      lines.push(`Content-Transfer-Encoding: base64`);
+      lines.push(``);
+      lines.push(att.data);
+    }
+    lines.push(`--${outerBoundary}--`);
+  }
+
   const raw = lines.join('\n');
   return Buffer.from(raw).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
