@@ -365,7 +365,7 @@ app.post('/api/book-event', async (req, res) => {
     });
 
     // Confirmation email to attendee
-    await sendEventConfirmationEmail({ to: email, firstName, eventTitle, eventDate, eventTime, eventLocation });
+    await sendEventConfirmationEmail({ to: email, firstName, eventTitle, eventDate, eventTime, eventLocation, eventId });
 
     // Internal notification
     await sendInternalNotification({
@@ -930,16 +930,27 @@ function makeEmailMessage({ to, subject, html, attachments = [] }) {
   return Buffer.from(raw).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// Load the event flier PDF once at startup (if present)
+// Load event flier PDFs once at startup (Friday and Wednesday versions)
 const fs = require('fs');
-const EVENT_FLIER_PATH = process.env.EVENT_FLIER_PATH || './event-flier.pdf';
-let eventFlierAttachment = null;
-try {
-  const data = fs.readFileSync(EVENT_FLIER_PATH).toString('base64');
-  eventFlierAttachment = { filename: 'July-Events-The-Compound.pdf', mimeType: 'application/pdf', data };
-  console.log('✓ Event flier loaded for email attachment');
-} catch (_) {
-  console.log('ℹ Event flier not found — emails will send without attachment (drop event-flier.pdf in project root to enable)');
+function loadFlier(path, filename, label) {
+  try {
+    const data = fs.readFileSync(path).toString('base64');
+    const mimeType = path.endsWith('.pdf') ? 'application/pdf' : 'image/png';
+    console.log(`✓ ${label} flier loaded`);
+    return { filename, mimeType, data };
+  } catch (_) {
+    console.log(`ℹ ${label} flier not found — drop ${path} in project root to enable`);
+    return null;
+  }
+}
+const fridayFlier    = loadFlier('./compound_flier_friday.png',    'Community-Night-The-Compound.png',        'Friday');
+const wednesdayFlier = loadFlier('./compound_flier_wednesday.png', 'Evening-Transformation-The-Compound.png', 'Wednesday');
+
+function getFlierForEvent(eventId) {
+  if (!eventId) return null;
+  if (eventId.startsWith('fri')) return fridayFlier;
+  if (eventId.startsWith('wed')) return wednesdayFlier;
+  return null;
 }
 
 async function sendGmail({ to, subject, html, attachments = [] }) {
@@ -996,8 +1007,9 @@ async function sendConfirmationEmail({ to, clientName, practitioner, service, da
 // ════════════════════════════════════════════════════════
 // HELPER: Send auto-reply to inquiry submission
 // ════════════════════════════════════════════════════════
-async function sendEventConfirmationEmail({ to, firstName, eventTitle, eventDate, eventTime, eventLocation }) {
-  const attachments = eventFlierAttachment ? [eventFlierAttachment] : [];
+async function sendEventConfirmationEmail({ to, firstName, eventTitle, eventDate, eventTime, eventLocation, eventId }) {
+  const flier = getFlierForEvent(eventId);
+  const attachments = flier ? [flier] : [];
   const attachNote = attachments.length
     ? `<p style="font-size:13px;color:#7A6E64;line-height:1.7;margin-bottom:24px">We've attached the full event details to this email. You'll also receive a reminder the morning of the event.</p>`
     : '';
