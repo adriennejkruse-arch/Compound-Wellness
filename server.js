@@ -278,6 +278,99 @@ app.post('/api/submit-inquiry', async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════
+// ADMIN AUTH MIDDLEWARE
+// ════════════════════════════════════════════════════════
+function adminAuth(req, res, next) {
+  const key = req.headers['x-admin-key'] || '';
+  const pass = process.env.ADMIN_PASSWORD || 'Compound2025!';
+  if (key !== pass) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
+
+app.post('/api/admin/auth', (req, res) => {
+  const { password } = req.body;
+  const pass = process.env.ADMIN_PASSWORD || 'Compound2025!';
+  if (password === pass) {
+    res.json({ ok: true });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+app.get('/api/admin/contacts', adminAuth, async (req, res) => {
+  if (!base) return res.json({ contacts: [] });
+  try {
+    const records = await base('Contacts').select({
+      sort: [{ field: 'Submission Date', direction: 'desc' }],
+      maxRecords: 200,
+    }).all();
+    const contacts = records.map(r => ({
+      id: r.id,
+      name:         r.fields['Name'] || '',
+      email:        r.fields['Email'] || '',
+      phone:        r.fields['Phone'] || '',
+      city:         r.fields['City'] || '',
+      source:       r.fields['Source Form'] || '',
+      notes:        r.fields['Notes'] || '',
+      created:      r.fields['Submission Date'] ? new Date(r.fields['Submission Date']).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '',
+    }));
+    res.json({ contacts });
+  } catch (err) {
+    console.error('Admin contacts error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/bookings', adminAuth, async (req, res) => {
+  if (!base) return res.json({ bookings: [] });
+  try {
+    const records = await base('Booking Requests').select({
+      sort: [{ field: 'Submission Date (PST)', direction: 'desc' }],
+      maxRecords: 200,
+    }).all();
+    const bookings = records.map(r => ({
+      id:           r.id,
+      name:         r.fields['Client Name'] || '',
+      practitioner: r.fields['Requested Practitioner'] || '',
+      service:      r.fields['Inquiry Details'] || '',
+      date:         r.fields['Requested Date'] || '',
+      time:         r.fields['Requested Time'] || '',
+      amount:       r.fields['Amount'] || 0,
+      status:       r.fields['Status'] || 'Pending',
+      stripe:       r.fields['Stripe Payment Intent'] || '—',
+      submitted:    r.fields['Submission Date (PST)'] ? new Date(r.fields['Submission Date (PST)']).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '',
+    }));
+    res.json({ bookings });
+  } catch (err) {
+    console.error('Admin bookings error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/stats', adminAuth, async (req, res) => {
+  if (!base) return res.json({ contacts: 0, bookings: 0, pending: 0, confirmed: 0 });
+  try {
+    const [contactRecs, bookingRecs] = await Promise.all([
+      base('Contacts').select({ fields: ['Name'], maxRecords: 500 }).all(),
+      base('Booking Requests').select({ fields: ['Status', 'Amount'], maxRecords: 500 }).all(),
+    ]);
+    const pending   = bookingRecs.filter(r => r.fields['Status'] === 'Pending').length;
+    const confirmed = bookingRecs.filter(r => r.fields['Status'] === 'Confirmed').length;
+    const revenue   = bookingRecs.reduce((s,r) => s + (r.fields['Amount'] || 0), 0);
+    res.json({
+      contacts:  contactRecs.length,
+      bookings:  bookingRecs.length,
+      pending,
+      confirmed,
+      revenue,
+    });
+  } catch (err) {
+    console.error('Admin stats error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ════════════════════════════════════════════════════════
 app.get('/api/health', (req, res) => {

@@ -691,14 +691,10 @@ const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
 let loginAttempts = 0;
 let lockedUntil = 0;
 
-// Credentials — in production these come from server-side auth
-// Change these immediately after first deploy
-const ADMIN_CREDS = [
-  { email: 'adrienne@thecompoundwellness.com', password: 'Compound2024!' },
-  // Add more admins here if needed
-];
+const ADMIN_EMAIL = 'adrienne@compoundoc.com';
+let adminKey = null; // stored after successful login
 
-function doLogin() {
+async function doLogin() {
   const now = Date.now();
   if (lockedUntil > now) {
     const secs = Math.ceil((lockedUntil - now) / 1000);
@@ -707,28 +703,40 @@ function doLogin() {
   }
   const email = (document.getElementById('au').value || '').trim().toLowerCase();
   const pass  = document.getElementById('ap').value || '';
-  const match = ADMIN_CREDS.find(c => c.email === email && c.password === pass);
-  if (!match) {
+  if (email !== ADMIN_EMAIL) {
+    document.getElementById('loginErr').textContent = 'Incorrect email or password.';
+    return;
+  }
+  const btn = document.querySelector('#loginScreen button[type="submit"],#loginScreen button');
+  if (btn) { btn.textContent = 'Signing in…'; btn.disabled = true; }
+  try {
+    const res = await fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass }),
+    });
+    if (!res.ok) throw new Error('Invalid credentials');
+    loginAttempts = 0;
+    adminKey = pass;
+    const session = { email, pass, ts: now };
+    try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session)); } catch(e) {}
+    document.getElementById('loginErr').textContent = '';
+    launchApp(email);
+  } catch(err) {
     loginAttempts++;
     if (loginAttempts >= 5) {
-      lockedUntil = now + 60000; // lock for 60s
+      lockedUntil = now + 60000;
       loginAttempts = 0;
       document.getElementById('loginErr').textContent = 'Too many failed attempts. Locked for 60 seconds.';
-      document.getElementById('lockMsg').textContent = '';
       return;
     }
     const remaining = 5 - loginAttempts;
-    document.getElementById('loginErr').textContent = `Incorrect email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
+    document.getElementById('loginErr').textContent = `Incorrect password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
     document.getElementById('ap').value = '';
     document.getElementById('ap').focus();
-    return;
+  } finally {
+    if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
   }
-  // Success
-  loginAttempts = 0;
-  const session = { email, ts: now };
-  try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session)); } catch(e) {}
-  document.getElementById('loginErr').textContent = '';
-  launchApp(email);
 }
 
 function checkSession() {
@@ -737,6 +745,7 @@ function checkSession() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (Date.now() - s.ts > SESSION_TTL) { sessionStorage.removeItem(ADMIN_SESSION_KEY); return false; }
+    adminKey = s.pass || '';
     launchApp(s.email);
     return true;
   } catch(e) { return false; }
@@ -765,54 +774,39 @@ const PG = 20;
 let DB = { contacts:[], bookings:[], members:[], qrLib:[] };
 let pg = { contacts:1, bookings:1, members:1 };
 
-function loadDB() {
+function adminHeaders() {
+  return { 'Content-Type': 'application/json', 'x-admin-key': adminKey || '' };
+}
+
+async function loadDB() {
   try {
-    const s = localStorage.getItem('cw_admin_db');
-    if (s) Object.assign(DB, JSON.parse(s));
+    const [cRes, bRes] = await Promise.all([
+      fetch('/api/admin/contacts',  { headers: adminHeaders() }),
+      fetch('/api/admin/bookings',  { headers: adminHeaders() }),
+    ]);
+    if (cRes.ok) { const d = await cRes.json(); DB.contacts = d.contacts || []; }
+    if (bRes.ok) { const d = await bRes.json(); DB.bookings = d.bookings || []; }
+  } catch(e) {
+    console.warn('Could not load live data, using cache:', e.message);
+  }
+  // Load QR lib from localStorage only
+  try {
+    const s = localStorage.getItem('cw_qr_lib');
+    if (s) DB.qrLib = JSON.parse(s);
   } catch(e) {}
-  if (!DB.contacts.length) seed();
 }
+
 function saveDB() {
-  try { localStorage.setItem('cw_admin_db', JSON.stringify(DB)); } catch(e) {}
-}
-function ago(n) {
-  const d = new Date(); d.setDate(d.getDate()-n);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-}
-function seed() {
-  DB.contacts = [
-    {id:'c1',name:'Katherine M.',email:'k.m@example.com',phone:'(949)555-0101',city:'Newport Beach',practitioner:'Adrienne Kruse',source:'Inquiry — Cohort',status:'New Lead',created:ago(2)},
-    {id:'c2',name:'Thomas R.',email:'t.r@example.com',phone:'(949)555-0102',city:'Laguna Beach',practitioner:'Dr. Angela Colombo',source:'Booking',status:'Booked',created:ago(5)},
-    {id:'c3',name:'Avery L.',email:'a.l@example.com',phone:'(949)555-0103',city:'Dana Point',practitioner:'Coco Poovey',source:'Booking',status:'Booked',created:ago(7)},
-    {id:'c4',name:'Claire D.',email:'c.d@example.com',phone:'(949)555-0104',city:'Irvine',practitioner:'Adrienne Kruse',source:'Inquiry — Executive Cohort',status:'Contacted',created:ago(10)},
-    {id:'c5',name:'Sarah P.',email:'s.p@example.com',phone:'(949)555-0105',city:'San Clemente',practitioner:"Adrienne Kruse",source:"Women's Cohort",status:'Booked',created:ago(14)},
-    {id:'c6',name:'Dr. M.H.',email:'m.h@example.com',phone:'(949)555-0106',city:'Mission Viejo',practitioner:'Branden Carrisalez',source:'Inquiry',status:'Contacted',created:ago(18)},
-    {id:'c7',name:'Jessica K.',email:'j.k@example.com',phone:'(949)555-0107',city:'Newport Beach',practitioner:'Adrienne Kruse',source:'Executive Cohort',status:'Booked',created:ago(21)},
-    {id:'c8',name:'Rachel B.',email:'r.b@example.com',phone:'(949)555-0108',city:'Laguna Niguel',practitioner:'Christine Winnen',source:'Booking',status:'Booked',created:ago(3)},
-  ];
-  DB.bookings = [
-    {id:'b1',name:'Thomas R.',practitioner:'Dr. Angela Colombo',service:'Concierge Consult',date:'Jun 8, 2026',amount:0,status:'Confirmed',stripe:'pi_demo_001'},
-    {id:'b2',name:'Avery L.',practitioner:'Coco Poovey',service:'Sound Bath · 60 min',date:'Jun 9, 2026',amount:150,status:'Confirmed',stripe:'pi_demo_002'},
-    {id:'b3',name:'Rachel B.',practitioner:'Christine Winnen',service:'IV Therapy',date:'Jun 10, 2026',amount:250,status:'Confirmed',stripe:'pi_demo_003'},
-    {id:'b4',name:'Sarah P.',practitioner:'Coco Poovey',service:'Reiki · 90 min',date:'Jun 11, 2026',amount:212,status:'Confirmed',stripe:'pi_demo_004'},
-    {id:'b5',name:'Dr. M.H.',practitioner:'Branden Carrisalez',service:'Structural Integration',date:'Jun 12, 2026',amount:0,status:'Inquiry',stripe:'—'},
-  ];
-  DB.members = [
-    {id:'m1',name:'Sarah P.',email:'s.p@example.com',phone:'(949)555-0105',type:"Women's Cohort",start:'Aug 2, 2026',renews:'Nov 2, 2026',status:'Upcoming'},
-    {id:'m2',name:'Jessica K.',email:'j.k@example.com',phone:'(949)555-0107',type:'Executive Cohort',start:'Jan 4, 2027',renews:'Apr 4, 2027',status:'Upcoming'},
-    {id:'m3',name:'Thomas R.',email:'t.r@example.com',phone:'(949)555-0102',type:'Concierge Medicine',start:'May 1, 2026',renews:'Jun 1, 2026',status:'Active'},
-    {id:'m4',name:'Avery L.',email:'a.l@example.com',phone:'(949)555-0103',type:'Holistic Enclave',start:'Apr 15, 2026',renews:'Jul 15, 2026',status:'Active'},
-  ];
-  saveDB();
+  try { localStorage.setItem('cw_qr_lib', JSON.stringify(DB.qrLib)); } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
-function init() {
+async function init() {
   document.getElementById('todayDate').textContent =
     new Date().toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
-  loadDB();
+  await loadDB();
   renderAll();
   drawCharts();
   genQR();
@@ -1448,9 +1442,11 @@ function exportCSV(){
   a.download=fname; a.click();
 }
 
-function refreshData(){
+async function refreshData(){
   const btn=event.target; btn.textContent='↻ Loading…'; btn.disabled=true;
-  setTimeout(()=>{updateStats();drawCharts();renderAll();btn.textContent='↻ Refresh';btn.disabled=false;},700);
+  await loadDB();
+  updateStats(); drawCharts(); renderAll();
+  btn.textContent='↻ Refresh'; btn.disabled=false;
 }
 
 // ═══════════════════════════════════════════════════════════
