@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-MFCNF2ME2S"></script>
 <script>
@@ -44,7 +45,7 @@
       "logo": "https://compoundoc.com/founder-photo.webp",
       "description": "A concierge health ecosystem delivering holistic primary medicine, IV therapy, sound healing, and structural care — all in your home in Orange County, CA.",
       "telephone": "+19495900724",
-      "email": "hello@thecompoundwellness.com",
+      "email": "hello@compoundoc.com",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "2801 W Coast Hwy STE 370",
@@ -132,6 +133,7 @@
   .nav-logo-text{display:flex;flex-direction:column;gap:1px}
   .nav-logo-the{font-family:'DM Sans',sans-serif;font-size:8px;font-weight:400;letter-spacing:.38em;text-transform:uppercase;color:var(--cognac);line-height:1}
   .nav-logo-compound{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;letter-spacing:.06em;color:var(--espresso);line-height:1}
+  .nav-logo-wellness{font-family:'DM Sans',sans-serif;font-size:7px;font-weight:400;letter-spacing:.3em;text-transform:uppercase;color:var(--copper);border-top:1px solid rgba(196,168,130,.35);padding-top:3px;margin-top:2px;line-height:1}
   .nav-links{display:flex;gap:36px;list-style:none;align-items:center}
   .nav-links a{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--bark);text-decoration:none;transition:color .3s;cursor:pointer;position:relative}
   .nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--copper);transform:scaleX(0);transition:transform .3s;transform-origin:left}
@@ -837,20 +839,21 @@
   <a href="/" class="nav-logo" onclick="showPage('home');return false">
     <div class="nav-logo-mark">
       <svg viewBox="0 0 28 28" fill="none" aria-hidden="true" role="presentation">
-        <circle cx="14" cy="14" r="12" stroke="#C4A882" stroke-width=".7"/>
-        <circle cx="14" cy="14" r="8" stroke="#C4A882" stroke-width=".7" stroke-dasharray="1.5 2"/>
-        <line x1="14" y1="2" x2="14" y2="26" stroke="#C4A882" stroke-width=".5" opacity=".45"/>
-        <line x1="2" y1="14" x2="26" y2="14" stroke="#C4A882" stroke-width=".5" opacity=".45"/>
-        <circle cx="14" cy="14" r="2.2" fill="#B8916A"/>
-        <circle cx="14" cy="2.5" r="1" fill="#C4A882"/>
-        <circle cx="14" cy="25.5" r="1" fill="#C4A882"/>
-        <circle cx="2.5" cy="14" r="1" fill="#C4A882"/>
-        <circle cx="25.5" cy="14" r="1" fill="#C4A882"/>
+        <path d="M 24.4,20 A 12,12 0 1,0 24.4,8" stroke="#C4A882" stroke-width=".9" stroke-linecap="round"/>
+        <circle cx="14" cy="14" r="6.5" stroke="#C4A882" stroke-width=".7"/>
+        <line x1="2" y1="14" x2="26" y2="14" stroke="#C4A882" stroke-width=".5" opacity=".55"/>
+        <line x1="14" y1="2" x2="14" y2="26" stroke="#C4A882" stroke-width=".5" opacity=".55"/>
+        <circle cx="14" cy="2.2" r=".9" fill="#C4A882"/>
+        <circle cx="14" cy="25.8" r=".9" fill="#C4A882"/>
+        <circle cx="2.2" cy="14" r=".9" fill="#C4A882"/>
+        <circle cx="25.8" cy="14" r=".9" fill="#C4A882"/>
+        <circle cx="14" cy="14" r="1.9" fill="#B8916A"/>
       </svg>
     </div>
     <div class="nav-logo-text">
       <span class="nav-logo-the">The</span>
-      <span class="nav-logo-compound">Compound Wellness</span>
+      <span class="nav-logo-compound">Compound</span>
+      <span class="nav-logo-wellness">Wellness</span>
     </div>
   </a>
   <ul class="nav-links" id="navLinks" role="list">
@@ -1026,11 +1029,11 @@
   <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Wellness,<br><em>Without Guesswork.</em></h2><p>A system designed around you.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Session</a><a href="#" class="btn-ghost-light" onclick="showPage('partnerships');return false">For Partnerships</a></div></div></section>
 
   <footer>
-    <div class="footer-brand"><div class="brand-name"><svg width="18" height="18" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="#C4A882" stroke-width=".7" opacity=".6"/><circle cx="14" cy="14" r="7" stroke="#C4A882" stroke-width=".6" stroke-dasharray="1.5 2" opacity=".4"/><circle cx="14" cy="14" r="2.2" fill="#C4A882" opacity=".8"/></svg><span>The Compound Wellness</span></div><p>Precision Lifestyle Architecture for individuals and groups seeking a more intelligent, personalized approach to wellness.</p></div>
+    <div class="footer-brand"><div class="brand-name"><svg width="18" height="18" viewBox="0 0 28 28" fill="none"><path d="M 24.4,20 A 12,12 0 1,0 24.4,8" stroke="#C4A882" stroke-width=".9" stroke-linecap="round" opacity=".7"/><circle cx="14" cy="14" r="6.5" stroke="#C4A882" stroke-width=".7" opacity=".6"/><line x1="2" y1="14" x2="26" y2="14" stroke="#C4A882" stroke-width=".5" opacity=".35"/><line x1="14" y1="2" x2="14" y2="26" stroke="#C4A882" stroke-width=".5" opacity=".35"/><circle cx="14" cy="2.2" r=".9" fill="#C4A882" opacity=".6"/><circle cx="14" cy="25.8" r=".9" fill="#C4A882" opacity=".6"/><circle cx="2.2" cy="14" r=".9" fill="#C4A882" opacity=".6"/><circle cx="25.8" cy="14" r=".9" fill="#C4A882" opacity=".6"/><circle cx="14" cy="14" r="1.9" fill="#C4A882" opacity=".8"/></svg><span>The Compound Wellness</span></div><p>Precision Lifestyle Architecture for individuals and groups seeking a more intelligent, personalized approach to wellness.</p></div>
     <div class="footer-nav"><h5>Explore</h5><ul><li><a href="#" onclick="showPage('pathways');return false">Pathways</a></li><li><a href="#" onclick="showPage('services');return false">Services</a></li><li><a href="#" onclick="showPage('practitioners');return false">Practitioners</a></li><li><a href="#" onclick="showPage('survey');return false">Wellness Assessment</a></li><li><a href="#" onclick="showPage('about');return false">About</a></li><li><a href="#" onclick="showPage('contact');return false">Contact</a></li></ul></div>
     <div class="footer-nav"><h5>Partnerships</h5><ul><li><a href="#" onclick="showPage('corporate');return false">Corporate</a></li><li><a href="#" onclick="showPage('hotels');return false">Hotels</a></li><li><a href="#" onclick="showPage('residential');return false">Residential</a></li><li><a href="#" onclick="showPage('weddings');return false">Weddings</a></li></ul></div>
   </footer>
-  <div class="footer-bottom"><p>© 2025 The Compound Wellness. Precision Lifestyle Architecture.</p><p>thecompoundwellness.com</p></div>
+  <div class="footer-bottom"><p>© 2025 The Compound Wellness. Precision Lifestyle Architecture.</p><p>compoundoc.com</p></div>
 </div>
 
 <!-- ══════════ PRACTITIONERS OVERVIEW ══════════ -->

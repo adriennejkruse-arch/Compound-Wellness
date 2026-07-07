@@ -279,6 +279,74 @@ app.post('/api/submit-inquiry', async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════
+// EVENT RSVP — Community group event booking
+// ════════════════════════════════════════════════════════
+app.post('/api/book-event', async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, eventId, eventTitle, eventDate, eventTime, eventLocation } = req.body;
+
+    if (!firstName || !email) {
+      return res.status(400).json({ error: 'Name and email are required.' });
+    }
+
+    const fullName = `${firstName} ${lastName || ''}`.trim();
+
+    // Save contact
+    const contactRecord = await saveToAirtable('Contacts', {
+      'Name':            fullName,
+      'Email':           email,
+      'Phone':           phone || '',
+      'Source Form':     'Event',
+      'Submission Date': nowPST(),
+    });
+
+    // Save RSVP as a booking request
+    const bookingFields = {
+      'Request Name':           `${fullName} — ${eventTitle} ${eventDate}`,
+      'Client Name':            fullName,
+      'Requested Practitioner': 'Community Event',
+      'Requested Time':         eventTime,
+      'Inquiry Details':        `Event RSVP: ${eventTitle}\nDate: ${eventDate}\nTime: ${eventTime}\nLocation: ${eventLocation}`,
+      'Submission Date (PST)':  nowPST(),
+      'Status':                 'Confirmed',
+    };
+    if (contactRecord) bookingFields['Related Contact'] = [contactRecord.id];
+    await saveToAirtable('Booking Requests', bookingFields);
+
+    // Add to Klaviyo
+    await addToKlaviyo({
+      email,
+      firstName,
+      lastName:   lastName || '',
+      source:     'Event RSVP — ' + eventTitle,
+      listId:     process.env.KLAVIYO_LIST_ID,
+      properties: { eventTitle, eventDate, eventLocation },
+    });
+
+    // Confirmation email to attendee
+    await sendEventConfirmationEmail({ to: email, firstName, eventTitle, eventDate, eventTime, eventLocation });
+
+    // Internal notification
+    await sendInternalNotification({
+      type:        'Event RSVP',
+      clientName:  fullName,
+      clientEmail: email,
+      practitioner:'Community Event',
+      service:     `${eventTitle} — ${eventDate}`,
+      date:        eventDate,
+      time:        eventTime,
+      amount:      '0',
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('book-event error:', err.message);
+    res.status(500).json({ error: err.message || 'Submission failed.' });
+  }
+});
+
+
+// ════════════════════════════════════════════════════════
 // ADMIN AUTH MIDDLEWARE
 // ════════════════════════════════════════════════════════
 function adminAuth(req, res, next) {
@@ -866,6 +934,31 @@ async function sendConfirmationEmail({ to, clientName, practitioner, service, da
 // ════════════════════════════════════════════════════════
 // HELPER: Send auto-reply to inquiry submission
 // ════════════════════════════════════════════════════════
+async function sendEventConfirmationEmail({ to, firstName, eventTitle, eventDate, eventTime, eventLocation }) {
+  await sendGmail({
+    to,
+    subject: `You're confirmed — ${eventTitle} · ${eventDate}`,
+    html: `
+      <div style="font-family:'Georgia',serif;max-width:560px;margin:0 auto;color:#2C2420;background:#FAF7F2;padding:40px 32px">
+        <p style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A5E38;margin-bottom:24px">The Compound Wellness</p>
+        <h1 style="font-size:32px;font-weight:300;line-height:1.1;margin-bottom:20px">You're <em>confirmed.</em></h1>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:32px">Hi ${firstName}, your spot is reserved. We look forward to seeing you there.</p>
+        <div style="border:1px solid rgba(196,168,130,.3);padding:24px;background:#F0EAE0;margin-bottom:32px">
+          <table style="width:100%;font-size:13px;line-height:2">
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Event</td><td><strong>${eventTitle}</strong></td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Date</td><td>${eventDate}</td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Time</td><td>${eventTime}</td></tr>
+            <tr><td style="color:#9A8E84;padding-right:16px;white-space:nowrap">Location</td><td>${eventLocation}</td></tr>
+          </table>
+        </div>
+        <p style="font-size:13px;color:#7A6E64;line-height:1.7;margin-bottom:24px">If you have any questions or need to cancel, simply reply to this email.</p>
+        <p style="font-size:13px;color:#7A6E64">— Adrienne &amp; The Compound Team</p>
+        <p style="font-size:12px;color:#9A8E84;margin-top:24px">The Compound Wellness · Newport Beach, CA · compoundoc.com</p>
+      </div>
+    `,
+  });
+}
+
 async function sendAutoReply({ to, firstName, practitioner, consultTime }) {
   const consultNote = consultTime
     ? `<p style="font-size:14px;line-height:1.7">Your requested time is <strong>${consultTime}</strong> — I'll confirm this shortly.</p>`

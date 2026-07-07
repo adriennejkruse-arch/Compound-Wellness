@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="X-Frame-Options" content="DENY">
@@ -279,7 +280,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
     <span class="login-sub">Admin Dashboard</span>
     <div class="login-field">
       <label for="au">Email</label>
-      <input type="email" id="au" autocomplete="username" placeholder="admin@thecompoundwellness.com"
+      <input type="email" id="au" autocomplete="username" placeholder="admin@compoundoc.com"
              onkeydown="if(event.key==='Enter')document.getElementById('ap').focus()">
     </div>
     <div class="login-field">
@@ -399,7 +400,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
         <div class="tcard">
           <div class="thead"><span class="thead-title">UTM Link Builder</span><span style="font-size:10px;color:var(--text-body)">Track where visitors come from</span></div>
           <div style="padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
-            <div class="fg"><label>Base URL</label><input id="uu" value="https://thecompoundwellness.com" oninput="buildUTM()"></div>
+            <div class="fg"><label>Base URL</label><input id="uu" value="https://compoundoc.com" oninput="buildUTM()"></div>
             <div class="fg"><label>Source</label><input id="us" placeholder="instagram" oninput="buildUTM()"></div>
             <div class="fg"><label>Medium</label><input id="um" placeholder="social" oninput="buildUTM()"></div>
             <div class="fg"><label>Campaign</label><input id="uc" placeholder="womens-cohort-aug" oninput="buildUTM()"></div>
@@ -635,14 +636,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
             <p style="font-size:11px;color:var(--text-body);margin-bottom:16px">Create QR codes for any page — for print, events, partnerships, or social.</p>
             <div style="font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-body);margin-bottom:7px">Quick Presets</div>
             <div class="presets">
-              <button class="preset on" onclick="setPreset(this,'https://thecompoundwellness.com')">Home</button>
-              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html')">Booking</button>
-              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html?prac=angela')">Dr. Colombo</button>
-              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/booking.html?prac=coco')">Coco</button>
-              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com/portal.html')">Member Portal</button>
-              <button class="preset" onclick="setPreset(this,'https://thecompoundwellness.com#cohorts')">Cohorts</button>
+              <button class="preset on" onclick="setPreset(this,'https://compoundoc.com')">Home</button>
+              <button class="preset" onclick="setPreset(this,'https://compoundoc.com/booking.html')">Booking</button>
+              <button class="preset" onclick="setPreset(this,'https://compoundoc.com/booking.html?prac=angela')">Dr. Colombo</button>
+              <button class="preset" onclick="setPreset(this,'https://compoundoc.com/booking.html?prac=coco')">Coco</button>
+              <button class="preset" onclick="setPreset(this,'https://compoundoc.com/portal.html')">Member Portal</button>
+              <button class="preset" onclick="setPreset(this,'https://compoundoc.com#cohorts')">Cohorts</button>
             </div>
-            <div class="fg"><label>URL</label><input id="qrUrl" value="https://thecompoundwellness.com" oninput="genQR()"></div>
+            <div class="fg"><label>URL</label><input id="qrUrl" value="https://compoundoc.com" oninput="genQR()"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
               <div class="fg"><label>Label</label><input id="qrLabel" placeholder="Business Card"></div>
               <div class="fg">
