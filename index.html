@@ -574,16 +574,17 @@
     div[style*="grid-template-columns:1fr 1fr 1fr"] > div{border-right:none !important;border-bottom:1px solid var(--line)}
   }
 
-  @media(max-width:900px){
+  @media(max-width:1100px){
     /* NAV */
     nav{padding:16px clamp(16px,4vw,24px)} nav.scrolled{padding:12px clamp(16px,4vw,24px)}
     .nav-links{display:none}
     .nav-links.mobile-open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--ivory);z-index:999;padding:90px 32px 40px;gap:0;justify-content:flex-start;overflow-y:auto}
     .nav-links.mobile-open li{border-bottom:1px solid var(--line)}
-    .nav-links.mobile-open a{font-size:14px;letter-spacing:.1em;padding:17px 0;display:block;white-space:normal}
+    .nav-links.mobile-open a{font-size:17px;letter-spacing:.06em;padding:18px 0;display:block;white-space:normal}
+    .nav-links.mobile-open .nav-dropdown>a{color:var(--espresso);font-weight:400;cursor:default;pointer-events:none}
     .nav-links.mobile-open .nav-dropdown>a::before{display:none}
-    .nav-links.mobile-open .dropdown-menu{position:static;opacity:1;pointer-events:all;transform:none;box-shadow:none;border:none;padding:0 0 8px 20px;background:transparent}
-    .nav-links.mobile-open .dropdown-menu a{font-size:12px;padding:10px 0;color:var(--cognac)}
+    .nav-links.mobile-open .dropdown-menu{position:static;opacity:1;pointer-events:all;transform:none;box-shadow:none;border:none;padding:0 0 12px 20px;background:transparent}
+    .nav-links.mobile-open .dropdown-menu a{font-size:15px;padding:12px 0;color:var(--cognac);pointer-events:all}
     .hamburger{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:1000;position:relative}
     .hamburger span{display:block;width:22px;height:1.5px;background:var(--espresso);transition:transform .3s,opacity .3s}
     .hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
@@ -597,7 +598,7 @@
     .hero-content{max-width:100%;padding:40px 24px 48px;position:static;transform:none}
     .hero-headline{font-size:clamp(40px,10vw,64px)}
     .hero-sub{font-size:14px;max-width:100%}
-    .hero-actions{flex-direction:column;align-items:flex-start;gap:12px;margin-top:24px}
+    .hero-actions{flex-direction:column;align-items:center;gap:16px;margin-top:24px}
     .hero-scroll{display:none}
 
     /* SECTIONS */
@@ -638,7 +639,9 @@
     .prac-link{font-size:9px;padding:0;white-space:nowrap}
     .practitioner-card{padding:24px 20px 28px}
 
-    /* TEXT */
+    /* TEXT — larger for readability */
+    body{font-size:17px}
+    p,li,.hero-sub,.pathway-for,.pathway-outcome,.prac-service-item p,.philosophy-statement p,.mantra-item p,.concierge-strip p{font-size:16px!important;line-height:1.75}
     h2{font-size:clamp(28px,7vw,44px)}
     h3{font-size:clamp(22px,5vw,32px)}
     .pull-quote{padding:36px 24px}
@@ -648,7 +651,7 @@
     /* FINAL CTA */
     .final-cta{padding:60px 24px}
     .final-cta h2{font-size:clamp(32px,8vw,56px)}
-    .final-cta-actions{flex-direction:column;align-items:flex-start;gap:12px}
+    .final-cta-actions{flex-direction:column;align-items:center;gap:16px}
 
     /* FOOTER */
     footer{grid-template-columns:1fr;padding:40px 24px;gap:32px}
@@ -713,7 +716,7 @@
   @media(max-width:480px){
     .practitioners-grid{grid-template-columns:1fr}
     .wedding-timeline{grid-template-columns:1fr}
-    nav .nav-cta{display:none} /* hide Book button in nav, hamburger takes over */
+    nav .nav-cta{display:none}
     .inner-hero h1{font-size:clamp(30px,10vw,44px)}
     .section{padding:40px 20px}
     .final-cta{padding:48px 20px}
@@ -3230,8 +3233,8 @@ updateProgressBar();
   }
   function checkHamburger(){
     const btn=document.getElementById('hamburger');
-    btn.style.display=window.innerWidth<=900?'flex':'none';
-    if(window.innerWidth>900){
+    btn.style.display=window.innerWidth<=1100?'flex':'none';
+    if(window.innerWidth>1100){
       document.querySelector('.nav-links').classList.remove('mobile-open');
       document.getElementById('hamburger').classList.remove('open');
     }
