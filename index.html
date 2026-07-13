@@ -580,11 +580,12 @@
     .nav-links{display:none}
     .nav-links.mobile-open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--ivory);z-index:999;padding:90px 32px 40px;gap:0;justify-content:flex-start;overflow-y:auto}
     .nav-links.mobile-open li{border-bottom:1px solid var(--line)}
-    .nav-links.mobile-open a{font-size:17px;letter-spacing:.06em;padding:18px 0;display:block;white-space:normal}
-    .nav-links.mobile-open .nav-dropdown>a{color:var(--espresso);font-weight:400;cursor:default;pointer-events:none}
+    .nav-links.mobile-open li{border-bottom:none}
+    .nav-links.mobile-open a{font-size:13px;letter-spacing:.18em;padding:14px 0;display:block;white-space:normal;text-transform:uppercase}
+    .nav-links.mobile-open .nav-dropdown>a{color:var(--espresso);font-size:10px;font-weight:600;letter-spacing:.26em;padding:20px 0 8px;border-bottom:1px solid var(--line)}
     .nav-links.mobile-open .nav-dropdown>a::before{display:none}
-    .nav-links.mobile-open .dropdown-menu{position:static;opacity:1;pointer-events:all;transform:none;box-shadow:none;border:none;padding:0 0 12px 20px;background:transparent}
-    .nav-links.mobile-open .dropdown-menu a{font-size:15px;padding:12px 0;color:var(--cognac);pointer-events:all}
+    .nav-links.mobile-open .dropdown-menu{position:static;opacity:1;pointer-events:all;transform:none;box-shadow:none;border:none;padding:4px 0 8px 0;background:transparent;border-bottom:1px solid var(--line)}
+    .nav-links.mobile-open .dropdown-menu a{font-size:15px;letter-spacing:.04em;text-transform:none;padding:13px 16px;color:var(--espresso);border:none;font-family:'Cormorant Garamond',serif;font-style:italic}
     .hamburger{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:1000;position:relative}
     .hamburger span{display:block;width:22px;height:1.5px;background:var(--espresso);transition:transform .3s,opacity .3s}
     .hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
@@ -1055,7 +1056,7 @@
 <!-- ══ DR. ANGELA COLOMBO ══ -->
 <div id="page-prac-angela" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Angela<br><em>Colombo, MD</em></h2><p>Holistic Concierge Family Physician — blending the precision of science-based medicine with the wisdom of natural healing.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Book a Consultation</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Angela<br><em>Colombo, MD</em></h2><p>Holistic Concierge Family Physician — blending the precision of science-based medicine with the wisdom of natural healing.</p><a href="booking.html" class="btn-primary">Book a Consultation</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1070,7 +1071,7 @@
             <li>Preventative Family Medicine</li>
             <li>Medication Reduction Protocols</li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false">Book Now</a>
+          <a href="booking.html" class="btn-primary">Book Now</a>
         </div>
         <div class="prac-detail-body">
           <h3>Meet Dr. Colombo</h3>
@@ -1088,14 +1089,14 @@
       <div class="prac-service-item"><h5>Hormone Balancing</h5><p>Precision restoration of hormonal equilibrium through natural, science-backed interventions.</p></div>
       <div class="prac-service-item"><h5>Preventative Care</h5><p>Proactive, individualized care designed to preserve vitality and prevent chronic disease before it begins.</p></div>
     </div>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin With <em>Dr. Colombo.</em></h2><p>Personalized, root-cause medicine designed around you.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Book a Consultation</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin With <em>Dr. Colombo.</em></h2><p>Personalized, root-cause medicine designed around you.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Consultation</a></div></div></section>
   </div>
 </div>
 
 <!-- ══ DR. ANDREW ADAMS ══ -->
 <div id="page-prac-andrew" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Andrew<br><em>Adams, DC</em></h2><p>SOMA Therapist — trusted by elite athletes to deliver next-level care that prioritizes performance, precision, and longevity.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Book a Session</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Andrew<br><em>Adams, DC</em></h2><p>SOMA Therapist — trusted by elite athletes to deliver next-level care that prioritizes performance, precision, and longevity.</p><a href="booking.html" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1140,7 +1141,7 @@
               <span>NHL</span>
             </div>
           </div>
-          <a href="#" class="btn-primary" style="margin-top:24px" onclick="showPage('contact');return false">Book Now</a>
+          <a href="booking.html" class="btn-primary" style="margin-top:24px">Book Now</a>
         </div>
         <div class="prac-detail-body">
           <h3>SOMA Therapy</h3>
@@ -1157,14 +1158,14 @@
       <div class="prac-service-item"><h5>Performance Optimization</h5><p>Enhance power, mobility, and resilience through functional biomechanical assessment and corrective protocols.</p></div>
       <div class="prac-service-item"><h5>Preventative Maintenance</h5><p>Sustain high performance and prevent re-injury through proactive structural body tuning.</p></div>
     </div>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Train With <em>Dr. Adams.</em></h2><p>Next-level care for performance, recovery, and longevity.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Book a Session</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Train With <em>Dr. Adams.</em></h2><p>Next-level care for performance, recovery, and longevity.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Session</a></div></div></section>
   </div>
 </div>
 
 <!-- ══ CHRISTINE WINNEN ══ -->
 <div id="page-prac-christine" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Christine<br><em>Winnen, RN</em></h2><p>IV Drip & Injection Therapy — delivering vitamins, minerals, and hydration directly to the bloodstream as a rejuvenating ritual, not just a medical procedure.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Book a Session</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Christine<br><em>Winnen, RN</em></h2><p>IV Drip & Injection Therapy — delivering vitamins, minerals, and hydration directly to the bloodstream as a rejuvenating ritual, not just a medical procedure.</p><a href="booking.html" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1180,7 +1181,7 @@
             <li>Injection Therapy</li>
             <li>Hydration & Detoxification</li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false">Book Now</a>
+          <a href="booking.html" class="btn-primary">Book Now</a>
         </div>
         <div class="prac-detail-body">
           <h3>IV & Drip Infusion Therapy</h3>
@@ -1196,14 +1197,14 @@
       <div class="prac-service-item"><h5>Hydration & Detox</h5><p>Deep hydration and cellular cleansing to restore optimal function.</p></div>
       <div class="prac-service-item"><h5>Performance Optimization</h5><p>Pre- and post-event infusions tailored to your athletic and wellness demands.</p></div>
     </div>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Christine.</em></h2><p>Personalized IV therapy as a luxury, rejuvenating ritual.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Book a Session</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Christine.</em></h2><p>Personalized IV therapy as a luxury, rejuvenating ritual.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Session</a></div></div></section>
   </div>
 </div>
 
 <!-- ══ BRANDEN CARRISALEZ ══ -->
 <div id="page-prac-branden" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Branden<br><em>Carrisalez</em></h2><p>Structural Integrationist — restoring balance, alignment, and ease within the body through precise hands-on fascia therapy.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Book a Session</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Branden<br><em>Carrisalez</em></h2><p>Structural Integrationist — restoring balance, alignment, and ease within the body through precise hands-on fascia therapy.</p><a href="booking.html" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1219,7 +1220,7 @@
             <li>Range of Motion Restoration</li>
             <li>In-Home Sessions Available</li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false">Book Now</a>
+          <a href="booking.html" class="btn-primary">Book Now</a>
         </div>
         <div class="prac-detail-body">
           <h3>Meet Branden</h3>
@@ -1237,14 +1238,14 @@
       <div class="prac-service-item"><h5>Athletic Recovery</h5><p>Support tissue recovery and movement quality for athletes training at high output.</p></div>
       <div class="prac-service-item"><h5>In-Home Sessions</h5><p>Fully equipped mobile sessions delivered to your home throughout south Orange County.</p></div>
     </div>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Branden.</em></h2><p>Structural care that restores your body's natural grace.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Book a Session</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Branden.</em></h2><p>Structural care that restores your body's natural grace.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Session</a></div></div></section>
   </div>
 </div>
 
 <!-- ══ COCO POOVEY ══ -->
 <div id="page-prac-coco" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Coco<br><em>Poovey</em></h2><p>Holistic Wellness Integrator — guiding sacred embodiment through sound healing, Reiki, and yoga. A doorway inward, a return to presence.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Book a Session</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Coco<br><em>Poovey</em></h2><p>Holistic Wellness Integrator — guiding sacred embodiment through sound healing, Reiki, and yoga. A doorway inward, a return to presence.</p><a href="booking.html" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1260,7 +1261,7 @@
             <li>Breathwork & Regulation</li>
             <li>In-Home Sessions Available</li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false">Book Now</a>
+          <a href="booking.html" class="btn-primary">Book Now</a>
         </div>
         <div class="prac-detail-body">
           <h3>Integrated Healing</h3>
@@ -1285,14 +1286,14 @@
       <div class="prac-service-item"><h5>Private Yoga</h5><p>In-home yoga experiences tailored to your body, goals, and current state — intimate and deeply personalized.</p></div>
       <div class="prac-service-item"><h5>Somatic Movement</h5><p>Body-based practices that integrate the nervous system and create lasting patterns of ease and regulation.</p></div>
     </div>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Coco.</em></h2><p>Sacred healing that guides you back to yourself.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Book a Session</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Book With <em>Coco.</em></h2><p>Sacred healing that guides you back to yourself.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Book a Session</a></div></div></section>
   </div>
 </div>
 
 <!-- ══ ADRIENNE KRUSE ══ -->
 <div id="page-prac-adrienne" class="page">
   <div style="padding-top:100px">
-    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Co-Founder & Practitioner</div><h2>Adrienne<br><em>Kruse</em></h2><p>Co-Founder and Director of Holistic Services — guiding individuals and small groups toward nervous system regulation, clarity in decision-making, and sustainable transformation through community-anchored care.</p><a href="#" class="btn-primary" onclick="showPage('contact');return false">Inquire</a></div></div>
+    <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Co-Founder & Practitioner</div><h2>Adrienne<br><em>Kruse</em></h2><p>Co-Founder and Director of Holistic Services — guiding individuals and small groups toward nervous system regulation, clarity in decision-making, and sustainable transformation through community-anchored care.</p><a href="booking.html" class="btn-primary">Inquire</a></div></div>
     <section class="section">
       <div class="prac-detail-grid reveal">
         <div class="prac-detail-aside">
@@ -1308,7 +1309,7 @@
             <li>1-on-1 Holistic Coaching</li>
             <li>Community &amp; Group Programming</li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false">Inquire</a>
+          <a href="booking.html" class="btn-primary">Inquire</a>
         </div>
         <div class="prac-detail-body">
           <h3>Director of Holistic Services</h3>
@@ -1578,7 +1579,7 @@
         </div>
       </div>
     </section>
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Live Inside<br><em>The Enclave.</em></h2><p>A membership for those who want wellness as a way of life — not just a quarterly appointment.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Inquire About Membership</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Live Inside<br><em>The Enclave.</em></h2><p>A membership for those who want wellness as a way of life — not just a quarterly appointment.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Inquire About Membership</a></div></div></section>
   </div>
 </div>
 
@@ -1622,7 +1623,7 @@
 </div>
 
 <!-- ══════════ PATHWAYS ══════════ -->
-<div id="page-pathways" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Core Offering</div><h2>Curated Pathways.<br><em>Designed as a System.</em></h2><p>Personalized, multi-modal care designed to deliver measurable, lasting change. Each pathway integrates clinical insight and embodied practices to guide you from your current state to where you want to operate.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="pathways-grid reveal"><div class="pathway-card"><span class="pathway-num">01</span><h3>The Reset</h3><span class="pathway-tag">Return to Baseline</span><p class="pathway-for">For chronic stress, burnout, and nervous system dysregulation.</p><p class="pathway-outcome">Outcome: Stability, regulation, restored baseline.</p><button type="button" class="pathway-cta" onclick="showPage('reset')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">02</span><h3>The Foundation</h3><span class="pathway-tag">Build What Sustains You</span><p class="pathway-for">For inconsistent energy, sleep, and overall physiological health.</p><p class="pathway-outcome">Outcome: Resilience, stability, sustainable wellness.</p><button type="button" class="pathway-cta" onclick="showPage('foundation')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">03</span><h3>The Elevation</h3><span class="pathway-tag">Refine How You Operate</span><p class="pathway-for">For high-functioning individuals seeking precision performance.</p><p class="pathway-outcome">Outcome: Enhanced focus, recovery, long-term vitality.</p><button type="button" class="pathway-cta" onclick="showPage('elevation')">Explore Pathway</button></div></div></section><section class="section"><div class="how-grid"><div class="how-left reveal"><h2>To Be Known:<br><em>Wellness Without Guesswork.</em></h2><p>Every pathway follows the same rigorous four-step methodology — ensuring care is continuously refined as your system evolves.</p></div><div class="how-steps reveal reveal-delay-1"><div class="how-step"><span class="step-num">01</span><div class="step-content"><h4>Assessment</h4><p>A comprehensive understanding of your physiology, lifestyle, and goals.</p></div></div><div class="how-step"><span class="step-num">02</span><div class="step-content"><h4>Curation</h4><p>A personalized pathway built from the right combination of modalities.</p></div></div><div class="how-step"><span class="step-num">03</span><div class="step-content"><h4>Integration</h4><p>Coordinated sessions that build on one another — never fragmented.</p></div></div><div class="how-step"><span class="step-num">04</span><div class="step-content"><h4>Adaptation</h4><p>Your pathway evolves as your system responds and progresses.</p></div></div></div></div></section><section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin Your <em>Pathway.</em></h2><p>A personalized system designed around you.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Start With an Assessment</a></div></div></section></div></div>
+<div id="page-pathways" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Core Offering</div><h2>Curated Pathways.<br><em>Designed as a System.</em></h2><p>Personalized, multi-modal care designed to deliver measurable, lasting change. Each pathway integrates clinical insight and embodied practices to guide you from your current state to where you want to operate.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="pathways-grid reveal"><div class="pathway-card"><span class="pathway-num">01</span><h3>The Reset</h3><span class="pathway-tag">Return to Baseline</span><p class="pathway-for">For chronic stress, burnout, and nervous system dysregulation.</p><p class="pathway-outcome">Outcome: Stability, regulation, restored baseline.</p><button type="button" class="pathway-cta" onclick="showPage('reset')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">02</span><h3>The Foundation</h3><span class="pathway-tag">Build What Sustains You</span><p class="pathway-for">For inconsistent energy, sleep, and overall physiological health.</p><p class="pathway-outcome">Outcome: Resilience, stability, sustainable wellness.</p><button type="button" class="pathway-cta" onclick="showPage('foundation')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">03</span><h3>The Elevation</h3><span class="pathway-tag">Refine How You Operate</span><p class="pathway-for">For high-functioning individuals seeking precision performance.</p><p class="pathway-outcome">Outcome: Enhanced focus, recovery, long-term vitality.</p><button type="button" class="pathway-cta" onclick="showPage('elevation')">Explore Pathway</button></div></div></section><section class="section"><div class="how-grid"><div class="how-left reveal"><h2>To Be Known:<br><em>Wellness Without Guesswork.</em></h2><p>Every pathway follows the same rigorous four-step methodology — ensuring care is continuously refined as your system evolves.</p></div><div class="how-steps reveal reveal-delay-1"><div class="how-step"><span class="step-num">01</span><div class="step-content"><h4>Assessment</h4><p>A comprehensive understanding of your physiology, lifestyle, and goals.</p></div></div><div class="how-step"><span class="step-num">02</span><div class="step-content"><h4>Curation</h4><p>A personalized pathway built from the right combination of modalities.</p></div></div><div class="how-step"><span class="step-num">03</span><div class="step-content"><h4>Integration</h4><p>Coordinated sessions that build on one another — never fragmented.</p></div></div><div class="how-step"><span class="step-num">04</span><div class="step-content"><h4>Adaptation</h4><p>Your pathway evolves as your system responds and progresses.</p></div></div></div></div></section><section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin Your <em>Pathway.</em></h2><p>A personalized system designed around you.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Start With an Assessment</a></div></div></section></div></div>
 
 <!-- ══ RESET ══ -->
 <div id="page-reset" class="page"><div style="padding-top:100px">
@@ -1631,7 +1632,7 @@
   <h2>The <em>Reset.</em></h2>
   <p>A structured pathway to restore balance, regulate your system, and rebuild your foundation. Designed for those experiencing chronic stress, burnout, or nervous system dysregulation.</p>
   <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:32px">
-    <a href="#" class="btn-primary" onclick="showPage('contact');return false">Begin Your Pathway</a>
+    <a href="booking.html" class="btn-primary">Begin Your Pathway</a>
     <a href="#" class="btn-ghost" onclick="showPage('survey');return false">Take the Assessment</a>
   </div>
 </div></div>
@@ -1750,7 +1751,7 @@
 <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal">
   <h2>Begin Your <em>Reset.</em></h2>
   <p>Restore balance and rebuild your foundation.</p>
-  <div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Start With an Assessment</a></div>
+  <div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Start With an Assessment</a></div>
 </div></section>
 </div></div>
 
@@ -1761,7 +1762,7 @@
   <h2>The <em>Foundation.</em></h2>
   <p>A structured pathway to build resilience, stabilize energy, and support long-term health. Designed for those seeking consistency, strength, and a more sustainable way to operate.</p>
   <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:32px">
-    <a href="#" class="btn-primary" onclick="showPage('contact');return false">Begin Your Pathway</a>
+    <a href="booking.html" class="btn-primary">Begin Your Pathway</a>
     <a href="#" class="btn-ghost" onclick="showPage('survey');return false">Take the Assessment</a>
   </div>
 </div></div>
@@ -1877,7 +1878,7 @@
 <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal">
   <h2>Build Your <em>Foundation.</em></h2>
   <p>A pathway designed to support how you function every day.</p>
-  <div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Start With an Assessment</a></div>
+  <div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Start With an Assessment</a></div>
 </div></section>
 </div></div>
 
@@ -1888,7 +1889,7 @@
   <h2>The <em>Elevation.</em></h2>
   <p>A structured pathway to refine performance, enhance recovery, and elevate how you operate. Designed for individuals who are functioning well — and want to perform at a higher level.</p>
   <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:32px">
-    <a href="#" class="btn-primary" onclick="showPage('contact');return false">Begin Your Pathway</a>
+    <a href="booking.html" class="btn-primary">Begin Your Pathway</a>
     <a href="#" class="btn-ghost" onclick="showPage('survey');return false">Take the Assessment</a>
   </div>
 </div></div>
@@ -2007,7 +2008,7 @@
 <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal">
   <h2>Elevate Your <em>Standard.</em></h2>
   <p>A precision system designed to refine how you perform and feel.</p>
-  <div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Start With an Assessment</a></div>
+  <div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Start With an Assessment</a></div>
 </div></section>
 </div></div>
 
@@ -2515,7 +2516,7 @@
             <li style="display:flex;align-items:flex-start;gap:14px;font-size:13px;color:var(--text-body);line-height:1.7"><span style="color:var(--green);font-size:16px;flex-shrink:0;margin-top:2px">◦</span><span><strong style="color:var(--espresso);font-weight:500">Weekly Office Hours</strong> — unstructured time to live in community. Bring a friend. No agenda required.</span></li>
             <li style="display:flex;align-items:flex-start;gap:14px;font-size:13px;color:var(--text-body);line-height:1.7"><span style="color:var(--green);font-size:16px;flex-shrink:0;margin-top:2px">◦</span><span><strong style="color:var(--espresso);font-weight:500">Access to All Compound Events</strong> — sound baths, community circles, seasonal gatherings, and more throughout your three months</span></li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false" style="margin-top:32px;display:inline-block;background:var(--green)">Apply for This Cohort</a>
+          <a href="booking.html" class="btn-primary" style="margin-top:32px;display:inline-block;background:var(--green)">Apply for This Cohort</a>
         </div>
       </div>
     </section>
@@ -2558,7 +2559,7 @@
             <li style="display:flex;align-items:flex-start;gap:14px;font-size:13px;color:var(--text-body);line-height:1.7"><span style="color:var(--green);font-size:16px;flex-shrink:0;margin-top:2px">◦</span><span><strong style="color:var(--espresso);font-weight:500">Networking Office Hours</strong> — bring a colleague or friend. High-quality, low-agenda time with people who operate at your level</span></li>
             <li style="display:flex;align-items:flex-start;gap:14px;font-size:13px;color:var(--text-body);line-height:1.7"><span style="color:var(--green);font-size:16px;flex-shrink:0;margin-top:2px">◦</span><span><strong style="color:var(--espresso);font-weight:500">Access to All Compound Events</strong> — wellness events throughout your three months, remote-compatible for hybrid members</span></li>
           </ul>
-          <a href="#" class="btn-primary" onclick="showPage('contact');return false" style="margin-top:32px;display:inline-block;background:var(--green)">Apply for This Cohort</a>
+          <a href="booking.html" class="btn-primary" style="margin-top:32px;display:inline-block;background:var(--green)">Apply for This Cohort</a>
         </div>
         <div style="padding:40px 44px">
           <span style="font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--copper);display:block;margin-bottom:16px">Cohort 02 · Executive</span>
@@ -2597,7 +2598,7 @@
       </div>
     </section>
 
-    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Twelve People.<br><em>Three Months.</em></h2><p>Both cohorts are limited to twelve participants. Applications are open now.</p><div class="final-cta-actions"><a href="#" class="btn-primary-light" onclick="showPage('contact');return false">Apply Now</a><a href="#" class="btn-ghost-light" onclick="showPage('prac-adrienne');return false">Meet Adrienne</a></div></div></section>
+    <section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Twelve People.<br><em>Three Months.</em></h2><p>Both cohorts are limited to twelve participants. Applications are open now.</p><div class="final-cta-actions"><a href="booking.html" class="btn-primary-light">Apply Now</a><a href="#" class="btn-ghost-light" onclick="showPage('prac-adrienne');return false">Meet Adrienne</a></div></div></section>
   </div>
 </div>
 
@@ -2851,7 +2852,7 @@
           <div style="text-align:center">
             <p style="font-size:13px;color:var(--text-body);margin-bottom:28px;line-height:1.8">A member of The Compound team will reach out to <strong id="result-email-confirm" style="color:var(--bark)"></strong> within one business day.</p>
             <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
-              <a href="#" class="btn-primary" onclick="showPage('contact');return false">Book Your Assessment Call</a>
+              <a href="booking.html" class="btn-primary">Book Your Assessment Call</a>
               <button type="button" style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:var(--bark);text-decoration:none;border:none;background:none;padding-bottom:2px;border-bottom:1px solid var(--sand);cursor:none;transition:color .3s" onclick="resetSurvey()">Retake Assessment</button>
             </div>
           </div>
