@@ -416,6 +416,20 @@
   .about-quote{border-left:2px solid var(--copper);padding:20px 28px;margin:36px 0;background:var(--parchment)}
   .about-quote p{font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;font-weight:300;color:var(--bark);line-height:1.5;margin:0}
 
+  /* COMMUNITY EVENTS */
+  .events-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:56px}
+  .event-card{background:var(--parchment);padding:52px 48px;border:1px solid var(--line);display:flex;flex-direction:column;gap:0}
+  .event-card:first-child{background:var(--ivory)}
+  .event-day-loc{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--copper);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+  .event-day-loc::after{content:'';flex:1;max-width:40px;height:1px;background:var(--copper);opacity:.4}
+  .event-card h3{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,2.6vw,34px);font-weight:300;color:var(--espresso);line-height:1.15;margin-bottom:20px}
+  .event-card h3 em{font-style:italic;color:var(--cognac)}
+  .event-card p{font-size:14px;color:var(--text-body);line-height:1.85;margin-bottom:36px;flex:1}
+  .event-detail-row{display:flex;gap:28px;margin-bottom:36px;flex-wrap:wrap}
+  .event-detail{display:flex;flex-direction:column;gap:4px}
+  .event-detail-label{font-family:'DM Sans',sans-serif;font-size:8px;letter-spacing:.26em;text-transform:uppercase;color:var(--text-dim)}
+  .event-detail-val{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--espresso);font-style:italic}
+
   /* FOUNDER STATEMENT */
   .founder-statement{display:grid;grid-template-columns:340px 1fr;gap:0;border:1px solid var(--line)}
   .founder-aside{padding:60px 48px;border-right:1px solid var(--line);background:var(--parchment);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end}
@@ -716,6 +730,8 @@
 
   @media(max-width:480px){
     .practitioners-grid{grid-template-columns:1fr}
+    .events-grid{grid-template-columns:1fr}
+    .event-card{padding:36px 24px}
     .wedding-timeline{grid-template-columns:1fr}
     nav .nav-cta{display:none}
     .inner-hero h1{font-size:clamp(30px,10vw,44px)}
@@ -1015,8 +1031,35 @@
     </div>
   </section>
 
+  <section class="section section-alt">
+    <div class="section-label" data-num="05">Community Events</div>
+    <div class="reveal"><h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.5vw,48px);font-weight:300;color:var(--espresso);line-height:1.15;max-width:560px">Where the<br>community <em>gathers.</em></h2><p style="font-size:14px;color:var(--text-body);line-height:1.85;max-width:520px;margin-top:16px">Weekly gatherings open to the community — no membership required. Come once or make it a ritual.</p></div>
+    <div class="events-grid reveal reveal-delay-1">
+      <div class="event-card">
+        <div class="event-day-loc">Wednesdays · Laguna Beach</div>
+        <h3>Meditation &amp;<br><em>Breathwork</em></h3>
+        <div class="event-detail-row">
+          <div class="event-detail"><span class="event-detail-label">When</span><span class="event-detail-val">Every Wednesday</span></div>
+          <div class="event-detail"><span class="event-detail-label">Where</span><span class="event-detail-val">Laguna Beach</span></div>
+        </div>
+        <p>Adrienne guides you through a subconscious meditation rooted in clarity and intentional action — creating space to hear yourself clearly and move toward the life you want to live.</p>
+        <a href="booking.html" class="btn-primary">Reserve Your Spot</a>
+      </div>
+      <div class="event-card">
+        <div class="event-day-loc">Fridays · Newport Beach</div>
+        <h3>Community Share<br><em>with an Ocean View</em></h3>
+        <div class="event-detail-row">
+          <div class="event-detail"><span class="event-detail-label">When</span><span class="event-detail-val">Every Friday</span></div>
+          <div class="event-detail"><span class="event-detail-label">Where</span><span class="event-detail-val">Newport Beach</span></div>
+        </div>
+        <p>Each week holds a new theme and invites us to be truly known — sharing stories, writings, and moments from our lives with the Compound community. This is a space to be heard and to belong.</p>
+        <a href="booking.html" class="btn-primary">Reserve Your Spot</a>
+      </div>
+    </div>
+  </section>
+
   <section class="section">
-    <div class="section-label" data-num="05">Partnerships</div>
+    <div class="section-label" data-num="06">Partnerships</div>
     <div class="partnerships-header reveal"><h2>Designed for Individuals <em>and Groups.</em></h2><p>The Compound partners with organizations, properties, and brands to deliver elevated, personalized wellness experiences without compromising precision or care.</p></div>
     <div class="partnerships-grid reveal reveal-delay-1">
       <div class="partnership-tile"><span class="tile-number">01</span><span class="tile-label">Partnership</span><h3>Corporate</h3><p>Physiology-based wellness systems that support how teams perform under pressure.</p><a href="#" class="tile-link" onclick="showPage('corporate');return false">Inquire About Partnership</a></div>
