@@ -284,19 +284,14 @@ app.post('/api/submit-inquiry', async (req, res) => {
 app.get('/api/event-capacity', async (req, res) => {
   if (!base) return res.json({ counts: {}, limit: EVENT_CAPACITY_LIMIT });
   try {
-    const records = await base('Booking Requests').select({
-      filterByFormula: `FIND("EventID:", {Inquiry Details})`,
-      fields: ['Inquiry Details'],
+    const records = await base('Event Bookings').select({
+      fields: ['Event ID'],
       maxRecords: 1000,
     }).all();
     const counts = {};
     for (const rec of records) {
-      const details = rec.fields['Inquiry Details'] || '';
-      const match = details.match(/EventID:\s*(\S+)/);
-      if (match) {
-        const id = match[1];
-        counts[id] = (counts[id] || 0) + 1;
-      }
+      const id = rec.fields['Event ID'];
+      if (id) counts[id] = (counts[id] || 0) + 1;
     }
     res.json({ counts, limit: EVENT_CAPACITY_LIMIT });
   } catch (err) {
@@ -320,9 +315,9 @@ app.post('/api/book-event', async (req, res) => {
 
     // Enforce capacity limit
     if (base) {
-      const existing = await base('Booking Requests').select({
-        filterByFormula: `FIND("EventID: ${eventId}", {Inquiry Details})`,
-        fields: ['Inquiry Details'],
+      const existing = await base('Event Bookings').select({
+        filterByFormula: `{Event ID} = "${eventId}"`,
+        fields: ['Event ID'],
         maxRecords: EVENT_CAPACITY_LIMIT + 1,
       }).all();
       if (existing.length >= EVENT_CAPACITY_LIMIT) {
@@ -332,26 +327,18 @@ app.post('/api/book-event', async (req, res) => {
 
     const fullName = `${firstName} ${lastName}`.trim();
 
-    // Save contact
-    const contactRecord = await saveToAirtable('Contacts', {
-      'Name':            fullName,
+    // Save to Event Bookings table
+    await saveToAirtable('Event Bookings', {
+      'Event':           eventTitle,
+      'Event Date':      eventId.match(/\d{4}-\d{2}-\d{2}/) ? eventId.match(/\d{4}-\d{2}-\d{2}/)[0] : undefined,
+      'First Name':      firstName,
+      'Last Name':       lastName,
       'Email':           email,
       'Phone':           phone,
-      'Source Form':     'Event',
+      'Event ID':        eventId,
       'Submission Date': nowPST(),
+      'Status':          'Confirmed',
     });
-
-    // Save RSVP — embed eventId and email so reminder queries can find them
-    const bookingFields = {
-      'Request Name':           `${fullName} — ${eventTitle} ${eventDate}`,
-      'Client Name':            fullName,
-      'Requested Practitioner': 'Community Event',
-      'Requested Time':         eventTime,
-      'Inquiry Details':        `Event RSVP: ${eventTitle}\nDate: ${eventDate}\nTime: ${eventTime}\nLocation: ${eventLocation}\nEventID: ${eventId}\nAttendeeEmail: ${email}\nAttendeeFirst: ${firstName}`,
-      'Submission Date (PST)':  nowPST(),
-    };
-    if (contactRecord) bookingFields['Related Contact'] = [contactRecord.id];
-    await saveToAirtable('Booking Requests', bookingFields);
 
     // Add to Klaviyo
     await addToKlaviyo({
@@ -1124,19 +1111,16 @@ async function runEventReminders() {
   for (const ev of todayEvents) {
     console.log(`📅 Sending day-of reminders for ${ev.title} (${ev.label})`);
     try {
-      const records = await base('Booking Requests').select({
-        filterByFormula: `FIND("EventID: ${ev.id}", {Inquiry Details})`,
-        fields: ['Inquiry Details'],
+      const records = await base('Event Bookings').select({
+        filterByFormula: `{Event ID} = "${ev.id}"`,
+        fields: ['Email', 'First Name'],
         maxRecords: 500,
       }).all();
 
       for (const rec of records) {
-        const details = rec.fields['Inquiry Details'] || '';
-        const emailMatch = details.match(/AttendeeEmail:\s*(.+)/);
-        const firstMatch  = details.match(/AttendeeFirst:\s*(.+)/);
-        if (!emailMatch) continue;
-        const to        = emailMatch[1].trim();
-        const firstName = firstMatch ? firstMatch[1].trim() : 'Friend';
+        const to        = rec.fields['Email'];
+        const firstName = rec.fields['First Name'] || 'Friend';
+        if (!to) continue;
         await sendEventReminderEmail({ to, firstName, eventTitle: ev.title, eventDate: ev.label, eventTime: ev.time, eventLocation: ev.location });
         console.log(`  ✓ Reminder sent to ${to}`);
       }
