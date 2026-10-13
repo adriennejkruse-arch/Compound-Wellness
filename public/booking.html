@@ -331,11 +331,11 @@ h1 em{font-style:italic;color:var(--copper)}
               <span class="badge book-online">Book Online</span>
             </div>
 
-            <div class="prac-card" tabindex="0" role="radio" aria-checked="false" data-prac="adrienne" data-name="Adrienne Kruse" data-type="zoom">
+            <div class="prac-card bookable" tabindex="0" role="radio" aria-checked="false" data-prac="adrienne" data-name="Adrienne Kruse" data-type="book-request">
               <img src="adrienne.webp" alt="Adrienne Kruse" class="prac-photo">
               <div class="prac-name">Adrienne Kruse</div>
-              <div class="prac-role">Cohort Programs</div>
-              <span class="badge free">Free Zoom · July</span>
+              <div class="prac-role">Meditation &amp; Breathwork</div>
+              <span class="badge book-online">Book Online</span>
             </div>
 
             <div class="prac-card bookable" tabindex="0" role="radio" aria-checked="false" data-prac="christine" data-name="Christine Winnen, RN" data-type="book-request">
@@ -713,6 +713,10 @@ h1 em{font-style:italic;color:var(--copper)}
 <script>
 // ─── DATA ────────────────────────────────────────────────
 const SVCS = {
+  adrienne: [
+    {id:'adr-med',  cat:'Meditation', name:'Guided Meditation', dur:'60 min', price:250, desc:'Subconscious meditation rooted in clarity and intentional action, creating space to hear yourself clearly and move toward the life you want to live.'},
+    {id:'adr-breath',cat:'Breathwork', name:'Breathwork',        dur:'60 min', price:250, desc:'Guided breathwork for nervous system regulation, stress release, and emotional integration.'},
+  ],
   coco: [
     {id:'sb60', cat:'Sound Bath',  name:'Sound Bath',        dur:'60 min',  price:150, desc:'Deep relaxation through crystal bowls and sacred instruments. Restores resonance and calm.'},
     {id:'sb90', cat:'Sound Bath',  name:'Sound Bath',        dur:'90 min',  price:212, desc:'Extended sound bath for deeper nervous system integration and a more complete reset.'},
