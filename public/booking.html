@@ -1081,7 +1081,9 @@ async function submitBookingRequest() {
     email:       document.getElementById('f-email').value.trim(),
     phone:       document.getElementById('f-phone').value.trim(),
     city:        document.getElementById('f-city').value.trim(),
-    notes:       document.getElementById('f-notes')?.value?.trim() || '',
+    // The home address is sent inside notes so it lands in existing Airtable fields and the notification email
+    notes:       [ 'Home address: ' + [document.getElementById('f-address').value.trim(), document.getElementById('f-city').value.trim()].filter(Boolean).join(', '),
+                   document.getElementById('f-notes')?.value?.trim() ].filter(Boolean).join('\n'),
     practitioner:S.pracName,
     pracRole:    S.prac,
     service:     S.svc ? `${S.svc.name} (${S.svc.dur})` : '',
