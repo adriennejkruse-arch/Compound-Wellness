@@ -30,6 +30,10 @@ const { clerkClient, requireAuth } = require('@clerk/express');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+// Railway sits in front of this app as a proxy — trust its X-Forwarded-For
+// header so req.ip reflects the real client, not Railway's edge IP
+// (needed for the admin-login rate limiter below to work per-client).
+app.set('trust proxy', true);
 
 // ── Google OAuth2 client ─────────────────────────────────
 const oauth2Client = new google.auth.OAuth2(
@@ -56,8 +60,41 @@ app.use('/api/stripe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (HTML, images, etc.)
-app.use(express.static(path.join(__dirname)));
+// ── Security headers ─────────────────────────────────────
+// CSP starts in Report-Only mode — it logs violations to the browser console
+// instead of blocking anything. Flip CSP_ENFORCE=1 in Railway once a full
+// manual pass (booking payment, portal login, admin dashboard) shows no
+// console violations, then remove the Report-Only fallback below.
+const CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://js.stripe.com https://cdnjs.cloudflare.com https://smart-gannet-54.clerk.accounts.dev",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https://api.bufferapp.com https://api.stripe.com https://m.stripe.com https://m.stripe.network https://smart-gannet-54.clerk.accounts.dev https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://cdnjs.cloudflare.com",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://smart-gannet-54.clerk.accounts.dev",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'self'",
+].join('; ');
+
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  const cspHeader = process.env.CSP_ENFORCE === '1'
+    ? 'Content-Security-Policy'
+    : 'Content-Security-Policy-Report-Only';
+  res.setHeader(cspHeader, CSP_DIRECTIVES);
+  next();
+});
+
+// Serve static files (HTML, images, etc.) — only from public/, never the project root,
+// so package.json/package-lock.json/node_modules/.env are never web-accessible.
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // ════════════════════════════════════════════════════════
@@ -228,6 +265,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
       'Notes':           notes  || '',
       'Source Form':     airtableSource,
       'Submission Date': nowPST(),
+      'Status':          'New Lead',
     });
 
     // Save booking details to Booking Requests table, linked back to the contact
@@ -268,6 +306,15 @@ app.post('/api/submit-inquiry', async (req, res) => {
       practitioner,
       notes,
       consultTime,
+    });
+
+    notifySlack({
+      title: 'New inquiry',
+      lines: [
+        `*From:* ${fullName}`,
+        `*Practitioner:* ${practitioner || 'General'}`,
+        (requestedDate || requestedTime) ? `*Requested:* ${[requestedDate, requestedTime].filter(Boolean).join(' · ')}` : '',
+      ],
     });
 
     res.json({ success: true });
@@ -365,6 +412,14 @@ app.post('/api/book-event', async (req, res) => {
       amount:      '0',
     });
 
+    notifySlack({
+      title: 'New event RSVP',
+      lines: [
+        `*From:* ${fullName}`,
+        `*Event:* ${eventTitle || ''}${eventDate ? ' — ' + eventDate : ''}`,
+      ],
+    });
+
     res.json({ success: true });
   } catch (err) {
     console.error('book-event error:', err.message);
@@ -374,23 +429,67 @@ app.post('/api/book-event', async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════
-// ADMIN AUTH MIDDLEWARE
+// ADMIN AUTH — server-issued session tokens (not the raw
+// password) with expiry, plus server-side login rate limiting.
 // ════════════════════════════════════════════════════════
+const crypto = require('crypto');
+
+const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours — matches admin.html's client-side TTL
+const adminSessions = new Map(); // token -> expiry timestamp
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 60 * 1000;
+const loginAttemptsByIp = new Map(); // ip -> { count, lockedUntil }
+
+function safeCompare(a, b) {
+  const ah = crypto.createHash('sha256').update(String(a)).digest();
+  const bh = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ah, bh);
+}
+
 function adminAuth(req, res, next) {
-  const key = req.headers['x-admin-key'] || '';
-  const pass = process.env.ADMIN_PASSWORD || 'Compound2025!';
-  if (key !== pass) return res.status(401).json({ error: 'Unauthorized' });
+  const token = req.headers['x-admin-key'] || '';
+  const expiry = adminSessions.get(token);
+  if (!token || !expiry || expiry < Date.now()) {
+    adminSessions.delete(token);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   next();
 }
 
 app.post('/api/admin/auth', (req, res) => {
-  const { password } = req.body;
-  const pass = process.env.ADMIN_PASSWORD || 'Compound2025!';
-  if (password === pass) {
-    res.json({ ok: true });
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
+  const ip = req.ip;
+  const attempt = loginAttemptsByIp.get(ip) || { count: 0, lockedUntil: 0 };
+  if (attempt.lockedUntil > Date.now()) {
+    return res.status(429).json({ error: 'Too many attempts. Try again shortly.' });
   }
+
+  const pass = process.env.ADMIN_PASSWORD;
+  if (!pass) {
+    console.error('ADMIN_PASSWORD is not set — admin login is disabled until it is configured in Railway.');
+    return res.status(503).json({ error: 'Admin login is not configured.' });
+  }
+
+  const { password } = req.body;
+  if (password && safeCompare(password, pass)) {
+    loginAttemptsByIp.delete(ip);
+    const token = crypto.randomBytes(32).toString('hex');
+    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
+    return res.json({ ok: true, token });
+  }
+
+  attempt.count += 1;
+  if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+    attempt.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+    attempt.count = 0;
+  }
+  loginAttemptsByIp.set(ip, attempt);
+  res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.post('/api/admin/logout', adminAuth, (req, res) => {
+  adminSessions.delete(req.headers['x-admin-key']);
+  res.json({ ok: true });
 });
 
 app.get('/api/admin/contacts', adminAuth, async (req, res) => {
@@ -408,6 +507,7 @@ app.get('/api/admin/contacts', adminAuth, async (req, res) => {
       city:         r.fields['City'] || '',
       source:       r.fields['Source Form'] || '',
       notes:        r.fields['Notes'] || '',
+      status:       r.fields['Status'] || 'New Lead',
       created:      r.fields['Submission Date'] ? new Date(r.fields['Submission Date']).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '',
     }));
     res.json({ contacts });
@@ -439,6 +539,23 @@ app.get('/api/admin/bookings', adminAuth, async (req, res) => {
     res.json({ bookings });
   } catch (err) {
     console.error('Admin bookings error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const BOOKING_STATUSES = ['Pending', 'Confirmed', 'Cancelled'];
+
+app.patch('/api/admin/bookings/:id', adminAuth, async (req, res) => {
+  const { status } = req.body;
+  if (!BOOKING_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `Status must be one of: ${BOOKING_STATUSES.join(', ')}` });
+  }
+  if (!base) return res.status(503).json({ error: 'Airtable not configured' });
+  try {
+    await base('Booking Requests').update(req.params.id, { 'Status': status });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Update booking status error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -723,6 +840,8 @@ app.get('/robots.txt', (req, res) => {
   res.set('Content-Type', 'text/plain').send(
 `User-agent: *
 Allow: /
+Disallow: /admin.html
+Disallow: /portal.html
 
 Sitemap: https://compoundoc.com/sitemap.xml`
   );
@@ -760,6 +879,7 @@ app.get('/sitemap.xml', (req, res) => {
     { loc: '/about',                             priority: '0.7', freq: 'monthly' },
     { loc: '/contact',                           priority: '0.8', freq: 'monthly' },
     { loc: '/assessment',                        priority: '0.8', freq: 'monthly' },
+    { loc: '/privacy',                           priority: '0.3', freq: 'yearly' },
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -773,11 +893,15 @@ ${urls.map(u => `  <url>
   res.set('Content-Type', 'application/xml').send(xml);
 });
 
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
 // ════════════════════════════════════════════════════════
 // CATCH-ALL — serve index.html for all unmatched routes
 // ════════════════════════════════════════════════════════
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 
@@ -824,6 +948,22 @@ async function saveToAirtable(tableName, fields) {
     console.error(`Airtable ${tableName} error:`, err.message);
     return null;
   }
+}
+
+
+// ════════════════════════════════════════════════════════
+// HELPER: Post a short alert to Slack (incoming webhook)
+// Deliberately omits notes, phone and email: those can contain
+// health details and live in Airtable / the admin dashboard.
+// Fire-and-forget — a Slack outage never blocks a submission.
+// ════════════════════════════════════════════════════════
+function notifySlack({ title, lines }) {
+  const url = process.env.SLACK_WEBHOOK_URL;
+  if (!url) return;
+  const text = [`*${title}*`, ...lines.filter(Boolean), '<https://www.compoundoc.com/admin.html|Open admin dashboard>'].join('\n');
+  axios.post(url, { text }, { timeout: 5000 })
+    .then(() => console.log(`✓ Slack: ${title} posted`))
+    .catch(err => console.error('Slack notify error:', err.message));
 }
 
 

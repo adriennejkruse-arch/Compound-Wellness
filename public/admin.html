@@ -21,7 +21,7 @@
   --blue:#1877F2;--blue-tint:#EFF4FF;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;color:var(--espresso);word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none}
+html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;color:var(--espresso);word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none;min-width:1280px;overflow-x:auto}
 :focus-visible{outline:2px solid var(--copper);outline-offset:2px}
 
 /* ── LOGIN ─────────────────────────────────────────────── */
@@ -192,83 +192,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
 .buf-tip{font-size:11px;color:var(--text-body);line-height:1.7;background:var(--parchment);border-left:2px solid var(--sand);padding:10px 14px;margin-top:12px}
 
 /* ── MOBILE ────────────────────────────────────────────── */
-@media(max-width:768px){
-  /* Global */
-  *{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none}
 
-  /* App shell — allow vertical scroll on mobile */
-  #appShell{flex-direction:column;height:auto;min-height:100vh;overflow:visible}
-  .main{height:auto;overflow-y:visible}
-
-  /* Sidebar — icon-only strip at top */
-  .sidebar{width:100%;height:auto;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
-  .sidebar-logo{display:none}
-  .nav-sec{padding:0;border-bottom:none;display:flex;flex-direction:row}
-  .nav-sec-lbl,.sidebar-foot,.sidebar-user,.nav-btn span,
-  .sidebar-logo-name,.sidebar-logo-the,.sidebar-logo-tag{display:none}
-  .nav-btn{padding:12px 14px;justify-content:center;min-height:44px;min-width:44px;border-bottom:none;flex-shrink:0}
-  .nav-btn.active{border-left:none;border-bottom:2px solid var(--sand)}
-
-  /* Topbar */
-  .topbar{padding:10px 14px;flex-wrap:wrap;gap:6px}
-  .topbar-title{font-size:16px}
-  .topbar-actions{flex-wrap:wrap;gap:6px}
-  .topbar-date{display:none}
-  .btn-sm{min-height:36px;padding:6px 12px}
-
-  /* Content */
-  .content{padding:14px}
-
-  /* Stat grids */
-  .stat-grid{grid-template-columns:repeat(2,1fr)}
-  div.stat-grid[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
-
-  /* Chart / layout grids — single column */
-  .chart-row,.chart-row-half,.qr-grid,.frow{grid-template-columns:1fr}
-  .chart-wrap{height:160px}
-
-  /* Tables — horizontal scroll */
-  .tcard{overflow-x:auto}
-  div[style*="overflow-x:auto"]{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-  .dtable{min-width:560px}
-  .dtable th,.dtable td{padding:8px 10px;font-size:11px}
-
-  /* Search & filter controls stack */
-  .thead{flex-direction:column;align-items:flex-start;gap:10px}
-  .tcontrols{flex-wrap:wrap;gap:6px;width:100%}
-  .search{width:100%}
-
-  /* Drawer — full width */
-  .drawer{width:100vw;max-width:100vw}
-  .dhead{padding:16px}
-  .dbody{padding:16px}
-  .dact{padding:14px 16px;flex-wrap:wrap;gap:6px}
-  .dact .btn{min-height:44px}
-  .dr{flex-wrap:wrap;gap:4px}
-  .dl{width:auto;min-width:80px}
-
-  /* Queue */
-  .queue-row{grid-template-columns:1fr auto}
-  .queue-date{grid-column:1/-1;font-size:9px}
-
-  /* Buffer compose */
-  .compose-bar{flex-direction:column;gap:6px}
-  .sched-row{flex-wrap:wrap;gap:8px}
-  .sched-row input[type=datetime-local]{width:100%}
-
-  /* QR box */
-  .qr-display{width:120px;height:120px}
-
-  /* UTM builder */
-  div[style*="grid-template-columns:repeat(auto-fill,minmax(180px"]{grid-template-columns:1fr!important}
-
-  /* Login box */
-  .login-box{padding:32px 24px;width:100%;max-width:100%}
-
-  /* Buttons */
-  .btn{min-height:44px}
-  .btn-primary,.btn-green,.btn-blue{min-height:44px;padding:10px 16px}
-}
 </style>
 </head>
 <body>
@@ -717,9 +641,10 @@ async function doLogin() {
       body: JSON.stringify({ password: pass }),
     });
     if (!res.ok) throw new Error('Invalid credentials');
+    const { token } = await res.json();
     loginAttempts = 0;
-    adminKey = pass;
-    const session = { email, pass, ts: now };
+    adminKey = token;
+    const session = { email, token, ts: now };
     try { sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session)); } catch(e) {}
     document.getElementById('loginErr').textContent = '';
     launchApp(email);
@@ -746,7 +671,7 @@ function checkSession() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (Date.now() - s.ts > SESSION_TTL) { sessionStorage.removeItem(ADMIN_SESSION_KEY); return false; }
-    adminKey = s.pass || '';
+    adminKey = s.token || '';
     launchApp(s.email);
     return true;
   } catch(e) { return false; }
@@ -761,6 +686,7 @@ function launchApp(email) {
 }
 
 function doLogout() {
+  fetch('/api/admin/logout', { method: 'POST', headers: adminHeaders() }).catch(()=>{});
   try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch(e) {}
   document.getElementById('appShell').classList.remove('visible');
   document.getElementById('loginScreen').style.display = 'flex';
@@ -837,10 +763,9 @@ function set(id,v) { const e=document.getElementById(id); if(e) e.textContent=v;
 function updateStats() {
   const rev = DB.bookings.reduce((s,b)=>s+(b.amount||0),0);
   const inq = DB.contacts.filter(c=>(c.source||'').includes('Inquiry')).length;
-  set('sv','1,248'); set('sb', DB.bookings.length); set('si', inq);
+  set('sv','—'); set('sb', DB.bookings.length); set('si', inq);
   set('sr','$'+rev.toLocaleString()); set('sc', DB.contacts.length); set('sm', DB.members.length);
-  set('sv-c','↑ 12% vs last month'); set('sb-c','↑ 8% vs last month');
-  set('si-c','↑ 23% vs last month'); set('sr-c','↑ 15% vs last month');
+  set('sv-c',''); set('sb-c',''); set('si-c',''); set('sr-c','');
   set('bt', DB.bookings.length); set('bm', DB.bookings.length);
   set('br','$'+rev.toLocaleString());
   const paid = DB.bookings.filter(b=>b.amount>0);
@@ -882,11 +807,10 @@ async function drawCharts() {
     });
     set('sv', ga4.totalSessions.toLocaleString());
   } else {
+    // GA4 not connected — leave the chart empty rather than showing invented numbers.
     for(let i=days-1;i>=0;i--) {
       const d=new Date(); d.setDate(d.getDate()-i);
       labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-      sessions.push(Math.floor(20+Math.random()*60));
-      users.push(Math.floor(15+Math.random()*45));
     }
   }
 
@@ -904,7 +828,7 @@ async function drawCharts() {
   // Sources
   let srcs = ga4?.configured && ga4.sources?.length
     ? ga4.sources.map(s => ({ l: s.label, p: s.pct }))
-    : [{l:'Direct',p:32},{l:'Instagram',p:28},{l:'Google',p:20},{l:'Email',p:10},{l:'Referral',p:7},{l:'Other',p:3}];
+    : [];
 
   cS=new Chart(sc,{type:'doughnut',data:{
     labels: srcs.map(s=>s.l),
@@ -926,8 +850,10 @@ async function drawCharts() {
     <tr><td style="color:var(--bark)">${esc(p)}</td><td>${v}</td><td style="color:var(--text-body)">${pct}</td></tr>`).join('');
 
   if (!ga4?.configured) {
-    const note = `<div style="font-size:10px;color:var(--text-body);padding:8px 0;font-style:italic">
-      GA4 not connected — add GOOGLE_GA4_PROPERTY_ID to Railway for live data.</div>`;
+    const reason = ga4?.error
+      ? `GA4 connection failing: ${esc(ga4.error)}`
+      : 'GA4 not connected — set GOOGLE_GA4_PROPERTY_ID and GOOGLE_REFRESH_TOKEN in Railway for live data.';
+    const note = `<div style="font-size:10px;color:var(--text-body);padding:8px 0;font-style:italic">${reason}</div>`;
     document.getElementById('srcBars').insertAdjacentHTML('beforeend', note);
   }
 }
@@ -1054,12 +980,16 @@ function openContactDrawer(id) {
 }
 function openBookingDrawer(id) {
   const b=DB.bookings.find(x=>x.id===id); if(!b) return;
+  const actions = [
+    b.status!=='Confirmed' ? `<button class="btn btn-primary btn-sm" onclick="setBookingStatus('${id}','Confirmed')">Confirm Booking</button>` : '',
+    b.status!=='Cancelled' ? `<button class="btn btn-red btn-sm" onclick="setBookingStatus('${id}','Cancelled')">Cancel Booking</button>` : '',
+  ].filter(Boolean).join('\n');
   openDrawer(b.name, b.practitioner||'',
     dr('Service',esc(b.service||'—'))+dr('Date',esc(b.date||'—'))+
     dr('Amount',b.amount>0?'$'+b.amount.toLocaleString()+' USD':'—')+
     dr('Status',badge(bStatus(b.status),b.status))+
     dr('Stripe',`<code style="font-size:10px">${esc(b.stripe||'—')}</code>`),
-    `<button class="btn btn-red btn-sm" onclick="cancelBooking('${id}');closeDrawer()">Cancel Booking</button>`);
+    actions);
 }
 function openMemberDrawer(id) {
   const m=DB.members.find(x=>x.id===id); if(!m) return;
@@ -1072,7 +1002,21 @@ function openMemberDrawer(id) {
 }
 
 function delContact(id) { DB.contacts=DB.contacts.filter(c=>c.id!==id); saveDB(); renderContacts(); updateStats(); }
-function cancelBooking(id) { const b=DB.bookings.find(b=>b.id===id); if(b){b.status='Cancelled';saveDB();renderBookings();updateStats();} }
+async function setBookingStatus(id, status) {
+  try {
+    const res = await fetch(`/api/admin/bookings/${id}`, {
+      method: 'PATCH',
+      headers: adminHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) { const d = await res.json().catch(()=>({})); throw new Error(d.error || `Request failed (${res.status})`); }
+    const b = DB.bookings.find(b=>b.id===id);
+    if (b) b.status = status;
+    renderBookings(); updateStats(); closeDrawer();
+  } catch (err) {
+    alert(`Couldn't update booking: ${err.message}`);
+  }
+}
 function delMember(id) { DB.members=DB.members.filter(m=>m.id!==id); saveDB(); renderMembers(); updateStats(); }
 
 // ─── Add Contact ───────────────────────────────────────────
