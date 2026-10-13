@@ -383,6 +383,24 @@
   .prac-detail-body p{font-size:14px;color:var(--text-body);line-height:1.9;margin-bottom:20px}
   .prac-services-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);margin-top:0}
   .prac-service-item{padding:32px 36px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--ivory)}
+
+  /* IV menu (Christine Winnen page) */
+  .iv-menu{padding:72px 60px 24px;border-top:1px solid var(--line)}
+  .iv-menu-head{max-width:760px;margin:0 auto 40px;text-align:center}
+  .iv-menu-eyebrow{font-size:10px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--copper);margin-bottom:14px}
+  .iv-menu-head h3{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:42px;line-height:1.1;color:var(--espresso)}
+  .iv-menu-head h3 em{font-style:italic;color:var(--copper)}
+  .iv-menu-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);max-width:1080px;margin:0 auto}
+  .iv-cat{padding:32px 36px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--ivory)}
+  .iv-cat:nth-child(2n){border-right:none}
+  .iv-cat.alt{background:var(--parchment)}
+  .iv-cat h4{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:26px;color:var(--espresso);margin-bottom:14px}
+  .iv-cat ul{list-style:none;padding:0}
+  .iv-cat li{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid var(--line);font-size:15px;color:var(--espresso)}
+  .iv-cat li:first-child{border-top:none}
+  .iv-cat li span:last-child{color:var(--copper);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .iv-note p{font-size:14px;line-height:1.75;color:var(--text-body);margin-bottom:12px}
+  .iv-menu-cta{text-align:center;margin-top:36px}
   .prac-service-item:nth-child(2n){border-right:none}
   .prac-service-item:nth-last-child(-n+2){border-bottom:none}
   .prac-service-item h5{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--espresso);margin-bottom:10px}
@@ -979,6 +997,22 @@
           <p>Christine combines her extensive nursing background with an intuitive sense of care that puts clients completely at ease. Each infusion is carefully formulated to meet your unique needs — whether you are restoring after travel, preparing for an athletic event, or simply replenishing for optimal wellness.</p>
         </div>
       </div>
+    </section>
+    <section class="iv-menu reveal">
+      <div class="iv-menu-head"><div class="iv-menu-eyebrow">Drip IV &amp; Hydration</div><h3>The IV <em>Menu.</em></h3></div>
+      <div class="iv-menu-grid">
+        <div class="iv-cat"><h4>Hydration</h4><ul><li><span>Hydration IV</span><span>$265</span></li><li><span>Myers Cocktail IV</span><span>$315</span></li></ul></div>
+        <div class="iv-cat"><h4>Immune Support</h4><ul><li><span>Immune Support IV</span><span>$315</span></li><li><span>Super Immune Boost IV</span><span>$415</span></li></ul></div>
+        <div class="iv-cat alt"><h4>Symptom Support</h4><ul><li><span>Cold &amp; Flu IV</span><span>$345</span></li><li><span>Hangover IV</span><span>$315</span></li><li><span>Jet Lag IV</span><span>$365</span></li><li><span>Migraine Relief IV</span><span>$365</span></li></ul></div>
+        <div class="iv-cat alt"><h4>Everyday Wellness</h4><ul><li><span>All Inclusive IV</span><span>$415</span></li><li><span>Performance IV</span><span>$365</span></li><li><span>Radiance IV</span><span>$415</span></li><li><span>Vitality IV</span><span>$415</span></li></ul></div>
+        <div class="iv-cat"><h4>Advanced Infusions</h4><ul><li><span>Iron IV</span><span>$825</span></li><li><span>Iron IV &amp; Boost</span><span>$1,025</span></li><li><span>NAD+ IV</span><span>$825</span></li><li><span>NAD+ IV &amp; Boost</span><span>$1,025</span></li><li><span>Niagen+ IV</span><span>$850</span></li><li><span>Niagen+ IV &amp; Boost</span><span>$1,050</span></li></ul></div>
+        <div class="iv-cat iv-note"><h4>IV Service &amp; Appointment Timing</h4>
+          <p>Based on the patient's clinical assessment and health needs, either <strong>500 mL or 1,000 mL of Normal Saline</strong> may be administered.</p>
+          <p>For a standard vitamin infusion, the total appointment time, including patient arrival, setup, infusion, and cleanup, ranges from <strong>40–70 minutes</strong>. Advanced infusions may require approximately <strong>40–100 minutes</strong>.</p>
+          <p>Actual infusion time varies based on treatment, catheter gauge, patient tolerance, and whether a pressure bag is utilized.</p>
+        </div>
+      </div>
+      <div class="iv-menu-cta"><a href="booking.html" class="btn-primary">Book an IV</a></div>
     </section>
     <div class="prac-services-grid reveal">
       <div class="prac-service-item"><h5>Energy & Recovery</h5><p>Restore cellular energy and accelerate recovery from physical and mental demand.</p></div>
