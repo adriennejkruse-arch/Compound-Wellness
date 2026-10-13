@@ -711,6 +711,7 @@ async function loadDB() {
       fetch('/api/admin/contacts',  { headers: adminHeaders() }),
       fetch('/api/admin/bookings',  { headers: adminHeaders() }),
     ]);
+    if (cRes.status === 401 || bRes.status === 401) { doLogout(); alert('Your session expired. Please sign in again.'); return; }
     if (cRes.ok) { const d = await cRes.json(); DB.contacts = d.contacts || []; }
     if (bRes.ok) { const d = await bRes.json(); DB.bookings = d.bookings || []; }
   } catch(e) {

@@ -434,7 +434,8 @@ app.post('/api/book-event', async (req, res) => {
 const crypto = require('crypto');
 
 const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours — matches admin.html's client-side TTL
-const adminSessions = new Map(); // token -> expiry timestamp
+// Stateless signed tokens (expiry + HMAC keyed by ADMIN_PASSWORD) so sessions
+// survive deploys/restarts, and changing ADMIN_PASSWORD signs everyone out.
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_MS = 60 * 1000;
@@ -446,11 +447,23 @@ function safeCompare(a, b) {
   return crypto.timingSafeEqual(ah, bh);
 }
 
+function signAdminToken(expiry) {
+  const body = String(expiry);
+  const sig = crypto.createHmac('sha256', process.env.ADMIN_PASSWORD).update(body).digest('hex');
+  return `${body}.${sig}`;
+}
+
+function verifyAdminToken(token) {
+  if (!process.env.ADMIN_PASSWORD || typeof token !== 'string') return false;
+  const [body, sig] = token.split('.');
+  const expiry = Number(body);
+  if (!body || !sig || !expiry || expiry < Date.now()) return false;
+  const expected = crypto.createHmac('sha256', process.env.ADMIN_PASSWORD).update(body).digest('hex');
+  return safeCompare(sig, expected);
+}
+
 function adminAuth(req, res, next) {
-  const token = req.headers['x-admin-key'] || '';
-  const expiry = adminSessions.get(token);
-  if (!token || !expiry || expiry < Date.now()) {
-    adminSessions.delete(token);
+  if (!verifyAdminToken(req.headers['x-admin-key'] || '')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
@@ -472,8 +485,7 @@ app.post('/api/admin/auth', (req, res) => {
   const { password } = req.body;
   if (password && safeCompare(password, pass)) {
     loginAttemptsByIp.delete(ip);
-    const token = crypto.randomBytes(32).toString('hex');
-    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
+    const token = signAdminToken(Date.now() + ADMIN_SESSION_TTL_MS);
     return res.json({ ok: true, token });
   }
 
@@ -486,10 +498,8 @@ app.post('/api/admin/auth', (req, res) => {
   res.status(401).json({ error: 'Invalid credentials' });
 });
 
-app.post('/api/admin/logout', adminAuth, (req, res) => {
-  adminSessions.delete(req.headers['x-admin-key']);
-  res.json({ ok: true });
-});
+// Tokens are stateless, so logout just tells the client to discard its token.
+app.post('/api/admin/logout', (req, res) => res.json({ ok: true }));
 
 app.get('/api/admin/contacts', adminAuth, async (req, res) => {
   if (!base) return res.json({ contacts: [] });
