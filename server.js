@@ -641,6 +641,7 @@ app.get('/api/admin/ga4', adminAuth, async (req, res) => {
     res.json({ configured: true, totalSessions, traffic, sources, pages });
   } catch (err) {
     console.error('GA4 error:', err.message);
+    alertSlack('ga4', 'GA4 analytics is failing', err.message);
     res.json({ configured: false, error: err.message });
   }
 });
@@ -955,6 +956,7 @@ async function saveToAirtable(tableName, fields) {
   } catch (err) {
     // Don't throw — log and continue so submission still succeeds
     console.error(`Airtable ${tableName} error:`, err.message);
+    alertSlack(`airtable-${tableName}`, `Airtable save failed (${tableName}) — a submission may not have been recorded`, err.message);
     return null;
   }
 }
@@ -973,6 +975,41 @@ function notifySlack({ title, lines }) {
   axios.post(url, { text }, { timeout: 5000 })
     .then(() => console.log(`✓ Slack: ${title} posted`))
     .catch(err => console.error('Slack notify error:', err.message));
+}
+
+
+// ════════════════════════════════════════════════════════
+// HELPER: Slack alert when an integration breaks
+// Posts at most once per hour per problem so a failure that repeats on every
+// submission doesn't flood the channel. Never includes client details.
+// ════════════════════════════════════════════════════════
+const alertLastSent = new Map();
+const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
+const RAILWAY_LOGS_URL = 'https://railway.com/project/45374fb8-739d-470f-ae5d-e8a08b6b077c/logs?environmentId=382ebd67-51db-4495-bc0a-cedd513ca359';
+
+function alertSlack(key, title, detail) {
+  const msg = String(detail || '').slice(0, 300);
+  console.error(`ALERT [${key}] ${title}: ${msg}`);
+  const url = process.env.SLACK_WEBHOOK_URL;
+  if (!url) return;
+  if (Date.now() - (alertLastSent.get(key) || 0) < ALERT_COOLDOWN_MS) return;
+  alertLastSent.set(key, Date.now());
+  const hint = /invalid_grant/i.test(msg)
+    ? '\nThe Google login has expired or been revoked. Generate a new refresh token (OAuth Playground) and update GOOGLE_REFRESH_TOKEN in Railway.'
+    : '';
+  const text = [`:warning: *${title}*`, msg, hint, `<${RAILWAY_LOGS_URL}|Open Railway logs>`].filter(Boolean).join('\n');
+  axios.post(url, { text }, { timeout: 5000 }).catch(err => console.error('Slack alert error:', err.message));
+}
+
+// Daily check that the Google login still works, so expiry is caught before an inquiry is lost.
+async function checkGoogleAuth() {
+  if (!process.env.GOOGLE_REFRESH_TOKEN) return;
+  try {
+    await oauth2Client.getAccessToken();
+    console.log('✓ Google login check passed');
+  } catch (err) {
+    alertSlack('google-auth', 'Google login check failed — emails and analytics are down', err.message);
+  }
 }
 
 
@@ -1029,6 +1066,7 @@ async function addToKlaviyo({ email, firstName, lastName, source, listId, proper
   } catch (err) {
     const detail = err.response?.data || err.message;
     console.error('Klaviyo error:', JSON.stringify(detail));
+    if (err.response?.status !== 409) alertSlack('klaviyo', 'Klaviyo is failing', JSON.stringify(detail));
   }
 }
 
@@ -1141,6 +1179,7 @@ async function sendGmail({ to, subject, html, attachments = [] }) {
     console.log(`✓ Gmail sent to ${to}`);
   } catch (err) {
     console.error('Gmail send error:', err.message);
+    alertSlack('gmail', 'Gmail is failing — client emails are not going out', err.message);
   }
 }
 
@@ -1300,6 +1339,7 @@ function scheduleEventReminders() {
 }
 
 scheduleEventReminders();
+setTimeout(function googleCheck() { checkGoogleAuth(); setTimeout(googleCheck, 24 * 60 * 60 * 1000); }, 20 * 1000);
 
 async function sendAutoReply({ to, firstName, practitioner, consultTime }) {
   const consultNote = consultTime
