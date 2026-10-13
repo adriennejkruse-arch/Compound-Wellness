@@ -265,7 +265,6 @@ app.post('/api/submit-inquiry', async (req, res) => {
       'Notes':           notes  || '',
       'Source Form':     airtableSource,
       'Submission Date': nowPST(),
-      'Status':          'New Lead',
     });
 
     // Save booking details to Booking Requests table, linked back to the contact
