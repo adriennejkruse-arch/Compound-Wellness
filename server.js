@@ -889,6 +889,7 @@ app.get('/sitemap.xml', (req, res) => {
     { loc: '/about',                             priority: '0.7', freq: 'monthly' },
     { loc: '/contact',                           priority: '0.8', freq: 'monthly' },
     { loc: '/assessment',                        priority: '0.8', freq: 'monthly' },
+    { loc: '/iv-quiz',                           priority: '0.7', freq: 'monthly' },
     { loc: '/privacy',                           priority: '0.3', freq: 'yearly' },
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -905,6 +906,10 @@ ${urls.map(u => `  <url>
 
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
+app.get('/iv-quiz', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'iv-quiz.html'));
 });
 
 // ════════════════════════════════════════════════════════

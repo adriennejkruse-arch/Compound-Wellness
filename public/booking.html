@@ -1310,10 +1310,15 @@ function refreshSummary() {
 
 // ─── URL PARAM auto-select ────────────────────────────────
 (function() {
-  const p = new URLSearchParams(window.location.search).get('prac');
+  const qs = new URLSearchParams(window.location.search);
+  const p = qs.get('prac');
   if (!p) return;
   const card = document.querySelector(`.prac-card[data-prac="${p}"]`);
-  if (card) { card.click(); setTimeout(goNext, 80); }
+  if (card) {
+    card.click(); setTimeout(goNext, 80);
+    const svc = qs.get('svc');            // e.g. from the IV quiz: preselect that service
+    if (svc) setTimeout(() => pickSvc(svc), 200);
+  }
 })();
 
 // ─── COMMUNITY EVENTS ─────────────────────────────────────
