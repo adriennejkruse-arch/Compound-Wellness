@@ -59,8 +59,8 @@ label.opt:has(input:checked){background:var(--parchment);border-color:var(--copp
 .btn.ghost:hover{background:var(--parchment)}
 .center{text-align:center;margin-top:28px}
 .err{color:#8B2E2E;font-size:13px;text-align:center;min-height:20px;margin-top:12px}
-.progress{display:flex;justify-content:center;gap:8px;margin-bottom:30px}
-.progress i{width:34px;height:2px;background:var(--linen)}
+.progress{display:flex;justify-content:center;gap:6px;margin:0 auto 30px;max-width:300px}
+.progress i{flex:1;height:2px;background:var(--linen)}
 .progress i.on{background:var(--copper)}
 .back{display:block;margin:26px auto 0;background:none;border:none;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;text-decoration:underline}
 .card{background:#fff;border:1px solid var(--line);padding:34px 30px;text-align:center}
@@ -71,6 +71,15 @@ label.opt:has(input:checked){background:var(--parchment);border-color:var(--copp
 .card .price{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--copper);margin:6px 0 22px}
 .also{text-align:center;margin-top:22px;color:var(--body);font-size:15px}
 .also strong{font-weight:400;color:var(--espresso)}
+.reasons{font-size:13px;color:var(--muted);margin:-4px 0 18px}
+.alts{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.alt{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);padding:14px 18px;text-decoration:none;color:var(--espresso);text-align:left}
+.alt:hover{border-color:var(--copper)}
+.alt .n{font-family:'Cormorant Garamond',serif;font-size:20px;line-height:1.2}
+.alt .w{display:block;font-size:12px;color:var(--muted)}
+.alt .p{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--copper);white-space:nowrap}
+.subhead{font-size:10px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--copper);text-align:center;margin:30px 0 4px}
+.hint{text-align:center;color:var(--muted);font-size:14px;margin:-12px 0 22px}
 .notice{background:var(--parchment);border:1px solid var(--line);padding:22px 24px;text-align:center;color:var(--body);margin-bottom:24px}
 .adv{list-style:none;text-align:center;margin:0 0 6px}
 .adv li{font-family:'Cormorant Garamond',serif;font-size:22px;padding:6px 0;color:var(--espresso)}
@@ -94,145 +103,188 @@ footer a{color:var(--muted)}
 <script>
 'use strict';
 /* ══════════════════════════════════════════════════════════════════════
-   EDIT HERE — everything the quiz says and recommends lives in this block.
+   EDIT HERE — everything the quiz asks and recommends lives in this block.
    Have Christine review the matches before you advertise.
+
+   How it works: every answer a visitor picks adds points to one or more IVs
+   (the "pts" on each option). The IV with the most points is the main
+   suggestion; the next two are shown as "also worth asking about".
    ══════════════════════════════════════════════════════════════════════ */
 
-// The IVs. Keep prices and times in sync with the IV menu and booking page.
-// "id" must match the booking page service id (used for the Book button).
+// The IVs. Keep prices and times in sync with the IV menu and the booking page.
+// The key must match the booking page's service id (used by the Book button).
 const IVS = {
-  'iv-hydration-iv':        { name: 'Hydration IV',          cat: 'Hydration',          price: 320,  time: '40–70 min', why: 'A simple, hydrated reset.' },
-  'iv-myers-cocktail-iv':   { name: 'Myers Cocktail IV',     cat: 'Hydration',          price: 380,  time: '40–70 min', why: 'Hydration with added vitamins.' },
-  'iv-immune-support-iv':   { name: 'Immune Support IV',     cat: 'Immune Support',     price: 380,  time: '40–70 min', why: 'Everyday support for your immune system.' },
-  'iv-super-immune-boost-iv': { name: 'Super Immune Boost IV', cat: 'Immune Support',   price: 490,  time: '40–70 min', why: 'A step up from the Immune Support IV.' },
-  'iv-cold-flu-iv':         { name: 'Cold & Flu IV',         cat: 'Symptom Support',    price: 410,  time: '40–70 min', why: "For when you're feeling under the weather." },
-  'iv-hangover-iv':         { name: 'Hangover IV',           cat: 'Symptom Support',    price: 380,  time: '40–70 min', why: 'For a rough morning after.' },
-  'iv-jet-lag-iv':          { name: 'Jet Lag IV',            cat: 'Symptom Support',    price: 440,  time: '40–70 min', why: 'For after a long trip.' },
-  'iv-migraine-relief-iv':  { name: 'Migraine Relief IV',    cat: 'Symptom Support',    price: 440,  time: '40–70 min', why: 'For days when migraines take over.' },
-  'iv-all-inclusive-iv':    { name: 'All Inclusive IV',      cat: 'Everyday Wellness',  price: 490,  time: '40–70 min', why: 'A bit of everything in one visit.' },
-  'iv-performance-iv':      { name: 'Performance IV',        cat: 'Everyday Wellness',  price: 440,  time: '40–70 min', why: 'For training, events, and recovery.' },
-  'iv-radiance-iv':         { name: 'Radiance IV',           cat: 'Everyday Wellness',  price: 490,  time: '40–70 min', why: 'For a refreshed, glowing look.' },
-  'iv-vitality-iv':         { name: 'Vitality IV',           cat: 'Everyday Wellness',  price: 490,  time: '40–70 min', why: 'For steady everyday energy.' },
+  'iv-hydration-iv':          { name: 'Hydration IV',          cat: 'Hydration',         price: 320, time: '40–70 min', why: 'A simple, hydrated reset.' },
+  'iv-myers-cocktail-iv':     { name: 'Myers Cocktail IV',     cat: 'Hydration',         price: 380, time: '40–70 min', why: 'Hydration with added vitamins.' },
+  'iv-immune-support-iv':     { name: 'Immune Support IV',     cat: 'Immune Support',    price: 380, time: '40–70 min', why: 'Everyday support for your immune system.' },
+  'iv-super-immune-boost-iv': { name: 'Super Immune Boost IV', cat: 'Immune Support',    price: 490, time: '40–70 min', why: 'A step up from the Immune Support IV.' },
+  'iv-cold-flu-iv':           { name: 'Cold & Flu IV',         cat: 'Symptom Support',   price: 410, time: '40–70 min', why: "For when you're feeling under the weather." },
+  'iv-hangover-iv':           { name: 'Hangover IV',           cat: 'Symptom Support',   price: 380, time: '40–70 min', why: 'For a rough morning after.' },
+  'iv-jet-lag-iv':            { name: 'Jet Lag IV',            cat: 'Symptom Support',   price: 440, time: '40–70 min', why: 'For after a long trip.' },
+  'iv-migraine-relief-iv':    { name: 'Migraine Relief IV',    cat: 'Symptom Support',   price: 440, time: '40–70 min', why: 'For days when migraines take over.' },
+  'iv-all-inclusive-iv':      { name: 'All Inclusive IV',      cat: 'Everyday Wellness', price: 490, time: '40–70 min', why: 'A bit of everything in one visit.' },
+  'iv-performance-iv':        { name: 'Performance IV',        cat: 'Everyday Wellness', price: 440, time: '40–70 min', why: 'For training, events, and recovery.' },
+  'iv-radiance-iv':           { name: 'Radiance IV',           cat: 'Everyday Wellness', price: 490, time: '40–70 min', why: 'For a refreshed, glowing look.' },
+  'iv-vitality-iv':           { name: 'Vitality IV',           cat: 'Everyday Wellness', price: 490, time: '40–70 min', why: 'For steady everyday energy.' },
 };
 
-// Question 1 — safety screen. Ticking any of the first three sends people to "talk to Christine first".
-const SAFETY = {
-  title: 'Before we begin',
-  question: 'Does any of this apply to you?',
-  options: [
-    'I am pregnant or nursing',
-    'I have a heart, kidney, or liver condition',
-    'I take blood thinners or other daily prescription medication',
-  ],
-  noneLabel: 'None of these',
-};
+// Shorthand for the point lists below.
+const H = 'iv-hydration-iv', MY = 'iv-myers-cocktail-iv', IM = 'iv-immune-support-iv', SU = 'iv-super-immune-boost-iv',
+      CF = 'iv-cold-flu-iv', HO = 'iv-hangover-iv', JL = 'iv-jet-lag-iv', MI = 'iv-migraine-relief-iv',
+      AI = 'iv-all-inclusive-iv', PE = 'iv-performance-iv', RA = 'iv-radiance-iv', VI = 'iv-vitality-iv';
 
-// Question 2 — the main goal. "follow" points to a key in FOLLOWUPS below.
-const GOALS = {
-  question: 'What are you hoping for?',
-  options: [
-    { label: 'Rehydrate and reset',            follow: 'hydrate' },
-    { label: 'Support my immune system',       follow: 'immune' },
-    { label: 'Bounce back from a rough patch', sub: 'A cold or flu, a hangover, travel, or a migraine', follow: 'situation' },
-    { label: 'More energy, performance, or glow', follow: 'wellness' },
-    { label: 'Something deeper',               sub: 'Iron, NAD+, or Niagen+', follow: 'advanced' },
-  ],
-};
+/* The questions, in order.
+   type:   'multi' = choose all that apply, 'single' = choose one
+   showIf: only ask this question when it returns true (has(answers, 'questionId', 'tag'))
+   option: label, sub (small text), pts (points for IVs), tag (used by showIf), flag (safety), none (exclusive "none of these") */
+const QUESTIONS = [
+  { id: 'safety', type: 'multi', eyebrow: 'Before we begin', title: 'Does any of this apply to you?',
+    options: [
+      { label: 'I am pregnant or nursing', flag: true },
+      { label: 'I have a heart, kidney, or liver condition', flag: true },
+      { label: 'I take blood thinners or other daily prescription medication', flag: true },
+      { label: 'None of these', none: true },
+    ] },
 
-// Question 3 — one follow-up per goal. "iv" = main suggestion, "alt" = second suggestion.
-const FOLLOWUPS = {
-  hydrate:   { question: 'What kind of reset are you after?', options: [
-    { label: 'Simple hydration',        iv: 'iv-hydration-iv',      alt: 'iv-myers-cocktail-iv' },
-    { label: 'Hydration plus vitamins', iv: 'iv-myers-cocktail-iv', alt: 'iv-hydration-iv' },
-  ]},
-  immune:    { question: 'How much support are you looking for?', options: [
-    { label: 'Everyday support',  iv: 'iv-immune-support-iv',      alt: 'iv-super-immune-boost-iv' },
-    { label: 'A stronger boost',  sub: 'Before travel, events, or busy seasons', iv: 'iv-super-immune-boost-iv', alt: 'iv-immune-support-iv' },
-  ]},
-  situation: { question: "What's going on?", options: [
-    { label: 'A cold or the flu', iv: 'iv-cold-flu-iv',         alt: 'iv-immune-support-iv' },
-    { label: 'A hangover',        iv: 'iv-hangover-iv',         alt: 'iv-hydration-iv' },
-    { label: 'Jet lag or travel', iv: 'iv-jet-lag-iv',          alt: 'iv-hydration-iv' },
-    { label: 'A migraine',        iv: 'iv-migraine-relief-iv',  alt: 'iv-hydration-iv' },
-  ]},
-  wellness:  { question: 'What do you want most?', options: [
-    { label: 'Energy and vitality',               iv: 'iv-vitality-iv',      alt: 'iv-all-inclusive-iv' },
-    { label: 'Athletic performance and recovery', iv: 'iv-performance-iv',   alt: 'iv-vitality-iv' },
-    { label: 'A refreshed glow',                  iv: 'iv-radiance-iv',      alt: 'iv-all-inclusive-iv' },
-    { label: 'A little of everything',            iv: 'iv-all-inclusive-iv', alt: 'iv-vitality-iv' },
-  ]},
-};
+  { id: 'goals', type: 'multi', eyebrow: 'Your goals', title: 'What are you hoping for?',
+    options: [
+      { label: 'Rehydrate and reset',                tag: 'hydrate', pts: { [H]: 3, [MY]: 2 } },
+      { label: 'Support my immune system',           tag: 'immune',  pts: { [IM]: 3, [SU]: 2, [CF]: 1 } },
+      { label: 'Bounce back from a rough patch',     tag: 'rough',   sub: 'A cold or flu, a hangover, travel, or a migraine' },
+      { label: 'More energy, performance, or glow',  tag: 'wellness' },
+      { label: 'Something deeper',                   tag: 'advanced', sub: 'Iron, NAD+, or Niagen+' },
+    ] },
+
+  { id: 'rough', type: 'multi', eyebrow: 'A rough patch', title: "What's going on?",
+    showIf: a => has(a, 'goals', 'rough'),
+    options: [
+      { label: 'A cold or the flu', pts: { [CF]: 5, [IM]: 1 } },
+      { label: 'A hangover',        pts: { [HO]: 5, [H]: 1 } },
+      { label: 'Jet lag or travel', pts: { [JL]: 5, [H]: 1 } },
+      { label: 'A migraine',        pts: { [MI]: 5 } },
+    ] },
+
+  { id: 'wellness', type: 'multi', eyebrow: 'Everyday wellness', title: 'What do you want most?',
+    showIf: a => has(a, 'goals', 'wellness'),
+    options: [
+      { label: 'Energy and vitality',               pts: { [VI]: 5, [AI]: 1 } },
+      { label: 'Athletic performance and recovery', pts: { [PE]: 5, [VI]: 1 } },
+      { label: 'A refreshed glow',                  pts: { [RA]: 5, [AI]: 1 } },
+      { label: 'A little of everything',            pts: { [AI]: 5 } },
+    ] },
+
+  { id: 'lately', type: 'multi', eyebrow: 'Lately', title: 'Which of these sound like you?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'Tired or low on energy',        pts: { [VI]: 2, [MY]: 1, [AI]: 1 } },
+      { label: 'Dehydrated or dry',             pts: { [H]: 2, [MY]: 1 } },
+      { label: 'Run down, or catching everything', pts: { [IM]: 2, [SU]: 1 } },
+      { label: 'Sore or slow to recover',       pts: { [PE]: 2, [AI]: 1 } },
+      { label: 'Stressed or overbooked',        pts: { [AI]: 2, [VI]: 1 } },
+      { label: 'Skin looking dull',             pts: { [RA]: 2, [H]: 1 } },
+      { label: 'None of these', none: true },
+    ] },
+
+  { id: 'when', type: 'single', eyebrow: 'Timing', title: 'When would you like your IV?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: "I'm not feeling well right now",  pts: { [H]: 1, [IM]: 1, [CF]: 1 } },
+      { label: 'Before travel or a big event',    pts: { [SU]: 2, [JL]: 1, [PE]: 1 } },
+      { label: 'As part of my regular routine',   pts: { [AI]: 1, [VI]: 1, [MY]: 1 } },
+    ] },
+
+  { id: 'first', type: 'single', eyebrow: 'One last thing', title: 'Is this your first IV?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: "Yes, I'm new to IVs",     tag: 'first', pts: { [H]: 1, [MY]: 1 } },
+      { label: "No, I've had IVs before" },
+    ] },
+];
 
 // Advanced infusions are never recommended by the quiz — people are sent to Christine.
 const ADVANCED = ['Iron IV', 'NAD+ IV', 'Niagen+ IV'];
 
-const BOOK_URL  = '/booking.html?prac=christine';   // opens booking with Christine selected
-const MENU_URL  = '/practitioners/christine-winnen'; // her page with the full IV menu
-const TALK_URL  = '/booking.html?prac=christine';
+const BOOK_URL = '/booking.html?prac=christine';     // opens booking with Christine selected
+const MENU_URL = '/practitioners/christine-winnen';  // her page, with the full IV menu
 
 /* ══════════════════════ end of editable block ═════════════════════════ */
 
 const app = document.getElementById('app');
 const money = n => '$' + n.toLocaleString('en-US');
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-const trail = [];              // for the Back button
-let state = { screen: 'intro', goal: null };
 
-function go(screen, extra) {
-  trail.push({ ...state });
-  state = { ...state, screen, ...extra };
-  render();
-}
-function back() { state = trail.pop() || { screen: 'intro' }; render(); }
+let answers = {};      // question id -> array of chosen option indexes
+let pos = -1;          // index into visibleQuestions()
+let view = 'intro';    // intro | question | result | talk | advanced
 
-function progress(n) {
-  return `<div class="progress" aria-hidden="true">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div>`;
+function chosen(a, qid) { const q = QUESTIONS.find(x => x.id === qid); return (a[qid] || []).map(i => q.options[i]); }
+function has(a, qid, tag) { return chosen(a, qid).some(o => o.tag === tag); }
+function onlyAdvanced(a) {
+  const g = chosen(a, 'goals');
+  return g.length > 0 && g.every(o => o.tag === 'advanced');
 }
-function backBtn() { return trail.length ? `<button class="back" type="button" onclick="back()">Back</button>` : ''; }
+function visibleQuestions() { return QUESTIONS.filter(q => !q.showIf || q.showIf(answers)); }
+
+function recommend() {
+  const score = {}, why = {};
+  QUESTIONS.forEach(q => chosen(answers, q.id).forEach(o => {
+    Object.entries(o.pts || {}).forEach(([id, p]) => { score[id] = (score[id] || 0) + p; (why[id] = why[id] || []).push(o.label); });
+  }));
+  const order = Object.keys(IVS);
+  let list = order.map(id => ({ id, score: score[id] || 0, why: why[id] || [] })).filter(x => x.score > 0)
+    .sort((x, y) => y.score - x.score || order.indexOf(x.id) - order.indexOf(y.id));
+  if (!list.length) list = [{ id: H, score: 1, why: [] }];
+  return list.slice(0, 3);
+}
+
+function progress() {
+  const n = visibleQuestions().length;
+  return `<div class="progress" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<i class="${i <= pos ? 'on' : ''}"></i>`).join('')}</div>`;
+}
+function backBtn() { return `<button class="back" type="button" onclick="goBack()">Back</button>`; }
+function disclaimer() {
+  return `<p class="fine">These are general suggestions to discuss with Christine Winnen, RN. They are not medical advice, and your treatment is chosen after a clinical assessment. Nothing you chose here is saved or sent. In an emergency, call 911.</p>`;
+}
 
 function render() {
-  const s = state.screen;
   let html = '';
-  if (s === 'intro') {
+  if (view === 'intro') {
     html = `<section class="step">
       <p class="eyebrow">IV &amp; Hydration</p>
       <h1 tabindex="-1">Find your <em>IV.</em></h1>
-      <p class="lead">Answer a few quick questions and see which IV on our menu to ask about. It takes about two minutes, and nothing you choose is saved.</p>
-      <div class="center" style="margin-top:0"><button class="btn" type="button" onclick="go('safety')">Start</button></div>
+      <p class="lead">Answer a few quick questions and see which IVs on our menu to ask about. It takes about two minutes, and nothing you choose is saved.</p>
+      <div class="center" style="margin-top:0"><button class="btn" type="button" onclick="start()">Start</button></div>
       <p class="fine">In-home IV and hydration therapy in Orange County, delivered by Christine Winnen, RN.</p>
     </section>`;
-  } else if (s === 'safety') {
-    html = `<section class="step">${progress(1)}
-      <p class="eyebrow">${esc(SAFETY.title)}</p>
-      <h2 tabindex="-1">${esc(SAFETY.question)}</h2>
-      <form id="safetyForm" class="opts" onsubmit="return submitSafety(event)">
-        ${SAFETY.options.map((o, i) => `<label class="opt"><input type="checkbox" name="risk" value="${i}" onchange="clearNone()"><span class="t">${esc(o)}</span></label>`).join('')}
-        <label class="opt"><input type="checkbox" id="noneBox" onchange="clearRisks()"><span class="t">${esc(SAFETY.noneLabel)}</span></label>
-        <div class="err" id="err" role="alert"></div>
-        <div class="center" style="margin-top:6px"><button class="btn" type="submit">Continue</button></div>
-      </form>${backBtn()}</section>`;
-  } else if (s === 'goal') {
-    html = `<section class="step">${progress(2)}
-      <p class="eyebrow">Your goal</p>
-      <h2 tabindex="-1">${esc(GOALS.question)}</h2>
-      <div class="opts">${GOALS.options.map((o, i) => `<button class="opt" type="button" onclick="pickGoal(${i})"><span class="t">${esc(o.label)}</span>${o.sub ? `<span class="s">${esc(o.sub)}</span>` : ''}</button>`).join('')}</div>
-      ${backBtn()}</section>`;
-  } else if (s === 'follow') {
-    const f = FOLLOWUPS[state.goal];
-    html = `<section class="step">${progress(3)}
-      <p class="eyebrow">One more</p>
-      <h2 tabindex="-1">${esc(f.question)}</h2>
-      <div class="opts">${f.options.map((o, i) => `<button class="opt" type="button" onclick="pickFollow(${i})"><span class="t">${esc(o.label)}</span>${o.sub ? `<span class="s">${esc(o.sub)}</span>` : ''}</button>`).join('')}</div>
-      ${backBtn()}</section>`;
-  } else if (s === 'talk') {
+  } else if (view === 'question') {
+    const q = visibleQuestions()[pos];
+    const sel = answers[q.id] || [];
+    if (q.type === 'multi') {
+      html = `<section class="step">${progress()}
+        <p class="eyebrow">${esc(q.eyebrow)}</p>
+        <h2 tabindex="-1">${esc(q.title)}</h2>
+        <p class="hint">Choose all that apply.</p>
+        <form class="opts" onsubmit="return submitMulti(event)">
+          ${q.options.map((o, i) => `<label class="opt"><input type="checkbox" name="o" value="${i}" ${sel.includes(i) ? 'checked' : ''} onchange="exclusive(this)" data-none="${o.none ? 1 : 0}"><span><span class="t">${esc(o.label)}</span>${o.sub ? `<span class="s">${esc(o.sub)}</span>` : ''}</span></label>`).join('')}
+          <div class="err" id="err" role="alert"></div>
+          <div class="center" style="margin-top:6px"><button class="btn" type="submit">Continue</button></div>
+        </form>${backBtn()}</section>`;
+    } else {
+      html = `<section class="step">${progress()}
+        <p class="eyebrow">${esc(q.eyebrow)}</p>
+        <h2 tabindex="-1">${esc(q.title)}</h2>
+        <div class="opts">${q.options.map((o, i) => `<button class="opt${sel.includes(i) ? ' picked' : ''}" type="button" onclick="pickSingle(${i})"><span class="t">${esc(o.label)}</span>${o.sub ? `<span class="s">${esc(o.sub)}</span>` : ''}</button>`).join('')}</div>
+        ${backBtn()}</section>`;
+    }
+  } else if (view === 'talk') {
     html = `<section class="step">
       <p class="eyebrow">Let's talk first</p>
       <h2 tabindex="-1">Please check with <em>Christine.</em></h2>
       <div class="notice">Based on what you shared, an IV is something to talk through with Christine Winnen, RN, before booking. She can review your health and medications and recommend what is appropriate for you.</div>
-      <div class="center" style="margin-top:0"><a class="btn" href="${TALK_URL}">Request a visit with Christine</a></div>
+      <div class="center" style="margin-top:0"><a class="btn" href="${BOOK_URL}">Request a visit with Christine</a></div>
       <div class="center" style="margin-top:14px"><button class="btn ghost" type="button" onclick="restart()">Start over</button></div>
       ${disclaimer()}</section>`;
-  } else if (s === 'advanced') {
+  } else if (view === 'advanced') {
     html = `<section class="step">
       <p class="eyebrow">Advanced infusions</p>
       <h2 tabindex="-1">These are chosen <em>with Christine.</em></h2>
@@ -242,8 +294,10 @@ function render() {
       <div class="center" style="margin-top:14px"><a class="btn ghost" href="${MENU_URL}">See the full menu</a></div>
       <div class="center" style="margin-top:10px"><button class="back" type="button" onclick="restart()">Start over</button></div>
       ${disclaimer()}</section>`;
-  } else if (s === 'result') {
-    const iv = IVS[state.iv], alt = state.alt && IVS[state.alt];
+  } else if (view === 'result') {
+    const recs = recommend(), top = recs[0], iv = IVS[top.id], rest = recs.slice(1);
+    const wantsAdv = has(answers, 'goals', 'advanced');
+    const first = has(answers, 'first', 'first');
     html = `<section class="step">
       <p class="eyebrow">Your result</p>
       <h2 tabindex="-1">You might ask about the <em>${esc(iv.name)}.</em></h2>
@@ -251,13 +305,16 @@ function render() {
         <span class="pill">${esc(iv.cat)}</span>
         <h3>${esc(iv.name)}</h3>
         <p class="why">${esc(iv.why)}</p>
+        ${top.why.length ? `<p class="reasons">Because you chose: ${top.why.slice(0, 3).map(esc).join(' · ')}</p>` : ''}
         <p class="price">${money(iv.price)}</p>
         <p class="meta">About ${esc(iv.time)} including setup</p>
-        <div class="center" style="margin-top:24px"><a class="btn" href="${BOOK_URL}&svc=${encodeURIComponent(state.iv)}">Book this IV</a></div>
+        <div class="center" style="margin-top:24px"><a class="btn" href="${BOOK_URL}&svc=${encodeURIComponent(top.id)}">Book this IV</a></div>
       </div>
-      ${alt ? `<p class="also">You could also ask about the <strong>${esc(alt.name)}</strong> (${money(alt.price)}).</p>` : ''}
+      ${rest.length ? `<p class="subhead">Also worth asking about</p><div class="alts">${rest.map(r => { const v = IVS[r.id]; return `<a class="alt" href="${BOOK_URL}&svc=${encodeURIComponent(r.id)}"><span><span class="n">${esc(v.name)}</span><span class="w">${esc(v.why)}</span></span><span class="p">${money(v.price)}</span></a>`; }).join('')}</div>` : ''}
+      ${first ? `<div class="notice" style="margin-top:24px;margin-bottom:0">New to IVs? Christine will walk you through everything before you start.</div>` : ''}
+      ${wantsAdv ? `<div class="notice" style="margin-top:14px;margin-bottom:0">You also mentioned something deeper. Iron, NAD+, and Niagen+ infusions are chosen with Christine, so mention them when you book.</div>` : ''}
       <div class="center"><a class="btn ghost" href="${MENU_URL}">See the full IV menu</a></div>
-      <div class="center" style="margin-top:6px"><button class="back" type="button" onclick="restart()">Start over</button></div>
+      <div class="center" style="margin-top:6px"><button class="back" type="button" onclick="changeAnswers()">Change my answers</button><button class="back" type="button" onclick="restart()" style="margin-top:8px">Start over</button></div>
       ${disclaimer()}</section>`;
   }
   app.innerHTML = html;
@@ -265,30 +322,44 @@ function render() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function disclaimer() {
-  return `<p class="fine">These are general suggestions to discuss with Christine Winnen, RN. They are not medical advice, and your treatment is chosen after a clinical assessment. Nothing you chose here is saved or sent. In an emergency, call 911.</p>`;
+function start() { view = 'question'; pos = 0; render(); }
+function restart() { answers = {}; pos = -1; view = 'intro'; render(); }
+function changeAnswers() { view = 'question'; pos = visibleQuestions().length - 1; render(); }
+function goBack() {
+  if (pos <= 0) { view = 'intro'; pos = -1; } else { pos--; }
+  render();
 }
-
-function clearNone() { document.getElementById('noneBox').checked = false; }
-function clearRisks() { document.querySelectorAll('input[name=risk]').forEach(c => c.checked = false); }
-function submitSafety(e) {
+function exclusive(box) {
+  const boxes = [...document.querySelectorAll('input[name=o]')];
+  if (box.checked) boxes.forEach(b => { if (b !== box && (box.dataset.none === '1' || b.dataset.none === '1')) b.checked = false; });
+}
+function advance() {
+  const q = visibleQuestions()[pos];
+  // Safety screen: any flagged answer ends the quiz with "talk to Christine first".
+  if (q.id === 'safety' && chosen(answers, 'safety').some(o => o.flag)) { view = 'talk'; return render(); }
+  // Only "something deeper" chosen: no need for the remaining questions.
+  if (q.id === 'goals' && onlyAdvanced(answers)) { view = 'advanced'; return render(); }
+  pos++;
+  if (pos >= visibleQuestions().length) view = 'result';
+  render();
+}
+function submitMulti(e) {
   e.preventDefault();
-  const risks = [...document.querySelectorAll('input[name=risk]:checked')].length;
-  const none = document.getElementById('noneBox').checked;
-  if (!risks && !none) { document.getElementById('err').textContent = 'Choose at least one option to continue.'; return false; }
-  go(risks ? 'talk' : 'goal');
+  const q = visibleQuestions()[pos];
+  const picked = [...document.querySelectorAll('input[name=o]:checked')].map(b => +b.value);
+  if (!picked.length) { document.getElementById('err').textContent = 'Choose at least one option to continue.'; return false; }
+  answers[q.id] = picked;
+  // Changing an answer can hide later questions; drop answers that are no longer asked.
+  const keep = new Set(visibleQuestions().map(x => x.id));
+  Object.keys(answers).forEach(k => { if (!keep.has(k)) delete answers[k]; });
+  advance();
   return false;
 }
-function pickGoal(i) {
-  const g = GOALS.options[i];
-  if (g.follow === 'advanced') return go('advanced');
-  go('follow', { goal: g.follow });
+function pickSingle(i) {
+  const q = visibleQuestions()[pos];
+  answers[q.id] = [i];
+  advance();
 }
-function pickFollow(i) {
-  const o = FOLLOWUPS[state.goal].options[i];
-  go('result', { iv: o.iv, alt: o.alt });
-}
-function restart() { trail.length = 0; state = { screen: 'intro', goal: null }; render(); }
 
 render();
 </script>
