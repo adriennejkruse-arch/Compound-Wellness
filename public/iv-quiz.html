@@ -63,6 +63,23 @@ label.opt:has(input:checked){background:var(--parchment);border-color:var(--copp
 .progress .bar{height:2px;background:var(--linen)}
 .progress .bar i{display:block;height:100%;background:var(--copper);transition:width .3s}
 .progress .lbl{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.calbox{background:#fff;border:1px solid var(--line);padding:18px 16px 16px;max-width:420px;margin:0 auto 18px}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calhead .m{font-family:'Cormorant Garamond',serif;font-size:22px}
+.calhead button{background:none;border:1px solid var(--line);width:34px;height:34px;cursor:pointer;color:var(--espresso);font-size:16px;line-height:1}
+.calhead button:hover:not(:disabled){border-color:var(--copper)}
+.calhead button:disabled{opacity:.3;cursor:default}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calgrid .dow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center;padding-bottom:4px}
+.calgrid .d{aspect-ratio:1;min-height:38px;display:flex;align-items:center;justify-content:center;font:inherit;font-size:14px;background:none;border:1px solid transparent;color:var(--espresso);cursor:pointer}
+.calgrid .d.ok{border-color:var(--line)}
+.calgrid .d.ok:hover{border-color:var(--copper)}
+.calgrid .d.off{opacity:.28;cursor:default}
+.calgrid .d.sel{background:var(--copper);border-color:var(--copper);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 14px;min-height:30px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--linen);padding:6px 6px 6px 12px;font-size:13px}
+.chip button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 6px}
+.chip button:hover{color:var(--espresso)}
 .evt{background:#fff;border:1px solid var(--line);padding:26px 22px;margin-top:28px;text-align:center}
 .evt h3{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;line-height:1.15;margin:6px 0 10px}
 .evt .sum{font-size:14px;color:var(--muted);margin:0 0 16px}
@@ -223,13 +240,17 @@ const QUESTIONS = [
       { label: 'I sweat a lot',                            pts: { [H]: 2, [PE]: 1 } },
     ] },
 
-  { id: 'when', type: 'single', eyebrow: 'Timing', title: 'When would you like your IV?',
+  { id: 'when', type: 'single', eyebrow: 'Timing', title: 'What is the occasion?',
     showIf: a => !onlyAdvanced(a),
     options: [
       { label: "I'm not feeling well right now",  pts: { [H]: 1, [IM]: 1, [CF]: 1 } },
       { label: 'Before travel or a big event',    pts: { [SU]: 2, [JL]: 1, [PE]: 1 } },
       { label: 'As part of my regular routine',   pts: { [AI]: 1, [VI]: 1, [MY]: 1 } },
     ] },
+
+  // Calendar: up to MAX_DATES preferred days (weekdays from tomorrow, matching the booking page).
+  { id: 'dates', type: 'dates', eyebrow: 'Your calendar', title: 'When would you like your IV?',
+    showIf: a => !onlyAdvanced(a) },
 
   { id: 'often', type: 'single', eyebrow: 'Routine', title: 'How often could you see yourself doing this?',
     showIf: a => !onlyAdvanced(a),
@@ -239,12 +260,14 @@ const QUESTIONS = [
       { label: 'Monthly or more',     pts: { [VI]: 1, [AI]: 1, [PE]: 1 } },
     ] },
 
-  { id: 'budget', type: 'single', eyebrow: 'Budget', title: 'Is there a price you would like to stay within?',
+  // $500+ points at the top of the standard menu ($490 IVs); advanced infusions are never recommended here.
+  { id: 'budget', type: 'single', eyebrow: 'Budget', title: 'What price range feels right?',
     showIf: a => !onlyAdvanced(a),
     options: [
-      { label: 'Keep it under $400', pts: { [H]: 2, [MY]: 1, [IM]: 1, [HO]: 1 } },
-      { label: 'Up to about $450',   pts: { [CF]: 1, [JL]: 1, [MI]: 1, [PE]: 1 } },
-      { label: 'No limit, whatever fits best' },
+      { label: '$250–$350', pts: { [H]: 3 } },
+      { label: '$350–$450', pts: { [MY]: 1, [IM]: 1, [HO]: 1, [CF]: 1, [JL]: 1, [MI]: 1, [PE]: 1 } },
+      { label: '$500+',     pts: { [SU]: 1, [AI]: 1, [RA]: 1, [VI]: 1 } },
+      { label: 'I would like to compound services', tag: 'compound', sub: 'Pair your IV with other care at The Compound', pts: { [AI]: 2, [SU]: 1 } },
     ] },
 
   { id: 'first', type: 'single', eyebrow: 'Experience', title: 'Is this your first IV?',
@@ -306,6 +329,7 @@ const QUESTIONS = [
 // Advanced infusions are never recommended by the quiz — people are sent to Christine.
 const ADVANCED = ['Iron IV', 'NAD+ IV', 'Niagen+ IV'];
 
+const MAX_DATES = 5;   // how many preferred dates a visitor can choose
 const BOOK_URL = '/booking.html?prac=christine';     // opens booking with Christine selected
 const MENU_URL = '/practitioners/christine-winnen';  // her page, with the full IV menu
 
@@ -317,6 +341,9 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 let answers = {};      // question id -> array of chosen option indexes
 let pos = -1;          // index into visibleQuestions()
+let dates = [];         // preferred dates, 'YYYY-MM-DD'
+const now0 = new Date();
+let cal = { y: now0.getFullYear(), m: now0.getMonth() };
 let view = 'intro';    // intro | question | result | talk | advanced
 
 function chosen(a, qid) { const q = QUESTIONS.find(x => x.id === qid); return (a[qid] || []).map(i => q.options[i]); }
@@ -324,6 +351,47 @@ function has(a, qid, tag) { return chosen(a, qid).some(o => o.tag === tag); }
 function onlyAdvanced(a) {
   const g = chosen(a, 'goals');
   return g.length > 0 && g.every(o => o.tag === 'advanced');
+}
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const pad = n => String(n).padStart(2, '0');
+function dateLabel(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function earliest() { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1); return d; }
+function calHtml() {
+  const { y, m } = cal, min = earliest();
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const canPrev = new Date(y, m, 1) > new Date(min.getFullYear(), min.getMonth(), 1);
+  const full = dates.length >= MAX_DATES;
+  let cells = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => `<div class="dow">${d}</div>`).join('') + '<div></div>'.repeat(first);
+  for (let d = 1; d <= days; d++) {
+    const dt = new Date(y, m, d), k = `${y}-${pad(m + 1)}-${pad(d)}`;
+    const ok = dt >= min && dt.getDay() >= 1 && dt.getDay() <= 5, sel = dates.includes(k);
+    cells += ok || sel
+      ? `<button type="button" class="d ok${sel ? ' sel' : ''}" aria-pressed="${sel}" aria-label="${dateLabel(k)}" ${!sel && full ? 'disabled style="opacity:.35;cursor:default"' : ''} onclick="toggleDate('${k}')">${d}</button>`
+      : `<div class="d off">${d}</div>`;
+  }
+  return `<div class="calbox"><div class="calhead"><button type="button" aria-label="Previous month" ${canPrev ? '' : 'disabled'} onclick="calMove(-1)">&#8249;</button><span class="m">${MONTHS[m]} ${y}</span><button type="button" aria-label="Next month" onclick="calMove(1)">&#8250;</button></div><div class="calgrid">${cells}</div></div>
+    <div class="chips" aria-live="polite">${dates.map(k => `<span class="chip">${dateLabel(k)}<button type="button" aria-label="Remove ${dateLabel(k)}" onclick="toggleDate('${k}')">&times;</button></span>`).join('')}</div>
+    <div class="hint" style="margin:0 0 16px">${dates.length ? `${dates.length} of ${MAX_DATES} chosen${full ? ' (that is the most you can pick)' : ''}` : 'Pick up to ' + MAX_DATES + ' days that could work. Weekdays only.'}</div>`;
+}
+function drawCal() {
+  const box = document.getElementById('calwrap'); if (!box) return;
+  box.innerHTML = calHtml();
+  document.getElementById('datesGo').textContent = dates.length ? 'Continue' : "I'm flexible on dates";
+}
+function calMove(n) { cal.m += n; if (cal.m > 11) { cal.m = 0; cal.y++; } if (cal.m < 0) { cal.m = 11; cal.y--; } drawCal(); }
+function toggleDate(k) {
+  const i = dates.indexOf(k);
+  if (i > -1) dates.splice(i, 1); else if (dates.length < MAX_DATES) dates.push(k);
+  dates.sort(); drawCal();
+}
+function submitDates() { advance(); }
+// Booking link: preselects Christine, the IV, the first preferred date, and carries the rest in the notes box.
+function bookUrl(ivId, extraNote) {
+  const notes = [];
+  if (dates.length > 1) notes.push('Preferred dates: ' + dates.map(dateLabel).join(', ') + '.');
+  if (has(answers, 'budget', 'compound')) notes.push('Interested in combining services.');
+  if (extraNote) notes.push(extraNote);
+  return BOOK_URL + (ivId ? '&svc=' + encodeURIComponent(ivId) : '') + (dates[0] ? '&date=' + dates[0] : '') + (notes.length ? '&note=' + encodeURIComponent(notes.join(' ')) : '');
 }
 function hasEvent(a) { return has(a, 'event', 'event'); }
 function eventSummary() {
@@ -333,8 +401,7 @@ function eventSummary() {
 // Opens the booking form with Christine and a short, non-identifying note about the event.
 function eventUrl(ivId) {
   const t = eventSummary();
-  const note = 'Event inquiry (from the IV quiz). Type: ' + t[0] + '. Guests wanting IVs: ' + t[1] + '. Location: ' + t[2] + '. Timing: ' + t[3] + '.';
-  return BOOK_URL + (ivId ? '&svc=' + encodeURIComponent(ivId) : '') + '&note=' + encodeURIComponent(note);
+  return bookUrl(ivId, 'Event inquiry (from the IV quiz). Type: ' + t[0] + '. Guests wanting IVs: ' + t[1] + '. Location: ' + t[2] + '. Timing: ' + t[3] + '.');
 }
 function eventHelp() {
   return `<div class="notice" style="margin-top:20px;margin-bottom:0">Planning an event? Christine can bring IV service to your gathering. <a href="${BOOK_URL}&note=${encodeURIComponent('Event inquiry (from the IV quiz).')}" style="color:var(--copper)">Ask about events</a>.</div>`;
@@ -375,7 +442,15 @@ function render() {
   } else if (view === 'question') {
     const q = visibleQuestions()[pos];
     const sel = answers[q.id] || [];
-    if (q.type === 'multi') {
+    if (q.type === 'dates') {
+      html = `<section class="step">${progress()}
+        <p class="eyebrow">${esc(q.eyebrow)}</p>
+        <h2 tabindex="-1">${esc(q.title)}</h2>
+        <p class="hint">Choose up to ${MAX_DATES} days that could work.</p>
+        <div id="calwrap"></div>
+        <div class="center" style="margin-top:6px"><button class="btn" type="button" id="datesGo" onclick="submitDates()">I'm flexible on dates</button></div>
+        ${backBtn()}</section>`;
+    } else if (q.type === 'multi') {
       html = `<section class="step">${progress()}
         <p class="eyebrow">${esc(q.eyebrow)}</p>
         <h2 tabindex="-1">${esc(q.title)}</h2>
@@ -426,9 +501,11 @@ function render() {
         ${top.why.length ? `<p class="reasons">Because you chose: ${top.why.slice(0, 3).map(esc).join(' · ')}</p>` : ''}
         <p class="price">${money(iv.price)}</p>
         <p class="meta">About ${esc(iv.time)} including setup</p>
-        <div class="center" style="margin-top:24px"><a class="btn" href="${BOOK_URL}&svc=${encodeURIComponent(top.id)}">Book this IV</a></div>
+        ${dates.length ? `<p class="meta" style="margin-top:6px">Your dates: ${dates.map(dateLabel).map(esc).join(' · ')}</p>` : ''}
+        <div class="center" style="margin-top:24px"><a class="btn" href="${bookUrl(top.id)}">Book this IV</a></div>
       </div>
-      ${rest.length ? `<p class="subhead">Also worth asking about</p><div class="alts">${rest.map(r => { const v = IVS[r.id]; return `<a class="alt" href="${BOOK_URL}&svc=${encodeURIComponent(r.id)}"><span><span class="n">${esc(v.name)}</span><span class="w">${esc(v.why)}</span></span><span class="p">${money(v.price)}</span></a>`; }).join('')}</div>` : ''}
+      ${rest.length ? `<p class="subhead">Also worth asking about</p><div class="alts">${rest.map(r => { const v = IVS[r.id]; return `<a class="alt" href="${bookUrl(r.id)}"><span><span class="n">${esc(v.name)}</span><span class="w">${esc(v.why)}</span></span><span class="p">${money(v.price)}</span></a>`; }).join('')}</div>` : ''}
+      ${has(answers, 'budget', 'compound') ? `<div class="evt"><p class="eyebrow" style="margin:0">Compound your care</p><h3>Pair your IV with <em>more.</em></h3><p>Many guests combine an IV with breathwork or meditation, bodywork, or concierge medicine. Mention it when you book and we will help you plan it around one visit.</p><a class="btn ghost" href="/services/individual-services">See all services</a></div>` : ''}
       ${hasEvent(answers) ? `<div class="evt"><p class="eyebrow" style="margin:0">For your event</p><h3>Bring IVs to your <em>gathering.</em></h3><p class="sum">${eventSummary().map(esc).join(' · ')}</p><p>Event pricing is custom. Christine reviews each guest individually, then sends you a quote.</p><a class="btn" href="${eventUrl(top.id)}">Request an event quote</a></div>` : ''}
       ${first ? `<div class="notice" style="margin-top:24px;margin-bottom:0">New to IVs? Christine will walk you through everything before you start.</div>` : ''}
       ${wantsAdv ? `<div class="notice" style="margin-top:14px;margin-bottom:0">You also mentioned something deeper. Iron, NAD+, and Niagen+ infusions are chosen with Christine, so mention them when you book.</div>` : ''}
@@ -437,12 +514,13 @@ function render() {
       ${disclaimer()}</section>`;
   }
   app.innerHTML = html;
+  if (view === 'question' && visibleQuestions()[pos].type === 'dates') drawCal();
   const h = app.querySelector('h1,h2'); if (h) h.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function start() { view = 'question'; pos = 0; render(); }
-function restart() { answers = {}; pos = -1; view = 'intro'; render(); }
+function restart() { answers = {}; dates = []; cal = { y: now0.getFullYear(), m: now0.getMonth() }; pos = -1; view = 'intro'; render(); }
 function changeAnswers() { view = 'question'; pos = visibleQuestions().length - 1; render(); }
 function goBack() {
   if (pos <= 0) { view = 'intro'; pos = -1; } else { pos--; }

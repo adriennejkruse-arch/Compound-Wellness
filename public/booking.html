@@ -907,6 +907,7 @@ function renderCalendar() {
         : `<div class="${cls}">${d}</div>`;
     }).join('');
   if (!S.date) document.getElementById('timesSection').style.display = 'none';
+  else { document.getElementById('timesSection').style.display = ''; renderSlots(); }
 }
 function calPrev() { if(S.calM===0){S.calM=11;S.calY--;}else S.calM--; S.date=null;S.time=null; renderCalendar(); refreshSummary(); }
 function calNext() { if(S.calM===11){S.calM=0;S.calY++;}else S.calM++; S.date=null;S.time=null; renderCalendar(); refreshSummary(); }
@@ -1318,8 +1319,13 @@ function refreshSummary() {
     card.click(); setTimeout(goNext, 80);
     const svc = qs.get('svc');            // e.g. from the IV quiz: preselect that service
     if (svc) setTimeout(() => pickSvc(svc), 200);
+    const dq = qs.get('date');            // first preferred date from the quiz (weekday, from tomorrow), if valid
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dq || '')) {
+      const [dy, dm, dd] = dq.split('-').map(Number), dt = new Date(dy, dm - 1, dd), min = new Date(); min.setHours(0,0,0,0); min.setDate(min.getDate() + 1);
+      if (dt >= min && dt.getDay() >= 1 && dt.getDay() <= 5) { S.date = dq; S.calY = dy; S.calM = dm - 1; }
+    }
     const note = qs.get('note');          // e.g. event inquiry from the quiz: prefill the notes box
-    if (note) { const nb = document.getElementById('f-notes'); if (nb) nb.value = note.slice(0, 400); }
+    if (note) { const nb = document.getElementById('f-notes'); if (nb) nb.value = note.slice(0, 500); }
   }
 })();
 
