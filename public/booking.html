@@ -1318,6 +1318,8 @@ function refreshSummary() {
     card.click(); setTimeout(goNext, 80);
     const svc = qs.get('svc');            // e.g. from the IV quiz: preselect that service
     if (svc) setTimeout(() => pickSvc(svc), 200);
+    const note = qs.get('note');          // e.g. event inquiry from the quiz: prefill the notes box
+    if (note) { const nb = document.getElementById('f-notes'); if (nb) nb.value = note.slice(0, 400); }
   }
 })();
 

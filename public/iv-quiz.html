@@ -59,9 +59,14 @@ label.opt:has(input:checked){background:var(--parchment);border-color:var(--copp
 .btn.ghost:hover{background:var(--parchment)}
 .center{text-align:center;margin-top:28px}
 .err{color:#8B2E2E;font-size:13px;text-align:center;min-height:20px;margin-top:12px}
-.progress{display:flex;justify-content:center;gap:6px;margin:0 auto 30px;max-width:300px}
-.progress i{flex:1;height:2px;background:var(--linen)}
-.progress i.on{background:var(--copper)}
+.progress{margin:0 auto 30px;max-width:300px;text-align:center}
+.progress .bar{height:2px;background:var(--linen)}
+.progress .bar i{display:block;height:100%;background:var(--copper);transition:width .3s}
+.progress .lbl{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.evt{background:#fff;border:1px solid var(--line);padding:26px 22px;margin-top:28px;text-align:center}
+.evt h3{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;line-height:1.15;margin:6px 0 10px}
+.evt .sum{font-size:14px;color:var(--muted);margin:0 0 16px}
+.evt p{margin:0 0 16px}
 .back{display:block;margin:26px auto 0;background:none;border:none;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;text-decoration:underline}
 .card{background:#fff;border:1px solid var(--line);padding:34px 30px;text-align:center}
 .pill{display:inline-block;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--copper);border:1px solid var(--line);padding:4px 12px;margin-bottom:14px}
@@ -176,13 +181,46 @@ const QUESTIONS = [
   { id: 'lately', type: 'multi', eyebrow: 'Lately', title: 'Which of these sound like you?',
     showIf: a => !onlyAdvanced(a),
     options: [
-      { label: 'Tired or low on energy',        pts: { [VI]: 2, [MY]: 1, [AI]: 1 } },
-      { label: 'Dehydrated or dry',             pts: { [H]: 2, [MY]: 1 } },
+      { label: 'Tired or low on energy',           pts: { [VI]: 2, [MY]: 1, [AI]: 1 } },
+      { label: 'Dehydrated or dry',                pts: { [H]: 2, [MY]: 1 } },
       { label: 'Run down, or catching everything', pts: { [IM]: 2, [SU]: 1 } },
-      { label: 'Sore or slow to recover',       pts: { [PE]: 2, [AI]: 1 } },
-      { label: 'Stressed or overbooked',        pts: { [AI]: 2, [VI]: 1 } },
-      { label: 'Skin looking dull',             pts: { [RA]: 2, [H]: 1 } },
+      { label: 'Sore or slow to recover',          pts: { [PE]: 2, [AI]: 1 } },
+      { label: 'Stressed or overbooked',           pts: { [AI]: 2, [VI]: 1 } },
+      { label: 'Headaches or migraines',           pts: { [MI]: 2, [H]: 1 } },
+      { label: 'Skin looking dull',                pts: { [RA]: 2, [H]: 1 } },
       { label: 'None of these', none: true },
+    ] },
+
+  { id: 'sleep', type: 'single', eyebrow: 'Rest', title: 'How have you been sleeping?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'Well, I wake up refreshed' },
+      { label: 'Restless or light',          pts: { [VI]: 1, [AI]: 1 } },
+      { label: 'Poorly, and I feel it',      pts: { [VI]: 2, [AI]: 1, [MY]: 1 } },
+    ] },
+
+  { id: 'activity', type: 'single', eyebrow: 'Movement', title: 'How active are you?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'I train hard or compete',   pts: { [PE]: 3, [H]: 1 } },
+      { label: 'I move most days',          pts: { [PE]: 1, [VI]: 1 } },
+      { label: 'Mostly at a desk or on my feet for work', pts: { [VI]: 1, [H]: 1 } },
+    ] },
+
+  { id: 'travel', type: 'single', eyebrow: 'Travel', title: 'Have you traveled lately, or are you about to?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'I just got back',               pts: { [JL]: 3, [H]: 1 } },
+      { label: 'I am heading out soon',         pts: { [JL]: 2, [SU]: 1 } },
+      { label: 'Not really' },
+    ] },
+
+  { id: 'water', type: 'single', eyebrow: 'Day to day', title: 'How is your everyday hydration?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'I drink plenty of water' },
+      { label: 'I forget, or lean on coffee and alcohol', pts: { [H]: 2, [MY]: 1, [HO]: 1 } },
+      { label: 'I sweat a lot',                            pts: { [H]: 2, [PE]: 1 } },
     ] },
 
   { id: 'when', type: 'single', eyebrow: 'Timing', title: 'When would you like your IV?',
@@ -193,11 +231,75 @@ const QUESTIONS = [
       { label: 'As part of my regular routine',   pts: { [AI]: 1, [VI]: 1, [MY]: 1 } },
     ] },
 
-  { id: 'first', type: 'single', eyebrow: 'One last thing', title: 'Is this your first IV?',
+  { id: 'often', type: 'single', eyebrow: 'Routine', title: 'How often could you see yourself doing this?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'Just this once' },
+      { label: 'A few times a year',  pts: { [IM]: 1, [AI]: 1 } },
+      { label: 'Monthly or more',     pts: { [VI]: 1, [AI]: 1, [PE]: 1 } },
+    ] },
+
+  { id: 'budget', type: 'single', eyebrow: 'Budget', title: 'Is there a price you would like to stay within?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: 'Keep it under $400', pts: { [H]: 2, [MY]: 1, [IM]: 1, [HO]: 1 } },
+      { label: 'Up to about $450',   pts: { [CF]: 1, [JL]: 1, [MI]: 1, [PE]: 1 } },
+      { label: 'No limit, whatever fits best' },
+    ] },
+
+  { id: 'first', type: 'single', eyebrow: 'Experience', title: 'Is this your first IV?',
     showIf: a => !onlyAdvanced(a),
     options: [
       { label: "Yes, I'm new to IVs",     tag: 'first', pts: { [H]: 1, [MY]: 1 } },
       { label: "No, I've had IVs before" },
+    ] },
+
+  // Event hire: asked of everyone, then four short follow-ups for those who say yes or maybe.
+  { id: 'event', type: 'single', eyebrow: 'Events', title: 'Would you like to hire an IV nurse for an event?',
+    showIf: a => !onlyAdvanced(a),
+    options: [
+      { label: "Yes, I'm planning one",           tag: 'event', sub: 'A party, retreat, team day, or gathering' },
+      { label: "Maybe, I'd like to hear about it", tag: 'event' },
+      { label: 'No, this is just for me' },
+    ] },
+
+  { id: 'eventType', type: 'single', eyebrow: 'Your event', title: 'What kind of event is it?',
+    showIf: a => hasEvent(a),
+    options: [
+      { label: 'Birthday or celebration' },
+      { label: "Bachelorette or girls' weekend" },
+      { label: 'Wedding party' },
+      { label: 'Corporate or team wellness day' },
+      { label: 'Retreat or wellness gathering' },
+      { label: 'Athletic event or race' },
+      { label: 'Something else' },
+    ] },
+
+  { id: 'eventSize', type: 'single', eyebrow: 'Your event', title: 'About how many guests would want an IV?',
+    showIf: a => hasEvent(a),
+    options: [
+      { label: 'Fewer than 5' },
+      { label: '5 to 10' },
+      { label: '10 to 25' },
+      { label: 'More than 25' },
+    ] },
+
+  { id: 'eventWhere', type: 'single', eyebrow: 'Your event', title: 'Where will it be?',
+    showIf: a => hasEvent(a),
+    options: [
+      { label: 'A private home or rental' },
+      { label: 'A hotel' },
+      { label: 'An office or venue' },
+      { label: 'Not sure yet' },
+    ] },
+
+  { id: 'eventWhen', type: 'single', eyebrow: 'Your event', title: 'When is it?',
+    showIf: a => hasEvent(a),
+    options: [
+      { label: 'Within the next month' },
+      { label: 'In 1 to 3 months' },
+      { label: 'Later than that' },
+      { label: 'The date is not set' },
     ] },
 ];
 
@@ -223,6 +325,20 @@ function onlyAdvanced(a) {
   const g = chosen(a, 'goals');
   return g.length > 0 && g.every(o => o.tag === 'advanced');
 }
+function hasEvent(a) { return has(a, 'event', 'event'); }
+function eventSummary() {
+  const get = id => (chosen(answers, id)[0] || {}).label;
+  return ['eventType', 'eventSize', 'eventWhere', 'eventWhen'].map(get).filter(Boolean);
+}
+// Opens the booking form with Christine and a short, non-identifying note about the event.
+function eventUrl(ivId) {
+  const t = eventSummary();
+  const note = 'Event inquiry (from the IV quiz). Type: ' + t[0] + '. Guests wanting IVs: ' + t[1] + '. Location: ' + t[2] + '. Timing: ' + t[3] + '.';
+  return BOOK_URL + (ivId ? '&svc=' + encodeURIComponent(ivId) : '') + '&note=' + encodeURIComponent(note);
+}
+function eventHelp() {
+  return `<div class="notice" style="margin-top:20px;margin-bottom:0">Planning an event? Christine can bring IV service to your gathering. <a href="${BOOK_URL}&note=${encodeURIComponent('Event inquiry (from the IV quiz).')}" style="color:var(--copper)">Ask about events</a>.</div>`;
+}
 function visibleQuestions() { return QUESTIONS.filter(q => !q.showIf || q.showIf(answers)); }
 
 function recommend() {
@@ -239,7 +355,7 @@ function recommend() {
 
 function progress() {
   const n = visibleQuestions().length;
-  return `<div class="progress" aria-hidden="true">${Array.from({ length: n }, (_, i) => `<i class="${i <= pos ? 'on' : ''}"></i>`).join('')}</div>`;
+  return `<div class="progress" aria-hidden="true"><div class="lbl">Question ${pos + 1} of ${n}</div><div class="bar"><i style="width:${Math.round((pos + 1) / n * 100)}%"></i></div></div>`;
 }
 function backBtn() { return `<button class="back" type="button" onclick="goBack()">Back</button>`; }
 function disclaimer() {
@@ -283,6 +399,7 @@ function render() {
       <div class="notice">Based on what you shared, an IV is something to talk through with Christine Winnen, RN, before booking. She can review your health and medications and recommend what is appropriate for you.</div>
       <div class="center" style="margin-top:0"><a class="btn" href="${BOOK_URL}">Request a visit with Christine</a></div>
       <div class="center" style="margin-top:14px"><button class="btn ghost" type="button" onclick="restart()">Start over</button></div>
+      ${eventHelp()}
       ${disclaimer()}</section>`;
   } else if (view === 'advanced') {
     html = `<section class="step">
@@ -293,6 +410,7 @@ function render() {
       <div class="center"><a class="btn" href="${BOOK_URL}">Book with Christine</a></div>
       <div class="center" style="margin-top:14px"><a class="btn ghost" href="${MENU_URL}">See the full menu</a></div>
       <div class="center" style="margin-top:10px"><button class="back" type="button" onclick="restart()">Start over</button></div>
+      ${eventHelp()}
       ${disclaimer()}</section>`;
   } else if (view === 'result') {
     const recs = recommend(), top = recs[0], iv = IVS[top.id], rest = recs.slice(1);
@@ -311,6 +429,7 @@ function render() {
         <div class="center" style="margin-top:24px"><a class="btn" href="${BOOK_URL}&svc=${encodeURIComponent(top.id)}">Book this IV</a></div>
       </div>
       ${rest.length ? `<p class="subhead">Also worth asking about</p><div class="alts">${rest.map(r => { const v = IVS[r.id]; return `<a class="alt" href="${BOOK_URL}&svc=${encodeURIComponent(r.id)}"><span><span class="n">${esc(v.name)}</span><span class="w">${esc(v.why)}</span></span><span class="p">${money(v.price)}</span></a>`; }).join('')}</div>` : ''}
+      ${hasEvent(answers) ? `<div class="evt"><p class="eyebrow" style="margin:0">For your event</p><h3>Bring IVs to your <em>gathering.</em></h3><p class="sum">${eventSummary().map(esc).join(' · ')}</p><p>Event pricing is custom. Christine reviews each guest individually, then sends you a quote.</p><a class="btn" href="${eventUrl(top.id)}">Request an event quote</a></div>` : ''}
       ${first ? `<div class="notice" style="margin-top:24px;margin-bottom:0">New to IVs? Christine will walk you through everything before you start.</div>` : ''}
       ${wantsAdv ? `<div class="notice" style="margin-top:14px;margin-bottom:0">You also mentioned something deeper. Iron, NAD+, and Niagen+ infusions are chosen with Christine, so mention them when you book.</div>` : ''}
       <div class="center"><a class="btn ghost" href="${MENU_URL}">See the full IV menu</a></div>
