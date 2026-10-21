@@ -223,37 +223,10 @@ h1 em{font-style:italic;color:var(--copper)}
 .events-heading{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4vw,40px);font-weight:300;line-height:1.1;color:var(--espresso);margin-bottom:8px}
 .events-heading em{font-style:italic;color:var(--copper)}
 .events-sub{font-size:14px;color:var(--text-body);max-width:500px;line-height:1.8;margin-bottom:28px}
-.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.event-card{border:1px solid var(--line);background:var(--ivory);padding:22px 22px 20px;display:flex;flex-direction:column;gap:0}
-.event-card.type-transformation{border-top:3px solid var(--green)}
-.event-card.type-community{border-top:3px solid var(--copper)}
-.event-type-badge{font-size:8px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;padding:3px 9px;border:1px solid;display:inline-block;margin-bottom:14px;width:fit-content}
-.type-transformation .event-type-badge{color:var(--green);border-color:var(--green-line);background:var(--green-tint)}
-.type-community .event-type-badge{color:var(--cognac);border-color:rgba(138,96,64,.25);background:#FAF3EC}
-.event-date{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--espresso);line-height:1;margin-bottom:6px}
-.event-name{font-size:13px;font-weight:500;color:var(--espresso);margin-bottom:4px;letter-spacing:.02em}
-.event-detail{font-size:12px;color:var(--text-body);line-height:1.6;margin-bottom:12px}
-.event-meta{display:flex;gap:14px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sand);margin-bottom:18px;flex-wrap:wrap}
-.event-meta span{display:flex;align-items:center;gap:5px}
-.event-book-btn{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:11px 20px;border:none;cursor:pointer;transition:background .2s;color:var(--ivory);min-height:44px;margin-top:auto;align-self:flex-start}
-.type-transformation .event-book-btn{background:var(--green)}
-.type-transformation .event-book-btn:hover{background:var(--green-mid)}
-.type-community .event-book-btn{background:var(--copper)}
-.type-community .event-book-btn:hover{background:var(--cognac)}
 
 .events-divider{display:flex;align-items:center;gap:16px;margin:44px 0 36px;color:var(--sand);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
 .events-divider::before,.events-divider::after{content:'';flex:1;height:1px;background:var(--line)}
-.event-card.full{opacity:.7}
-.event-full-badge{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:11px 20px;background:var(--linen);color:var(--sand);cursor:not-allowed;min-height:44px;margin-top:auto;align-self:flex-start;border:none;display:inline-block}
-.event-spots-left{font-size:10px;color:var(--copper);letter-spacing:.08em;margin-bottom:6px;font-weight:500}
 
-/* ── EVENT RSVP MODAL ──────────────────────────────────── */
-.event-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-.event-modal-backdrop{position:absolute;inset:0;background:rgba(44,36,32,.55);backdrop-filter:blur(4px)}
-.event-modal-inner{position:relative;background:var(--ivory);max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:clamp(24px,4vw,40px);box-shadow:0 24px 60px rgba(44,36,32,.25)}
-.event-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:18px;color:var(--sand);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;line-height:1}
-.event-modal-close:hover{color:var(--espresso)}
-.event-modal-event-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--espresso);margin-bottom:22px;line-height:1.3;padding-bottom:18px;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -288,12 +261,12 @@ h1 em{font-style:italic;color:var(--copper)}
     <p class="sub">All sessions are delivered to your home in Orange County. Select your practitioner and we'll take it from there.</p>
   </div>
 
-  <!-- COMMUNITY EVENTS -->
-  <section class="events-section" id="eventsSection" aria-label="Community Events">
-    <div class="eyebrow">Community Events · July 2026</div>
-    <h2 class="events-heading">Join us this <em>summer.</em></h2>
-    <p class="events-sub">Free community gatherings open to everyone. Reserve your spot — space is limited.</p>
-    <div class="events-grid" id="eventsGrid"><!-- filled by JS --></div>
+  <!-- WEDNESDAY MEDITATION -->
+  <section class="events-section" id="eventsSection" aria-label="Wednesday Meditation">
+    <div class="eyebrow">Community · Laguna Beach</div>
+    <h2 class="events-heading">Wednesday <em>Meditation.</em></h2>
+    <p class="events-sub">Every Wednesday at 6:00 PM at 419 N PCH, Laguna Beach. Twelve spots each week. Free to attend, with an optional donation toward the studio space.</p>
+    <a class="btn green" href="/wednesday-meditation">Reserve your spot →</a>
     <div class="events-divider">or book a private session</div>
   </section>
 
@@ -663,51 +636,6 @@ h1 em{font-style:italic;color:var(--copper)}
     </div>
   </div>
 
-</div>
-
-<!-- EVENT RSVP MODAL -->
-<div id="eventModal" class="event-modal hidden" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
-  <div class="event-modal-backdrop" onclick="closeEventModal()"></div>
-  <div class="event-modal-inner">
-    <button class="event-modal-close" onclick="closeEventModal()" aria-label="Close">✕</button>
-    <div class="panel-label" id="eventModalTitle">Reserve Your Spot</div>
-    <div class="event-modal-event-name" id="eventModalName"></div>
-
-    <form id="eventRsvpForm" onsubmit="submitEventRsvp(event)" novalidate>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="ev-first">First Name *</label>
-          <input id="ev-first" type="text" required autocomplete="given-name" placeholder="Jane">
-        </div>
-        <div class="form-group">
-          <label for="ev-last">Last Name *</label>
-          <input id="ev-last" type="text" required autocomplete="family-name" placeholder="Last name">
-        </div>
-      </div>
-      <div class="form-row full">
-        <div class="form-group">
-          <label for="ev-email">Email *</label>
-          <input id="ev-email" type="email" required autocomplete="email" placeholder="jane@example.com">
-        </div>
-      </div>
-      <div class="form-row full">
-        <div class="form-group">
-          <label for="ev-phone">Phone *</label>
-          <input id="ev-phone" type="tel" required autocomplete="tel" placeholder="(949) 555-0100">
-        </div>
-      </div>
-      <div class="btn-row">
-        <button type="submit" class="btn green" id="evSubmitBtn" style="min-width:200px">Reserve My Spot →</button>
-      </div>
-    </form>
-
-    <div id="eventModalSuccess" class="hidden" style="text-align:center;padding:20px 0">
-      <div class="success-icon" style="margin:0 auto 18px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20,6 9,17 4,12"></polyline></svg></div>
-      <p style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;color:var(--espresso);margin-bottom:8px">You're <em>confirmed.</em></p>
-      <p style="font-size:13px;color:var(--text-body);line-height:1.8">A confirmation has been sent to your inbox. We can't wait to see you there.</p>
-      <button class="btn ghost" onclick="closeEventModal()" style="margin-top:22px">Close</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -1328,147 +1256,6 @@ function refreshSummary() {
     if (note) { const nb = document.getElementById('f-notes'); if (nb) nb.value = note.slice(0, 500); }
   }
 })();
-
-// ─── COMMUNITY EVENTS ─────────────────────────────────────
-const COMMUNITY_EVENTS = [
-  { id:'wed-jul-01', date:'2026-07-01', label:'Wed, Jul 1',  type:'transformation', title:'Evening Transformation', detail:'Breathwork · Sound Bath · Meditation', time:'6:30–8:00 PM', location:'Laguna Beach' },
-  { id:'fri-jul-03', date:'2026-07-03', label:'Fri, Jul 3',  type:'community',      title:'Community Night',        detail:'Community Discussion · Meditation · Open Share', time:'6:30–8:00 PM', location:'Newport Beach' },
-  { id:'fri-jul-10', date:'2026-07-10', label:'Fri, Jul 10', type:'community',      title:'Community Night',        detail:'Community Discussion · Meditation · Open Share', time:'6:30–8:00 PM', location:'Newport Beach' },
-  { id:'wed-jul-15', date:'2026-07-15', label:'Wed, Jul 15', type:'transformation', title:'Evening Transformation', detail:'Breathwork · Sound Bath · Meditation', time:'6:30–8:00 PM', location:'Laguna Beach' },
-  { id:'fri-jul-17', date:'2026-07-17', label:'Fri, Jul 17', type:'community',      title:'Community Night',        detail:'Community Discussion · Meditation · Open Share', time:'6:30–8:00 PM', location:'Newport Beach' },
-  { id:'wed-jul-22', date:'2026-07-22', label:'Wed, Jul 22', type:'transformation', title:'Evening Transformation', detail:'Breathwork · Sound Bath · Meditation', time:'6:30–8:00 PM', location:'Laguna Beach' },
-  { id:'fri-jul-24', date:'2026-07-24', label:'Fri, Jul 24', type:'community',      title:'Community Night',        detail:'Community Discussion · Meditation · Open Share', time:'6:30–8:00 PM', location:'Newport Beach' },
-  { id:'wed-jul-29', date:'2026-07-29', label:'Wed, Jul 29', type:'transformation', title:'Evening Transformation', detail:'Breathwork · Sound Bath · Meditation', time:'6:30–8:00 PM', location:'Laguna Beach' },
-];
-
-let activeEvent = null;
-const EVENT_LIMIT = 10;
-let capacityCounts = {};
-
-function renderEventCards(counts) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const grid = document.getElementById('eventsGrid');
-  if (!grid) return;
-  const upcoming = COMMUNITY_EVENTS.filter(ev => new Date(ev.date + 'T12:00:00') >= today);
-  if (!upcoming.length) {
-    grid.innerHTML = '<p style="font-size:13px;color:var(--text-dim);font-style:italic">No upcoming events scheduled. Check back soon.</p>';
-    return;
-  }
-  grid.innerHTML = upcoming.map(ev => {
-    const count = counts[ev.id] || 0;
-    const isFull = count >= EVENT_LIMIT;
-    const spotsLeft = EVENT_LIMIT - count;
-    const spotsNote = !isFull && spotsLeft <= 3
-      ? `<div class="event-spots-left">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} remaining</div>`
-      : '';
-    const cta = isFull
-      ? `<span class="event-full-badge">Event Full</span>`
-      : `<button class="event-book-btn" onclick="openEventModal('${ev.id}')">Reserve My Spot →</button>`;
-    return `
-      <div class="event-card type-${ev.type} fade${isFull ? ' full' : ''}">
-        <span class="event-type-badge">${ev.type === 'transformation' ? 'Evening Transformation' : 'Community Night'}</span>
-        <div class="event-date">${ev.label}</div>
-        <div class="event-name">${ev.title}</div>
-        <div class="event-detail">${ev.detail}</div>
-        <div class="event-meta">
-          <span>⏱ ${ev.time}</span>
-          <span>📍 ${ev.location}</span>
-        </div>
-        ${spotsNote}
-        ${cta}
-      </div>`;
-  }).join('');
-}
-
-(async function initEvents() {
-  renderEventCards({});
-  try {
-    const r = await fetch('/api/event-capacity');
-    if (r.ok) {
-      const data = await r.json();
-      capacityCounts = data.counts || {};
-      renderEventCards(capacityCounts);
-    }
-  } catch(e) { /* fail silently — cards already rendered */ }
-})();
-
-function openEventModal(eventId) {
-  activeEvent = COMMUNITY_EVENTS.find(e => e.id === eventId);
-  if (!activeEvent) return;
-  if ((capacityCounts[eventId] || 0) >= EVENT_LIMIT) return;
-  document.getElementById('eventModalName').textContent = `${activeEvent.label} · ${activeEvent.title} · ${activeEvent.time}`;
-  document.getElementById('eventRsvpForm').classList.remove('hidden');
-  document.getElementById('eventModalSuccess').classList.add('hidden');
-  document.getElementById('evSubmitBtn').textContent = 'Reserve My Spot →';
-  document.getElementById('evSubmitBtn').disabled = false;
-  document.getElementById('ev-first').value = '';
-  document.getElementById('ev-last').value = '';
-  document.getElementById('ev-email').value = '';
-  document.getElementById('ev-phone').value = '';
-  document.getElementById('eventModal').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('ev-first').focus(), 50);
-}
-
-function closeEventModal() {
-  document.getElementById('eventModal').classList.add('hidden');
-  document.body.style.overflow = '';
-  activeEvent = null;
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeEventModal();
-});
-
-async function submitEventRsvp(e) {
-  e.preventDefault();
-  if (!activeEvent) return;
-  const firstName = document.getElementById('ev-first').value.trim();
-  const lastName  = document.getElementById('ev-last').value.trim();
-  const email     = document.getElementById('ev-email').value.trim();
-  const phone     = document.getElementById('ev-phone').value.trim();
-  if (!firstName || !lastName || !email || !phone) {
-    alert('Please fill in all fields — they are all required.');
-    return;
-  }
-  const btn = document.getElementById('evSubmitBtn');
-  btn.textContent = 'Reserving…';
-  btn.disabled = true;
-  try {
-    const res = await fetch('/api/book-event', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        firstName, lastName, email, phone,
-        eventId:       activeEvent.id,
-        eventTitle:    activeEvent.title,
-        eventDate:     activeEvent.label,
-        eventTime:     activeEvent.time,
-        eventLocation: activeEvent.location,
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      if (res.status === 409) {
-        // Event just filled up — update UI
-        capacityCounts[activeEvent.id] = EVENT_LIMIT;
-        renderEventCards(capacityCounts);
-        closeEventModal();
-        alert('Sorry, this event just filled up. Please check other dates.');
-        return;
-      }
-      throw new Error(err.error || 'Failed');
-    }
-    // Update local count optimistically
-    capacityCounts[activeEvent.id] = (capacityCounts[activeEvent.id] || 0) + 1;
-    renderEventCards(capacityCounts);
-  } catch(err) {
-    console.warn('Event RSVP error:', err.message);
-  }
-  document.getElementById('eventRsvpForm').classList.add('hidden');
-  document.getElementById('eventModalSuccess').classList.remove('hidden');
-}
 </script>
 </body>
 </html>
