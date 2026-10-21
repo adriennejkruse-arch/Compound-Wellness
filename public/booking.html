@@ -224,6 +224,14 @@ h1 em{font-style:italic;color:var(--copper)}
 .events-heading em{font-style:italic;color:var(--copper)}
 .events-sub{font-size:14px;color:var(--text-body);max-width:500px;line-height:1.8;margin-bottom:28px}
 
+.wed-list{display:grid;gap:10px;max-width:560px;margin-bottom:8px}
+.wed-row{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);background:var(--ivory);padding:14px 18px;text-decoration:none;color:var(--espresso)}
+a.wed-row:hover{border-color:var(--copper)}
+.wed-row .wd{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.2}
+.wed-row .wm{font-size:12px;color:var(--text-dim)}
+.wed-row .wm.low{color:var(--copper);font-weight:500}
+.wed-row .wb{font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);white-space:nowrap}
+.wed-row.full{opacity:.6}
 .events-divider{display:flex;align-items:center;gap:16px;margin:44px 0 36px;color:var(--sand);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
 .events-divider::before,.events-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 
@@ -266,7 +274,8 @@ h1 em{font-style:italic;color:var(--copper)}
     <div class="eyebrow">Community · Laguna Beach</div>
     <h2 class="events-heading">Wednesday <em>Meditation.</em></h2>
     <p class="events-sub">Every Wednesday at 6:00 PM at 419 N PCH, Laguna Beach. Twelve spots each week. Free to attend, with an optional donation toward the studio space.</p>
-    <a class="btn green" href="/wednesday-meditation">Reserve your spot →</a>
+    <div class="wed-list" id="wedList" aria-live="polite"></div>
+    <a class="btn ghost" href="/wednesday-meditation">Details, map &amp; reflection →</a>
     <div class="events-divider">or book a private session</div>
   </section>
 
@@ -1236,6 +1245,24 @@ function refreshSummary() {
     document.getElementById('sumDate').textContent = `${ds} · ${S.time}`;
   }
 }
+
+// ─── WEDNESDAY MEDITATION: upcoming dates with spots left ─
+(async function loadWednesdays() {
+  const list = document.getElementById('wedList');
+  if (!list) return;
+  const fallback = '<a class="wed-row" href="/wednesday-meditation"><span class="wd">Reserve your spot</span><span class="wb">Register →</span></a>';
+  try {
+    const r = await fetch('/api/wednesday-meditations');
+    if (!r.ok) throw new Error('bad status');
+    const d = await r.json();
+    list.innerHTML = d.sessions.slice(0, 4).map(s => {
+      const low = !s.full && s.spotsLeft <= 4;
+      const meta = s.full ? 'Full' : `${s.spotsLeft} of ${d.capacity} spots left`;
+      const inner = `<span><span class="wd">${s.longLabel}</span><br><span class="wm${low ? ' low' : ''}">${d.time} · ${meta}</span></span>` + (s.full ? '' : '<span class="wb">Register →</span>');
+      return s.full ? `<div class="wed-row full">${inner}</div>` : `<a class="wed-row" href="/wednesday-meditation?date=${s.date}">${inner}</a>`;
+    }).join('');
+  } catch (e) { list.innerHTML = fallback; }
+})();
 
 // ─── URL PARAM auto-select ────────────────────────────────
 (function() {

@@ -350,7 +350,12 @@ if (new URLSearchParams(location.search).get('thanks') === '1') {
   $('thanks').style.display = 'block';
   history.replaceState(null, '', location.pathname);
 }
-load();
+load().then(() => {
+  // Arriving from the booking page with ?date=YYYY-MM-DD opens that Wednesday's form
+  const want = new URLSearchParams(location.search).get('date');
+  const s = data && data.sessions.find(x => x.date === want && !x.full);
+  if (s) openDlg(s.date, document.querySelector(`button[data-date="${s.date}"]`));
+});
 </script>
 </body>
 </html>
