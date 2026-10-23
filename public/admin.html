@@ -255,6 +255,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="3" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M6 7l4.5-2.5M6 9l4.5 2.5"/></svg>
         <span>Social (Buffer)</span>
       </button>
+      <button class="nav-btn" data-panel="wednesday" onclick="showPanel('wednesday')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2"/></svg>
+        <span>Wednesday Meditation</span>
+      </button>
       <button class="nav-btn" data-panel="qr" onclick="showPanel('qr')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="5" height="5"/><rect x="10" y="1" width="5" height="5"/><rect x="1" y="10" width="5" height="5"/><rect x="2.5" y="2.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="11.5" y="2.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="2.5" y="11.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="10" width="2" height="2" fill="currentColor" stroke="none"/><rect x="13" y="10" width="2" height="2" fill="currentColor" stroke="none"/><rect x="10" y="13" width="2" height="2" fill="currentColor" stroke="none"/><rect x="13" y="13" width="2" height="2" fill="currentColor" stroke="none"/></svg>
         <span>QR Codes</span>
@@ -553,6 +557,22 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
       </div><!-- /panel-social -->
 
       <!-- ── QR CODES ───────────────────────────────────────── -->
+      <!-- ── WEDNESDAY MEDITATION ─────────────────────────── -->
+      <div id="panel-wednesday" class="panel">
+        <div class="tcard" style="max-width:720px">
+          <div class="thead"><span class="thead-title">Add registrations by hand</span></div>
+          <div style="padding:20px">
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">For people who joined another way, such as a past Wednesday. They are saved to Airtable (Event Bookings) and Klaviyo, and one summary is posted to Slack. <strong>Nothing is emailed to them</strong>, and the 12-spot limit is ignored.</p>
+            <label for="wmDate" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Wednesday</label><br>
+            <input id="wmDate" type="date" class="search" style="margin:4px 0 14px">
+            <label for="wmPeople" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">One person per line: Name, email, phone</label>
+            <textarea id="wmPeople" rows="10" class="search" style="width:100%;margin:4px 0 12px;font-family:inherit;line-height:1.6" placeholder="Jane Doe, jane@example.com, (949) 555-0100"></textarea>
+            <button class="btn btn-primary btn-sm" id="wmGo" onclick="wmAdd()">Add registrations</button>
+            <div id="wmOut" style="margin-top:16px;font-size:12px;line-height:1.8"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="panel-qr" class="panel">
         <div class="qr-grid">
           <div class="qr-box">
@@ -745,7 +765,7 @@ async function init() {
 // ═══════════════════════════════════════════════════════════
 // PANELS
 // ═══════════════════════════════════════════════════════════
-const TITLES = {analytics:'Analytics',contacts:'Contacts',bookings:'Bookings',members:'Members',social:'Social — Buffer',qr:'QR Codes'};
+const TITLES = {analytics:'Analytics',contacts:'Contacts',bookings:'Bookings',members:'Members',social:'Social — Buffer',qr:'QR Codes',wednesday:'Wednesday Meditation'};
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
@@ -754,6 +774,38 @@ function showPanel(id) {
   const btn = document.querySelector(`.nav-btn[data-panel="${id}"]`);
   if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current','page'); }
   document.getElementById('panelTitle').textContent = TITLES[id] || id;
+}
+
+// ═══════════════════════════════════════════════════════════
+// WEDNESDAY MEDITATION — add registrations by hand
+// ═══════════════════════════════════════════════════════════
+(function defaultWednesday() {
+  // most recent Wednesday on or before today
+  const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 4) % 7));
+  const el = document.getElementById('wmDate');
+  if (el) el.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+})();
+async function wmAdd() {
+  const date = document.getElementById('wmDate').value;
+  const out = document.getElementById('wmOut'), btn = document.getElementById('wmGo');
+  const people = document.getElementById('wmPeople').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const parts = l.split(/[,\t]/).map(s => s.trim());
+    return { name: parts[0] || '', email: parts[1] || '', phone: parts.slice(2).join(', ') };
+  });
+  if (!date || !people.length) { out.textContent = 'Choose a date and add at least one person.'; return; }
+  const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  if (!confirm(`Add ${people.length} ${people.length === 1 ? 'person' : 'people'} to Wednesday Meditation on ${label}?\n\nThey are saved to Airtable and Klaviyo and posted to Slack. No emails are sent to them.`)) return;
+  btn.disabled = true; btn.textContent = 'Adding…'; out.textContent = '';
+  try {
+    const r = await fetch('/api/admin/wednesday/add-registrations', { method: 'POST', headers: adminHeaders(), body: JSON.stringify({ date, people }) });
+    if (r.status === 401) { doLogout(); alert('Your session expired. Please sign in again.'); return; }
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    out.innerHTML = `<strong>${j.added} of ${j.results.length} added for ${esc(j.label)}.</strong><br>` +
+      j.results.map(x => `${x.status === 'added' ? '✓' : '✗'} ${esc(x.name)} — ${esc(x.status)}${x.klaviyo === 'failed' ? ' (Klaviyo failed)' : ''}`).join('<br>');
+  } catch (e) { out.textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = 'Add registrations'; }
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -8,6 +8,7 @@
  *   POST /api/wednesday-meditations/register   reserve a spot (confirmation email goes out immediately)
  *   POST /api/wednesday-meditations/donate     optional donation -> Stripe Checkout (hosted by Stripe)
  *   POST /api/admin/wednesday/send-reminders   admin only: send the day-of email now (supports dryRun)
+ *   POST /api/admin/wednesday/add-registrations admin only: add people to a past or current Wednesday (no emails to them)
  *
  * Registrations are stored in the existing Airtable "Event Bookings" table. To free a spot,
  * set that row's Status to "Cancelled" (add that option to the Status field if needed).
@@ -341,6 +342,60 @@ function register(deps) {
     }
     console.log(`✓ Wednesday Meditation donation: $${amount}`);
   }
+
+  // ── Add registrations by hand (admin dashboard) ───────────────────────────
+  // For people who signed up another way, e.g. a past Wednesday. Writes Airtable + Klaviyo and posts one
+  // Slack summary. Deliberately sends nothing to the attendees and ignores the 12-spot limit.
+  app.post('/api/admin/wednesday/add-registrations', adminAuth, async (req, res) => {
+    try {
+      const date = String((req.body && req.body.date) || '');
+      const people = Array.isArray(req.body && req.body.people) ? req.body.people.slice(0, 60) : [];
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || weekday(date) !== 3) return res.status(400).json({ error: 'Please choose a Wednesday.' });
+      if (date > addDays(todayPT(), 7)) return res.status(400).json({ error: 'That date is too far ahead.' });
+      if (!people.length) return res.status(400).json({ error: 'No people to add.' });
+      const id = eventId(date);
+      const results = [], added = [];
+      for (const p of people) {
+        const name = String(p.name || '').trim().slice(0, 120);
+        const [firstName, ...rest] = name.split(/\s+/);
+        const lastName = rest.join(' ');
+        const email = String(p.email || '').trim().toLowerCase().slice(0, 120);
+        const phone = String(p.phone || '').trim().slice(0, 30);
+        if (!firstName || !EMAIL_RE.test(email) || phone.replace(/\D/g, '').length < 10) { results.push({ name, email, status: 'invalid' }); continue; }
+        try {
+          if (base) {
+            const dupe = await base('Event Bookings').select({
+              filterByFormula: `AND({Event ID} = "${id}", LOWER({Email}) = "${email.replace(/["\\]/g, '')}", {Status} != "Cancelled")`,
+              fields: ['Event ID'], maxRecords: 1,
+            }).firstPage();
+            if (dupe.length) { results.push({ name, email, status: 'already registered' }); continue; }
+          }
+          const record = await saveToAirtable('Event Bookings', {
+            'Event': CFG.title, 'Event Date': date, 'First Name': firstName, 'Last Name': lastName,
+            'Email': email, 'Phone': phone, 'Event ID': id, 'Submission Date': nowPST(), 'Status': 'Confirmed',
+          }, { typecast: true });
+          if (base && !record) { results.push({ name, email, status: 'failed to save' }); continue; }
+          let klaviyo = 'ok';
+          try {
+            await addToKlaviyo({ email, firstName, lastName, source: 'Event RSVP — ' + CFG.title, listId: process.env.KLAVIYO_LIST_ID, properties: { eventTitle: CFG.title, eventDate: date, eventLocation: CFG.addressLine } });
+          } catch (err) { klaviyo = 'failed'; console.error('Klaviyo (wednesday import) error:', err.message); }
+          added.push(name);
+          results.push({ name, email, status: 'added', klaviyo });
+        } catch (err) {
+          console.error('wednesday import error:', err.message);
+          results.push({ name, email, status: 'failed: ' + err.message.slice(0, 80) });
+        }
+      }
+      countCache.at = 0;
+      if (added.length) {
+        notifySlack({ title: `Wednesday Meditation — ${added.length} registration${added.length === 1 ? '' : 's'} added`, lines: [`*Event:* ${longLabel(date)}, ${startLabel()}`, `*Added:* ${added.join(', ')}`] });
+      }
+      res.json({ date, label: longLabel(date), added: added.length, results });
+    } catch (err) {
+      console.error('wednesday add-registrations error:', err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // ── Day-of reminders ──────────────────────────────────────────────────────
   async function sendReminders(iso, { dryRun = false } = {}) {
