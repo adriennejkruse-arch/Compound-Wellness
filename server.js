@@ -148,8 +148,8 @@ app.post('/api/stripe-webhook', async (req, res) => {
       'Status':            'Confirmed',
     });
 
-    // Add to Klaviyo marketing list
-    await addToKlaviyo({
+    // Add to Klaviyo marketing list (never for medical practitioners)
+    if (!isMedicalPractitioner(m.practitioner, '')) await addToKlaviyo({
       email:       m.clientEmail,
       firstName:   m.clientName.split(' ')[0] || m.clientName,
       lastName:    m.clientName.split(' ').slice(1).join(' ') || '',
@@ -280,7 +280,8 @@ app.post('/api/submit-inquiry', async (req, res) => {
     firstName = cap(firstName, 80); lastName = cap(lastName, 80); email = cap(email, 120).trim(); phone = cap(phone, 30);
     city = cap(city, 80); notes = cap(notes, 3000); practitioner = cap(practitioner, 80);
     const ad = cleanAd(req.body.ad);
-    const medical = isMedicalPractitioner(practitioner, pracRole) || !practitioner;   // no practitioner = could be medical
+    const medicalPrac = isMedicalPractitioner(practitioner, pracRole);        // Colombo, Adams, Winnen
+    const medical = medicalPrac || !practitioner;                              // no practitioner = could be medical, so alerts stay generic
 
     // Map incoming source values to allowed Airtable single-select options
     const sourceMap = {
@@ -343,16 +344,18 @@ app.post('/api/submit-inquiry', async (req, res) => {
     if (contactRecord) bookingFields['Related Contact'] = [contactRecord.id];
     await saveToAirtable('Booking Requests', bookingFields);
 
-    // Add to Klaviyo inquiries list
-    await addToKlaviyo({
-      email,
-      firstName,
-      lastName:    lastName || '',
-      phone,
-      // Medical practitioners: nothing but name, contact details and time. Others may include who it was for.
-      source:      medical ? 'Website inquiry' : 'Inquiry — ' + practitioner,
-      listId:      process.env.KLAVIYO_INQUIRIES_LIST_ID || process.env.KLAVIYO_LIST_ID,
-    });
+    // Klaviyo (marketing): never receives anyone who contacted a medical practitioner. Those requests live only in
+    // Airtable (the admin dashboard), the internal email to adrienne@compoundoc.com, and the generic Slack alert.
+    if (!medicalPrac) {
+      await addToKlaviyo({
+        email,
+        firstName,
+        lastName:    lastName || '',
+        phone,
+        source:      practitioner ? 'Inquiry — ' + practitioner : 'Website inquiry',
+        listId:      process.env.KLAVIYO_INQUIRIES_LIST_ID || process.env.KLAVIYO_LIST_ID,
+      });
+    }
 
     // Auto-reply to client
     await sendAutoReply({ to: email, firstName, practitioner: medical ? '' : practitioner, consultTime: medical ? '' : consultTime });

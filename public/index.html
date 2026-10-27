@@ -82,7 +82,7 @@
     --green-line:rgba(44,66,53,0.22);
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth;overflow-x:auto}
+  html{scroll-behavior:smooth}
   /* ADA — visible focus indicators for keyboard navigation */
   :focus-visible{
     outline:2px solid var(--copper);
@@ -99,7 +99,7 @@
   .skip-link:focus-visible,.skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;overflow:visible;outline:none}
   .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:10000;background:var(--copper);color:var(--ivory);padding:12px 24px;font-size:12px;letter-spacing:.1em;text-decoration:none}
   .skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;overflow:visible}
-  body{background:var(--ivory);color:var(--espresso);font-family:'DM Sans',sans-serif;font-weight:300;font-size:15px;line-height:1.7;min-width:1280px;overflow-x:auto;word-wrap:break-word;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none}
+  body{background:var(--ivory);color:var(--espresso);font-family:'DM Sans',sans-serif;font-weight:300;font-size:15px;line-height:1.7;overflow-x:hidden;word-wrap:break-word;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none}
   img{max-width:100%;height:auto}
   button,a{max-width:100%;word-break:break-word}
 
@@ -182,8 +182,9 @@
   }
   .marquee span{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:var(--cognac);letter-spacing:.04em;flex-shrink:0}
   .marquee-dot{color:var(--copper);font-style:normal}
-  .marquee-wrap{position:relative}
-  .marquee-pause{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:2;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:var(--parchment);color:var(--espresso);border:1px solid var(--copper);padding:6px 12px;cursor:pointer;min-height:32px}
+  .marquee-wrap{display:flex;align-items:center;gap:14px;padding-right:14px}
+  .marquee-clip{flex:1;min-width:0;overflow:hidden}
+  .marquee-pause{flex:0 0 auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:var(--parchment);color:var(--espresso);border:1px solid var(--copper);padding:6px 12px;cursor:pointer;min-height:32px}
   .marquee-pause:focus-visible{outline:2px solid var(--espresso);outline-offset:2px}
   .marquee.paused{animation-play-state:paused}
   @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -615,6 +616,293 @@
 
   /* ── ADDITIONAL MOBILE FIXES (max-width:768px) ─────────── */
   
+
+/* ── Responsive layout (phones, tablets, desktops) ── */
+@media(max-width:1100px){
+    body{min-width:auto;overflow-x:hidden}
+    /* NAV */
+    nav{padding:16px clamp(16px,4vw,24px)} nav.scrolled{padding:12px clamp(16px,4vw,24px)}
+    .nav-links{display:none}
+    .nav-links.mobile-open{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--ivory);z-index:999;padding:90px 32px 40px;gap:0;justify-content:flex-start;overflow-y:auto}
+    .nav-links.mobile-open li{border-bottom:1px solid var(--line)}
+    .nav-links.mobile-open li{border-bottom:none}
+    .nav-links.mobile-open a{font-size:13px;letter-spacing:.18em;padding:14px 0;display:block;white-space:normal;text-transform:uppercase}
+    .nav-links.mobile-open .nav-dropdown>a{color:var(--espresso);font-size:10px;font-weight:600;letter-spacing:.26em;padding:20px 0 8px;border-bottom:1px solid var(--line)}
+    .nav-links.mobile-open .nav-dropdown>a::before{display:none}
+    .nav-links.mobile-open .dropdown-menu{position:static;opacity:1;pointer-events:all;transform:none;box-shadow:none;border:none;padding:4px 0 8px 0;background:transparent;border-bottom:1px solid var(--line)}
+    .nav-links.mobile-open .dropdown-menu a{font-size:15px;letter-spacing:.04em;text-transform:none;padding:8px 16px;color:var(--espresso);border:none;font-family:'Cormorant Garamond',serif;font-style:italic}
+    .hamburger{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;z-index:1000;position:relative}
+    .hamburger span{display:block;width:22px;height:1.5px;background:var(--espresso);transition:transform .3s,opacity .3s}
+    .hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0}
+    .hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+    /* HERO */
+    .hero{padding:0;min-height:auto;flex-direction:column}
+    .hero-photo-panel{width:100%;height:50vw;min-height:240px;max-height:320px}
+    .hero-mark{display:none}
+    .hero-content{max-width:100%;padding:40px 24px 48px;position:static;transform:none}
+    .hero-headline{font-size:clamp(40px,10vw,64px)}
+    .hero-sub{font-size:14px;max-width:100%}
+    .hero-actions{flex-direction:column;align-items:center;gap:16px;margin-top:24px}
+    .hero-scroll{display:none}
+
+    /* SECTIONS */
+    .section{padding:48px 24px}
+    .section-label{padding:0 0 24px}
+    .inner-hero{padding:48px 24px 56px;min-height:auto}
+    .inner-hero h1{font-size:clamp(36px,9vw,56px)}
+
+    /* GRIDS — all single column on mobile */
+    .philosophy-grid,.how-grid,.practitioners-intro,.partnerships-header,
+    .pathway-detail-grid,.contact-grid,.about-grid,.prac-detail-grid,
+    .founder-statement,.booking-grid{grid-template-columns:1fr!important}
+    .philosophy-statement,.prac-detail-aside,.founder-aside{border-right:none;border-bottom:1px solid var(--line)}
+    .pd-col{border-right:none;border-bottom:1px solid var(--line);padding:32px 20px}
+    .pd-col:last-child{border-bottom:none}
+    /* Practitioner cards — 2 col on tablet, 1 col on phone */
+    .practitioners-grid{grid-template-columns:repeat(2,1fr)}
+    .practitioner-card{border-right:none;border-bottom:1px solid var(--line)}
+    .pathways-grid{grid-template-columns:1fr}
+    .pathway-card{border-right:none;border-bottom:1px solid var(--line)}
+    .partnerships-grid{grid-template-columns:1fr}
+    .partnership-tile{border-right:none}
+    .wedding-timeline{grid-template-columns:1fr 1fr}
+    .services-category .service-row{grid-template-columns:1fr}
+    .service-name,.service-desc{border-right:none;border-bottom:1px solid var(--line)}
+    .service-cta{justify-content:flex-start}
+    .prac-services-grid{grid-template-columns:1fr}
+    .prac-service-item{border-right:none}
+    .tier{grid-template-columns:80px 1fr}
+    /* inline style grids */
+    div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+    div[style*="grid-template-columns:repeat(auto-fill"]{grid-template-columns:1fr!important}
+
+    /* PRAC CARD PHOTO — square on mobile for consistency */
+    .prac-card-photo{aspect-ratio:1/1;margin:-24px -20px 20px}
+
+    /* PRAC LINK */
+    .prac-link{font-size:9px;padding:0;white-space:nowrap}
+    .practitioner-card{padding:24px 20px 28px}
+
+    /* TEXT — larger for readability */
+    body{font-size:17px}
+    p,li,.hero-sub,.pathway-for,.pathway-outcome,.prac-service-item p,.philosophy-statement p,.mantra-item p,.concierge-strip p{font-size:16px!important;line-height:1.75}
+    h2{font-size:clamp(28px,7vw,44px)}
+    h3{font-size:clamp(22px,5vw,32px)}
+    .pull-quote{padding:36px 24px}
+    .pull-quote blockquote{font-size:clamp(20px,5vw,28px)}
+    .hero-content blockquote{font-size:clamp(20px,5vw,28px)}
+
+    /* FINAL CTA */
+    .final-cta{padding:60px 24px}
+    .final-cta h2{font-size:clamp(32px,8vw,56px)}
+    .final-cta-actions{flex-direction:column;align-items:center;gap:16px}
+
+    /* FOOTER */
+    footer{grid-template-columns:1fr;padding:40px 24px;gap:32px}
+    .footer-bottom{padding:18px 24px;flex-direction:column;gap:6px;text-align:center}
+    .footer-nav ul{gap:12px}
+
+    /* FORMS */
+    .contact-info,.contact-form-wrap{padding:32px 20px}
+    .contact-info{border-right:none;border-bottom:1px solid var(--line)}
+    .form-row{grid-template-columns:1fr!important}
+
+    /* PATHWAY */
+    .pathway-transition{padding:40px 24px}
+    .pathway-architecture .pa-header{padding:28px 20px}
+    .pa-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .pa-table{min-width:600px}
+    div[style*="padding:0 60px"]{padding:0 20px 40px!important}
+    div[style*="padding:0 60px"]{padding:0!important}
+
+    /* OVERFLOW */
+    *{max-width:100%;overflow-wrap:break-word}
+    .page{overflow-x:hidden}
+    img{max-width:100%;height:auto}
+
+    /* BUTTONS — allow wrapping on mobile so long labels don't overflow */
+    .btn-primary,.btn-primary-light,.btn-ghost-light,.btn-ghost{white-space:normal;text-align:center;padding-left:20px;padding-right:20px}
+
+    /* NAV links — already handled by hamburger, but ensure no nowrap bleed */
+    .nav-links a{white-space:normal}
+
+    /* Practitioner cards — don't clip content */
+    .practitioner-card{overflow:visible}
+
+    /* Inner hero — never let text sit on image on mobile */
+    .inner-hero{flex-direction:column;align-items:flex-start;padding:40px 20px 48px;min-height:auto}
+    .inner-hero img,.inner-hero .inner-photo{width:100%;max-height:280px;object-fit:cover;margin-bottom:0}
+
+    /* Pathway cards — enough room for all text */
+    .pathway-card{padding:32px 20px;overflow:visible}
+
+    /* Partnership tiles — text room */
+    .partnership-tile{padding:40px 20px;overflow:visible}
+
+    /* Final CTA — text must not run over background image */
+    .final-cta{padding:60px 24px}
+    .final-cta::before{background:rgba(44,36,32,.72)} /* darken overlay */
+
+    /* Prac detail — long role titles */
+    .prac-role-title,.prac-tag,.prac-cred{white-space:normal;word-break:normal}
+
+    /* Athlete logos label */
+    .athlete-logos-label{white-space:normal}
+
+    /* Stats / numbers — don't clip on small screens */
+    .stat-number,.tile-number{font-size:clamp(36px,10vw,64px)}
+
+    /* Inline overflow:hidden divs that cap height — release on mobile */
+    [style*="max-height:480px"]{max-height:none!important;overflow:visible!important}
+    [style*="overflow:hidden"]:not(.marquee-wrap):not(.hero-photo-panel):not(.prac-card-photo):not(.prac-photo-wrap){overflow:visible!important}
+  }
+@media(max-width:768px){
+    /* No hyphenation anywhere */
+    *{hyphens:none;-webkit-hyphens:none;-ms-hyphens:none;word-break:normal}
+
+    /* Minimum 16px spacing between elements */
+    .section{gap:0} /* sections use padding already */
+
+    /* Hero — text below image, not overlaid */
+    .hero-photo-panel{position:relative;width:100%;height:56vw;min-height:220px;max-height:340px;top:auto;right:auto;bottom:auto;left:auto}
+    .hero-photo-panel::before{background:linear-gradient(to bottom,transparent 60%,var(--ivory) 100%)}
+    .hero-content{padding:24px 20px 40px;background:var(--ivory)}
+    .hero-eyebrow{margin-bottom:16px}
+    .hero-sub{margin-bottom:24px}
+    .hero-actions{gap:16px}
+
+    /* Buttons minimum 44px tap target */
+    .btn-primary,.btn-primary-light,.nav-cta,.form-submit,.survey-btn-next{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+    .pathway-cta,.prac-link,.tile-link,.service-book{min-height:44px;padding:4px 0}
+
+    /* Concierge strip — stack vertically */
+    .concierge-strip{flex-direction:column;gap:16px;padding:24px 20px}
+    .concierge-strip-text{flex-direction:column;gap:10px;align-items:flex-start}
+    .concierge-strip-text::before{display:none}
+    .concierge-strip h4{font-size:clamp(18px,5vw,24px)}
+    .concierge-badges{gap:8px}
+
+    /* Philosophy grid — stack */
+    .philosophy-grid{grid-template-columns:1fr}
+    .philosophy-statement{border-right:none;border-bottom:1px solid var(--line);padding:clamp(28px,5vw,48px) 20px}
+    .philosophy-mantra{padding:32px 20px}
+
+    /* Pathway cards — full width */
+    .pathway-card{padding:32px 24px}
+    .pathways-intro{margin-bottom:36px}
+    .pathways-intro h2{font-size:clamp(30px,8vw,48px)}
+
+    /* How section */
+    .how-grid{gap:40px}
+    .how-step{grid-template-columns:56px 1fr;padding:24px 0}
+
+    /* Practitioners */
+    .practitioners-intro{gap:24px;margin-bottom:36px}
+    .practitioner-card{padding:24px 20px}
+    .prac-card-photo{aspect-ratio:4/5;margin:-24px -20px 20px}
+
+    /* Partnerships */
+    .partnership-tile{padding:36px 24px}
+    .tile-number{font-size:48px}
+
+    /* Footer */
+    footer{grid-template-columns:1fr;gap:28px}
+    .footer-bottom{flex-direction:column;gap:6px;text-align:center;padding:16px 20px}
+
+    /* Prac detail page */
+    .prac-detail-grid{grid-template-columns:1fr}
+    .prac-detail-aside{border-right:none;border-bottom:1px solid var(--line);padding:32px 20px}
+    .prac-detail-body{padding:32px 20px}
+    .prac-services-grid{grid-template-columns:1fr}
+    .prac-service-item{border-right:none}
+
+    /* Services page */
+    .services-category .service-row{grid-template-columns:1fr}
+    .service-name,.service-desc{border-right:none;border-bottom:1px solid var(--line);padding:20px}
+    .service-cta{padding:16px 20px;justify-content:flex-start}
+
+    /* Survey */
+    .survey-wrap{max-width:100%;padding:0}
+    .survey-q{font-size:clamp(22px,6vw,34px)}
+    .survey-option{padding:14px 16px}
+    .survey-nav{margin-top:32px}
+
+    /* Pathway architecture table — horizontal scroll */
+    .pa-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+    .pa-table{min-width:560px}
+
+    /* Founder statement */
+    .founder-statement{grid-template-columns:1fr}
+    .founder-aside{border-right:none;border-bottom:1px solid var(--line);padding:32px 20px}
+    .founder-body{padding:32px 20px}
+    .founder-photo{width:140px;height:168px}
+
+    /* Tiers */
+    .tier{grid-template-columns:80px 1fr}
+    .tier-num{padding:24px 16px}
+    .tier-content{padding:24px 20px}
+
+    /* Pull quote */
+    .pull-quote{padding:32px 20px;gap:16px}
+
+    /* Contact */
+    .contact-grid{grid-template-columns:1fr}
+    .contact-info{border-right:none;border-bottom:1px solid var(--line);padding:32px 20px}
+    .contact-form-wrap{padding:32px 20px}
+    .form-group input,.form-group select,.form-group textarea{font-size:16px} /* prevent iOS zoom */
+
+    /* Images always 100% width */
+    img{max-width:100%;width:100%;height:auto}
+    .photo-duo img{width:100%}
+    .section-photo-strip{grid-template-columns:1fr}
+    .section-photo-strip .sp-item{aspect-ratio:4/3}
+
+    /* No horizontal scroll on page */
+    .page{overflow-x:hidden;max-width:100vw}
+  }
+@media(max-width:600px){
+    div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr !important}
+    div[style*="grid-template-columns:1fr 1fr 1fr"] > div{border-right:none !important;border-bottom:1px solid var(--line)}
+  }
+@media(max-width:480px){
+    .practitioners-grid{grid-template-columns:1fr}
+    .events-grid{grid-template-columns:1fr}
+    .event-card{padding:36px 24px}
+    .wedding-timeline{grid-template-columns:1fr}
+    nav .nav-cta{display:none}
+    .inner-hero h1{font-size:clamp(30px,10vw,44px)}
+    .section{padding:40px 20px}
+    .final-cta{padding:48px 20px}
+    .prac-detail-aside img.aside-photo{aspect-ratio:4/5;width:100%}
+  }
+
+/* ── IV menu: stack to one column on small screens ── */
+@media(max-width:900px){
+  .iv-menu{padding:56px 24px 24px}
+  .iv-cat{padding:28px 24px}
+}
+@media(max-width:768px){
+  .iv-menu{padding:44px 16px 16px}
+  .iv-menu-head h3{font-size:32px}
+  .iv-menu-grid{grid-template-columns:1fr}
+  .iv-cat,.iv-cat.alt{border-right:none;background:var(--ivory)}
+  .iv-cat:nth-child(even){background:var(--parchment)}
+  .iv-cat h4{font-size:24px}
+}
+
+/* ── Pathway tables: each phase becomes a card on small screens ── */
+@media(max-width:768px){
+  .pa-table-wrap{overflow:visible}
+  .pa-table,.pa-table tbody,.pa-table tr,.pa-table td{display:block;width:100%;min-width:0!important}
+  .pa-table{border:none}
+  .pa-table thead{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .pa-table tr{border:1px solid var(--line);margin-bottom:16px;background:var(--ivory)}
+  .pa-table td{border:none;border-top:1px solid var(--line);padding:16px 18px}
+  .pa-table td:first-child{border-top:none;min-width:0}
+  .pa-table td[data-label]:not(:first-child)::before{content:attr(data-label);display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--copper);margin-bottom:8px}
+}
 </style>
 </head>
 <body>
@@ -721,7 +1009,7 @@
     <div class="hero-scroll">Scroll</div>
   </section>
 
-  <div class="marquee-wrap"><button type="button" class="marquee-pause" id="marqueePause" aria-pressed="false" onclick="toggleMarquee(this)">Pause</button><div class="marquee">
+  <div class="marquee-wrap"><div class="marquee-clip"><div class="marquee">
     <span>Concierge Health Ecosystem</span><span class="marquee-dot"> · </span>
     <span>All Services Delivered In-Home</span><span class="marquee-dot"> · </span>
     <span>Clinical Research Meets Ancient Wisdom</span><span class="marquee-dot"> · </span>
@@ -734,7 +1022,7 @@
     <span>Holistic Primary Medical Care</span><span class="marquee-dot"> · </span>
     <span>Preventative Medicine &amp; Longevity</span><span class="marquee-dot"> · </span>
     <span>To Be Known.</span><span class="marquee-dot"> · </span>
-  </div></div>
+  </div></div><button type="button" class="marquee-pause" id="marqueePause" aria-pressed="false" onclick="toggleMarquee(this)">Pause</button></div>
 
   <section class="section section-alt">
     <div class="section-label" data-num="01">Community Events</div>
@@ -1540,28 +1828,28 @@
       </tr></thead>
       <tbody>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 1–2</span><span class="pa-phase">Assess</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Root-cause consultation</span><span class="pa-desc">Comprehensive intake — labs, history, lifestyle, hormonal baseline</span></td>
-          <td><span class="pa-role">SOMA Therapy</span><span class="pa-title">Structural evaluation</span><span class="pa-desc">Biomechanical mapping — where the body is holding and compensating</span></td>
-          <td><span class="pa-role">IV Therapy</span><span class="pa-title">First IV session</span><span class="pa-desc">Baseline restoration — cellular hydration, adrenal and immune support</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 1–2</span><span class="pa-phase">Assess</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Root-cause consultation</span><span class="pa-desc">Comprehensive intake — labs, history, lifestyle, hormonal baseline</span></td>
+          <td data-label="Structural &amp; Somatic · Branden · Dr. Adams"><span class="pa-role">SOMA Therapy</span><span class="pa-title">Structural evaluation</span><span class="pa-desc">Biomechanical mapping — where the body is holding and compensating</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">IV Therapy</span><span class="pa-title">First IV session</span><span class="pa-desc">Baseline restoration — cellular hydration, adrenal and immune support</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Wk 3–5</span><span class="pa-phase">Regulate</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Protocol refinement</span><span class="pa-desc">Adjust supplementation, sleep support, and stress-response interventions</span></td>
-          <td><span class="pa-role">Structural Integration</span><span class="pa-title">Fascia release series</span><span class="pa-desc">Weekly sessions targeting areas holding chronic tension patterns</span></td>
-          <td><span class="pa-role">Holistic Wellness</span><span class="pa-title">Breathwork + sound bath</span><span class="pa-desc">Guided nervous system regulation — somatic practices for downregulation</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 3–5</span><span class="pa-phase">Regulate</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Protocol refinement</span><span class="pa-desc">Adjust supplementation, sleep support, and stress-response interventions</span></td>
+          <td data-label="Structural &amp; Somatic · Branden · Dr. Adams"><span class="pa-role">Structural Integration</span><span class="pa-title">Fascia release series</span><span class="pa-desc">Weekly sessions targeting areas holding chronic tension patterns</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">Holistic Wellness</span><span class="pa-title">Breathwork + sound bath</span><span class="pa-desc">Guided nervous system regulation — somatic practices for downregulation</span></td>
         </tr>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 6–8</span><span class="pa-phase">Restore</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Progress review</span><span class="pa-desc">Lab re-evaluation, energy assessment, pathway recalibration</span></td>
-          <td><span class="pa-role">SOMA + Structural</span><span class="pa-title">Integration work</span><span class="pa-desc">Deepening sessions as the nervous system settles and releases</span></td>
-          <td><span class="pa-role">IV + Holistic</span><span class="pa-title">Energy optimization</span><span class="pa-desc">NAD+, B-complex, mitochondrial support for energy recovery</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 6–8</span><span class="pa-phase">Restore</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Progress review</span><span class="pa-desc">Lab re-evaluation, energy assessment, pathway recalibration</span></td>
+          <td data-label="Structural &amp; Somatic · Branden · Dr. Adams"><span class="pa-role">SOMA + Structural</span><span class="pa-title">Integration work</span><span class="pa-desc">Deepening sessions as the nervous system settles and releases</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">IV + Holistic</span><span class="pa-title">Energy optimization</span><span class="pa-desc">NAD+, B-complex, mitochondrial support for energy recovery</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Wk 9–12</span><span class="pa-phase">Integrate</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Maintenance protocol</span><span class="pa-desc">Long-term plan — what continues, what reduces, what to monitor</span></td>
-          <td><span class="pa-role">Movement</span><span class="pa-title">Coco joins</span><span class="pa-desc">Yoga and somatic movement as the system stabilises and strengthens</span></td>
-          <td><span class="pa-role">Ongoing</span><span class="pa-title">Rhythm established</span><span class="pa-desc">Monthly maintenance or transition into The Foundation when ready</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 9–12</span><span class="pa-phase">Integrate</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Maintenance protocol</span><span class="pa-desc">Long-term plan — what continues, what reduces, what to monitor</span></td>
+          <td data-label="Structural &amp; Somatic · Branden · Dr. Adams"><span class="pa-role">Movement</span><span class="pa-title">Coco joins</span><span class="pa-desc">Yoga and somatic movement as the system stabilises and strengthens</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">Ongoing</span><span class="pa-title">Rhythm established</span><span class="pa-desc">Monthly maintenance or transition into The Foundation when ready</span></td>
         </tr>
       </tbody>
     </table></div>
@@ -1669,28 +1957,28 @@
       </tr></thead>
       <tbody>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 1–3</span><span class="pa-phase">Baseline</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Comprehensive assessment</span><span class="pa-desc">Hormonal, metabolic, and lifestyle review — full diagnostic baseline</span></td>
-          <td><span class="pa-role">Structural Integration</span><span class="pa-title">Postural evaluation</span><span class="pa-desc">Identifying structural contributors to fatigue and energy drain</span></td>
-          <td><span class="pa-role">IV Therapy</span><span class="pa-title">Foundation IV series</span><span class="pa-desc">Targeted IV for sleep, energy restoration, and immune baseline</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 1–3</span><span class="pa-phase">Baseline</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Comprehensive assessment</span><span class="pa-desc">Hormonal, metabolic, and lifestyle review — full diagnostic baseline</span></td>
+          <td data-label="Structural &amp; Movement · Branden · Coco"><span class="pa-role">Structural Integration</span><span class="pa-title">Postural evaluation</span><span class="pa-desc">Identifying structural contributors to fatigue and energy drain</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">IV Therapy</span><span class="pa-title">Foundation IV series</span><span class="pa-desc">Targeted IV for sleep, energy restoration, and immune baseline</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Wk 4–7</span><span class="pa-phase">Stabilise</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Protocol implementation</span><span class="pa-desc">Hormonal and metabolic support, nutritional optimisation, sleep protocol</span></td>
-          <td><span class="pa-role">Structural Integration</span><span class="pa-title">Alignment series</span><span class="pa-desc">Fascia work to address postural patterns affecting energy and recovery</span></td>
-          <td><span class="pa-role">Holistic Wellness</span><span class="pa-title">Regulation practices</span><span class="pa-desc">Breathwork and somatic sessions for nervous system stabilisation</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 4–7</span><span class="pa-phase">Stabilise</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Protocol implementation</span><span class="pa-desc">Hormonal and metabolic support, nutritional optimisation, sleep protocol</span></td>
+          <td data-label="Structural &amp; Movement · Branden · Coco"><span class="pa-role">Structural Integration</span><span class="pa-title">Alignment series</span><span class="pa-desc">Fascia work to address postural patterns affecting energy and recovery</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">Holistic Wellness</span><span class="pa-title">Regulation practices</span><span class="pa-desc">Breathwork and somatic sessions for nervous system stabilisation</span></td>
         </tr>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 8–11</span><span class="pa-phase">Strengthen</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Progress evaluation</span><span class="pa-desc">Lab re-check, energy and sleep assessment, protocol refinement</span></td>
-          <td><span class="pa-role">Movement</span><span class="pa-title">Somatic Movement &amp; Yoga</span><span class="pa-desc">Coco introduces movement practices to build stability and capacity</span></td>
-          <td><span class="pa-role">IV + Holistic</span><span class="pa-title">Performance support</span><span class="pa-desc">IV optimisation for sustained energy and cellular resilience</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 8–11</span><span class="pa-phase">Strengthen</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Progress evaluation</span><span class="pa-desc">Lab re-check, energy and sleep assessment, protocol refinement</span></td>
+          <td data-label="Structural &amp; Movement · Branden · Coco"><span class="pa-role">Movement</span><span class="pa-title">Somatic Movement &amp; Yoga</span><span class="pa-desc">Coco introduces movement practices to build stability and capacity</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">IV + Holistic</span><span class="pa-title">Performance support</span><span class="pa-desc">IV optimisation for sustained energy and cellular resilience</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Wk 12–16</span><span class="pa-phase">Structure</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Maintenance plan</span><span class="pa-desc">Sustainable clinical rhythm — proactive care designed to hold the gains</span></td>
-          <td><span class="pa-role">Movement + Structural</span><span class="pa-title">Integrated maintenance</span><span class="pa-desc">Bi-weekly sessions sustaining structural alignment and movement quality</span></td>
-          <td><span class="pa-role">Ongoing</span><span class="pa-title">Rhythm established</span><span class="pa-desc">Monthly maintenance or transition into The Elevation when ready</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 12–16</span><span class="pa-phase">Structure</span></td>
+          <td data-label="Clinical Foundation · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Maintenance plan</span><span class="pa-desc">Sustainable clinical rhythm — proactive care designed to hold the gains</span></td>
+          <td data-label="Structural &amp; Movement · Branden · Coco"><span class="pa-role">Movement + Structural</span><span class="pa-title">Integrated maintenance</span><span class="pa-desc">Bi-weekly sessions sustaining structural alignment and movement quality</span></td>
+          <td data-label="Restoration &amp; Energy · Christine · Coco"><span class="pa-role">Ongoing</span><span class="pa-title">Rhythm established</span><span class="pa-desc">Monthly maintenance or transition into The Elevation when ready</span></td>
         </tr>
       </tbody>
     </table></div>
@@ -1796,28 +2084,28 @@
       </tr></thead>
       <tbody>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 1–2</span><span class="pa-phase">Map</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Advanced diagnostics</span><span class="pa-desc">Comprehensive labs — hormonal, metabolic, cognitive markers, longevity panels</span></td>
-          <td><span class="pa-role">SOMA Therapy</span><span class="pa-title">Performance biomechanics</span><span class="pa-desc">Structural efficiency mapping — how the body moves under load and demand</span></td>
-          <td><span class="pa-role">IV Therapy</span><span class="pa-title">Performance IV baseline</span><span class="pa-desc">Calibrated IV for cognitive performance, recovery speed, and cellular health</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 1–2</span><span class="pa-phase">Map</span></td>
+          <td data-label="Advanced Clinical · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Advanced diagnostics</span><span class="pa-desc">Comprehensive labs — hormonal, metabolic, cognitive markers, longevity panels</span></td>
+          <td data-label="Performance &amp; Structure · Dr. Adams · Branden"><span class="pa-role">SOMA Therapy</span><span class="pa-title">Performance biomechanics</span><span class="pa-desc">Structural efficiency mapping — how the body moves under load and demand</span></td>
+          <td data-label="Recovery &amp; Refinement · Christine · Coco"><span class="pa-role">IV Therapy</span><span class="pa-title">Performance IV baseline</span><span class="pa-desc">Calibrated IV for cognitive performance, recovery speed, and cellular health</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Wk 3–6</span><span class="pa-phase">Optimise</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Precision protocol</span><span class="pa-desc">Targeted interventions for cognition, energy regulation, and hormonal precision</span></td>
-          <td><span class="pa-role">SOMA + Structural</span><span class="pa-title">Performance maintenance</span><span class="pa-desc">Structural and recovery work calibrated to your output demands and schedule</span></td>
-          <td><span class="pa-role">Movement</span><span class="pa-title">Performance training</span><span class="pa-desc">Coco's yoga and somatic movement — mobility, grounding, and sustainable output</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 3–6</span><span class="pa-phase">Optimise</span></td>
+          <td data-label="Advanced Clinical · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Precision protocol</span><span class="pa-desc">Targeted interventions for cognition, energy regulation, and hormonal precision</span></td>
+          <td data-label="Performance &amp; Structure · Dr. Adams · Branden"><span class="pa-role">SOMA + Structural</span><span class="pa-title">Performance maintenance</span><span class="pa-desc">Structural and recovery work calibrated to your output demands and schedule</span></td>
+          <td data-label="Recovery &amp; Refinement · Christine · Coco"><span class="pa-role">Movement</span><span class="pa-title">Performance training</span><span class="pa-desc">Coco's yoga and somatic movement — mobility, grounding, and sustainable output</span></td>
         </tr>
         <tr class="pa-key">
-          <td><span class="pa-week">Wk 7–10</span><span class="pa-phase">Refine</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Biomarker review</span><span class="pa-desc">Deep re-evaluation — refining protocols based on measurable performance data</span></td>
-          <td><span class="pa-role">Structural + SOMA</span><span class="pa-title">Recovery architecture</span><span class="pa-desc">Optimising the body's ability to recover from high-output periods efficiently</span></td>
-          <td><span class="pa-role">IV + Holistic</span><span class="pa-title">NAD+ optimisation</span><span class="pa-desc">Advanced IV protocols targeting mitochondrial function and cognitive clarity</span></td>
+          <td data-label="Phase"><span class="pa-week">Wk 7–10</span><span class="pa-phase">Refine</span></td>
+          <td data-label="Advanced Clinical · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Biomarker review</span><span class="pa-desc">Deep re-evaluation — refining protocols based on measurable performance data</span></td>
+          <td data-label="Performance &amp; Structure · Dr. Adams · Branden"><span class="pa-role">Structural + SOMA</span><span class="pa-title">Recovery architecture</span><span class="pa-desc">Optimising the body's ability to recover from high-output periods efficiently</span></td>
+          <td data-label="Recovery &amp; Refinement · Christine · Coco"><span class="pa-role">IV + Holistic</span><span class="pa-title">NAD+ optimisation</span><span class="pa-desc">Advanced IV protocols targeting mitochondrial function and cognitive clarity</span></td>
         </tr>
         <tr>
-          <td><span class="pa-week">Ongoing</span><span class="pa-phase">Sustain</span></td>
-          <td><span class="pa-role">Holistic MD</span><span class="pa-title">Quarterly reviews</span><span class="pa-desc">Proactive clinical care — ahead of demands, not reactive to them</span></td>
-          <td><span class="pa-role">Performance Care</span><span class="pa-title">Ongoing maintenance</span><span class="pa-desc">Flexible scheduling around travel, events, and high-demand periods</span></td>
-          <td><span class="pa-role">Full ecosystem</span><span class="pa-title">Continuous evolution</span><span class="pa-desc">Care adapts as your performance goals and life demands evolve</span></td>
+          <td data-label="Phase"><span class="pa-week">Ongoing</span><span class="pa-phase">Sustain</span></td>
+          <td data-label="Advanced Clinical · Dr. Angela Colombo"><span class="pa-role">Holistic MD</span><span class="pa-title">Quarterly reviews</span><span class="pa-desc">Proactive clinical care — ahead of demands, not reactive to them</span></td>
+          <td data-label="Performance &amp; Structure · Dr. Adams · Branden"><span class="pa-role">Performance Care</span><span class="pa-title">Ongoing maintenance</span><span class="pa-desc">Flexible scheduling around travel, events, and high-demand periods</span></td>
+          <td data-label="Recovery &amp; Refinement · Christine · Coco"><span class="pa-role">Full ecosystem</span><span class="pa-title">Continuous evolution</span><span class="pa-desc">Care adapts as your performance goals and life demands evolve</span></td>
         </tr>
       </tbody>
     </table></div>

@@ -19,7 +19,7 @@
   --line:rgba(196,168,130,0.3);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;overflow-x:auto}
+html{scroll-behavior:smooth}
 body,*{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none}
   /* ADA — visible focus indicators */
   :focus-visible{outline:2px solid var(--copper);outline-offset:3px}
@@ -27,7 +27,7 @@ body,*{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:n
   /* Skip link */
   .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:10000;background:var(--copper);color:var(--ivory);padding:12px 24px;font-size:12px;text-decoration:none}
   .skip-link:focus{position:fixed;left:16px;top:16px;width:auto;height:auto;overflow:visible;outline:none}
-body{background:var(--ivory);color:var(--espresso);font-family:'DM Sans',sans-serif;font-weight:300;font-size:15px;line-height:1.7;min-height:100vh;min-width:1280px;overflow-x:auto}
+body{background:var(--ivory);color:var(--espresso);font-family:'DM Sans',sans-serif;font-weight:300;font-size:15px;line-height:1.7;min-height:100vh;overflow-x:hidden}
 
 /* NAV */
 .nav{background:rgba(250,247,242,.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--line);padding:20px clamp(20px,5vw,60px);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -231,6 +231,101 @@ a.wed-row:hover{border-color:var(--copper)}
 .events-divider{display:flex;align-items:center;gap:16px;margin:44px 0 36px;color:var(--sand);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
 .events-divider::before,.events-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 
+
+/* ── Responsive layout (phones, tablets, desktops) ── */
+@media(max-width:860px){.booking-grid{grid-template-columns:1fr}.summary{position:static;margin-top:24px}}
+@media(max-width:768px){
+    /* Global no-hyphen, no-overflow */
+    *{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none}
+
+    /* Layout */
+    .wrap{padding:16px;max-width:100%}
+    .booking-grid{grid-template-columns:1fr;gap:16px}
+    .summary{position:static;margin-top:16px}
+
+    /* Nav */
+    .nav{padding:14px 16px}
+    .nav-back{font-size:9px}
+
+    /* Page header */
+    .page-header{margin-bottom:24px}
+    h1{font-size:clamp(28px,8vw,44px)}
+    .sub{font-size:14px}
+
+    /* Steps bar — collapse to numbers only */
+    .steps-bar{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .step{min-width:44px;padding:10px 8px}
+    .step-l{display:none}
+
+    /* Panels */
+    .panel-section{padding:16px}
+
+    /* Practitioner grid — 2 columns */
+    .prac-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .prac-card{padding:14px 10px;min-height:44px}
+    .prac-name{font-size:13px}
+
+    /* Service items — stack price below title */
+    .svc-item{flex-direction:column;align-items:flex-start;gap:8px;padding:16px}
+    .svc-price{white-space:normal;flex-shrink:1}
+
+    /* Calendar */
+    .cal-grid{gap:2px}
+    .cal-day{font-size:12px;min-height:38px;min-width:0}
+
+    /* Slots */
+    .slots-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+    .slot{min-height:44px;padding:10px 6px;font-size:11px}
+
+    /* Forms — always single column */
+    .form-row{grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+    .form-group input,.form-group textarea,.form-group select{font-size:16px} /* prevent iOS zoom */
+
+    /* Buttons */
+    .btn{min-height:48px;padding:13px 20px;font-size:9px;display:inline-flex;align-items:center;justify-content:center}
+    .btn-row{flex-direction:column;gap:8px;align-items:stretch}
+    .btn-row .btn{width:100%}
+    .btn-row .btn.ghost{width:100%}
+
+    /* Summary */
+    .summary-head{padding:14px 16px}
+    .summary-body{padding:14px 16px}
+    .tags{margin-top:8px}
+
+    /* Review details */
+    #reviewDetails .sum-row{flex-direction:column;gap:2px;align-items:flex-start}
+    .sum-val{text-align:left}
+
+    /* Success screen */
+    .success-wrap{padding:32px 16px}
+    #nextStepsCard{padding:16px}
+
+    /* Inquiry / Zoom panels */
+    .inq-box{padding:16px}
+    .inq-box h3{font-size:18px}
+
+    /* Category buttons */
+    .cat-btn{min-height:44px;padding:8px 12px}
+    .svc-cats{gap:6px}
+
+    /* Note / hint text */
+    .slots-note{font-size:11px}
+  }
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+@media(max-width:480px){
+    .prac-grid{grid-template-columns:repeat(2,1fr)}
+    .steps-bar{font-size:9px}
+    .step-l{display:none}
+    .wrap{padding:24px 16px}
+    .panel-section{padding:20px 16px}
+    h1{font-size:clamp(28px,8vw,44px)}
+    .btn{padding:13px 24px;font-size:9px}
+  }
+@media(max-width:380px){
+    .prac-grid{grid-template-columns:repeat(2,1fr)}
+    .slots-grid{grid-template-columns:repeat(2,1fr)}
+    h1{font-size:clamp(24px,9vw,36px)}
+  }
 </style>
 </head>
 <body>

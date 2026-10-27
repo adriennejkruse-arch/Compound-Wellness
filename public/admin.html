@@ -21,7 +21,7 @@
   --blue:#1877F2;--blue-tint:#EFF4FF;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;color:var(--espresso);word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none;min-width:1280px;overflow-x:auto}
+html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size:14px;color:var(--espresso);word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none;-ms-hyphens:none;overflow-x:hidden}
 :focus-visible{outline:2px solid var(--copper);outline-offset:2px}
 
 /* ── LOGIN ─────────────────────────────────────────────── */
@@ -193,6 +193,86 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
 
 /* ── MOBILE ────────────────────────────────────────────── */
 
+
+/* ── Responsive layout (phones, tablets, desktops) ── */
+@media(max-width:768px){
+  /* Global */
+  *{word-break:normal;overflow-wrap:break-word;hyphens:none;-webkit-hyphens:none}
+
+  /* App shell — allow vertical scroll on mobile */
+  #appShell{flex-direction:column;height:auto;min-height:100vh;overflow:visible}
+  .main{height:auto;overflow-y:visible}
+
+  /* Sidebar — icon-only strip at top */
+  .sidebar{width:100%;height:auto;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+  .sidebar-logo{display:none}
+  .nav-sec{padding:0;border-bottom:none;display:flex;flex-direction:row}
+  .nav-sec-lbl,.sidebar-foot,.sidebar-user,.nav-btn span,
+  .sidebar-logo-name,.sidebar-logo-the,.sidebar-logo-tag{display:none}
+  .nav-btn{padding:12px 14px;justify-content:center;min-height:44px;min-width:44px;border-bottom:none;flex-shrink:0}
+  .nav-btn.active{border-left:none;border-bottom:2px solid var(--sand)}
+
+  /* Topbar */
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:6px}
+  .topbar-title{font-size:16px}
+  .topbar-actions{flex-wrap:wrap;gap:6px}
+  .topbar-date{display:none}
+  .btn-sm{min-height:36px;padding:6px 12px}
+
+  /* Content */
+  .content{padding:14px}
+
+  /* Stat grids */
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  div.stat-grid[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}
+
+  /* Chart / layout grids — single column */
+  .chart-row,.chart-row-half,.qr-grid,.frow{grid-template-columns:minmax(0,1fr)}
+  .chart-card{min-width:0;overflow-x:auto}
+  .chart-wrap{height:160px}
+
+  /* Tables — horizontal scroll */
+  .tcard{overflow-x:auto}
+  div[style*="overflow-x:auto"]{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .dtable{min-width:560px}
+  .dtable th,.dtable td{padding:8px 10px;font-size:11px}
+
+  /* Search & filter controls stack */
+  .thead{flex-direction:column;align-items:flex-start;gap:10px}
+  .tcontrols{flex-wrap:wrap;gap:6px;width:100%}
+  .search{width:100%}
+
+  /* Drawer — full width */
+  .drawer{width:100vw;max-width:100vw}
+  .dhead{padding:16px}
+  .dbody{padding:16px}
+  .dact{padding:14px 16px;flex-wrap:wrap;gap:6px}
+  .dact .btn{min-height:44px}
+  .dr{flex-wrap:wrap;gap:4px}
+  .dl{width:auto;min-width:80px}
+
+  /* Queue */
+  .queue-row{grid-template-columns:1fr auto}
+  .queue-date{grid-column:1/-1;font-size:9px}
+
+  /* Buffer compose */
+  .compose-bar{flex-direction:column;gap:6px}
+  .sched-row{flex-wrap:wrap;gap:8px}
+  .sched-row input[type=datetime-local]{width:100%}
+
+  /* QR box */
+  .qr-display{width:120px;height:120px}
+
+  /* UTM builder */
+  div[style*="grid-template-columns:repeat(auto-fill,minmax(180px"]{grid-template-columns:1fr!important}
+
+  /* Login box */
+  .login-box{padding:32px 24px;width:100%;max-width:100%}
+
+  /* Buttons */
+  .btn{min-height:44px}
+  .btn-primary,.btn-green,.btn-blue{min-height:44px;padding:10px 16px}
+}
 </style>
 </head>
 <body>
@@ -765,6 +845,8 @@ async function init() {
 // ═══════════════════════════════════════════════════════════
 // PANELS
 // ═══════════════════════════════════════════════════════════
+// On phones the menu shows icons only, so every button gets a spoken name
+document.querySelectorAll('.nav-btn').forEach(b => b.setAttribute('aria-label', b.textContent.trim()));
 const TITLES = {analytics:'Analytics',contacts:'Contacts',bookings:'Bookings',members:'Members',social:'Social — Buffer',qr:'QR Codes',wednesday:'Wednesday Meditation'};
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
