@@ -13,9 +13,9 @@
 <style>
 :root{
   --ivory:#FAF7F2;--parchment:#F0EAE0;--linen:#E8DDD0;
-  --sand:#C4A882;--copper:#B8916A;--cognac:#8A6040;
+  --sand:#C4A882;--copper:#8A5E38;--cognac:#8A6040;
   --bark:#6B5248;--espresso:#2C2420;
-  --text-body:#7A6E64;--line:rgba(196,168,130,.3);
+  --text-body:#5E5248;--line:rgba(196,168,130,.3);
   --green:#2C4235;--green-tint:#EFF4F1;--green-line:rgba(44,66,53,.2);
   --red:#8B2E2E;--red-tint:#FDF0F0;
   --blue:#1877F2;--blue-tint:#EFF4FF;
@@ -874,7 +874,7 @@ async function drawCharts() {
     {label:'Sessions',data:sessions,borderColor:'#B8916A',backgroundColor:'rgba(184,145,106,.07)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true},
     {label:'Users',data:users,borderColor:'#2C4235',backgroundColor:'rgba(44,66,53,.06)',tension:.4,pointRadius:0,borderWidth:1.5,fill:true}
   ]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{font,color:'#7A6E64',boxWidth:8,padding:12}}},
+    plugins:{legend:{labels:{font,color:'#5E5248',boxWidth:8,padding:12}}},
     scales:{x:{ticks:{font,color:'#9A8E84',maxTicksLimit:8},grid:{color:gc},border:{display:false}},
             y:{ticks:{font,color:'#9A8E84'},grid:{color:gc},border:{display:false}}}}});
 
@@ -887,7 +887,7 @@ async function drawCharts() {
     labels: srcs.map(s=>s.l),
     datasets:[{data:srcs.map(s=>s.p),backgroundColor:GA4_COLORS,borderWidth:0,hoverOffset:3}]
   },options:{responsive:true,maintainAspectRatio:false,cutout:'66%',
-    plugins:{legend:{position:'bottom',labels:{font,color:'#7A6E64',padding:8,boxWidth:8}}}}});
+    plugins:{legend:{position:'bottom',labels:{font,color:'#5E5248',padding:8,boxWidth:8}}}}});
 
   document.getElementById('srcBars').innerHTML=srcs.map(s=>`
     <div class="src-row"><span class="src-lbl">${esc(s.l)}</span>

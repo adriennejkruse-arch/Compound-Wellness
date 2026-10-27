@@ -28,12 +28,15 @@ const axios      = require('axios');
 const { google } = require('googleapis');
 const { clerkClient, requireAuth } = require('@clerk/express');
 
+// A failed background task (an email, a Klaviyo call) must never crash the whole site.
+process.on('unhandledRejection', err => console.error('Unhandled rejection:', err && err.message));
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 // Railway sits in front of this app as a proxy — trust its X-Forwarded-For
 // header so req.ip reflects the real client, not Railway's edge IP
 // (needed for the admin-login rate limiter below to work per-client).
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // ── Google OAuth2 client ─────────────────────────────────
 const oauth2Client = new google.auth.OAuth2(
@@ -101,36 +104,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // STRIPE — Create Payment Intent
 // Called when user reaches payment step in booking.html
 // ════════════════════════════════════════════════════════
-app.post('/api/create-payment-intent', async (req, res) => {
-  try {
-    const { amount, currency = 'usd', metadata = {} } = req.body;
-
-    if (!amount || amount < 50) {
-      return res.status(400).json({ error: 'Invalid amount' });
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount:   Math.round(amount * 100), // convert dollars → cents
-      currency,
-      metadata: {
-        practitioner: metadata.practitioner || '',
-        service:      metadata.service      || '',
-        date:         metadata.date         || '',
-        time:         metadata.time         || '',
-        clientName:   metadata.clientName   || '',
-        clientEmail:  metadata.clientEmail  || '',
-      },
-      automatic_payment_methods: { enabled: true },
-    });
-
-    res.json({ clientSecret: paymentIntent.client_secret });
-  } catch (err) {
-    console.error('Stripe create-payment-intent error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
 // ════════════════════════════════════════════════════════
 // STRIPE — Webhook (payment confirmed by Stripe)
 // Stripe calls this automatically after payment succeeds
@@ -160,6 +133,9 @@ app.post('/api/stripe-webhook', async (req, res) => {
       catch (err) { alertSlack('donation-webhook', 'A donation was paid but follow-up failed', err.message); }
       return res.json({ received: true });
     }
+
+    // Portal payments and anything else without booking details are acknowledged and skipped.
+    if (!m || !m.clientName) return res.json({ received: true });
 
     // Save confirmed booking to Airtable
     await saveToAirtable('Bookings', {
@@ -215,7 +191,7 @@ app.post('/api/stripe-webhook', async (req, res) => {
       amount:       (pi.amount / 100).toFixed(2),
     });
 
-    console.log(`✓ Booking confirmed: ${m.clientName} — ${m.service}`);
+    console.log('✓ Booking confirmed');
   }
 
   res.json({ received: true });
@@ -249,7 +225,7 @@ function cleanAd(ad) {
 }
 async function sendMetaLead({ ad, email, phone, firstName, lastName, req }) {
   const pixelId = process.env.META_PIXEL_ID, token = process.env.META_CAPI_TOKEN;
-  if (!pixelId || !token || !ad || !ad.consent || !ad.eventId) return;
+  if (process.env.META_PIXEL_APPROVED !== '1' || !pixelId || !token || !ad || !ad.consent || !ad.eventId) return;
   const d = String(phone || '').replace(/\D/g, '');
   const ph = d.length === 10 ? '1' + d : (d.length === 11 && d[0] === '1' ? d : null);
   const user_data = { em: [sha256(email)], fn: [sha256(firstName || '')], client_ip_address: req.ip, client_user_agent: req.get('user-agent') || '' };
@@ -274,16 +250,25 @@ async function sendMetaLead({ ad, email, phone, firstName, lastName, req }) {
 
 app.get('/api/meta-config', (req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json({ pixelId: process.env.META_PIXEL_ID || null });
+  // Off unless the owner has approved it (META_PIXEL_APPROVED=1), e.g. after legal review.
+  res.json({ pixelId: process.env.META_PIXEL_APPROVED === '1' ? (process.env.META_PIXEL_ID || null) : null });
 });
 
 // ════════════════════════════════════════════════════════
 // INQUIRY SUBMISSION
 // For Adrienne, Andrew, Christine, Branden (inquiry-only)
 // ════════════════════════════════════════════════════════
+const inquiryHits = new Map();
+function inquiryTooMany(ip, max = 20, windowMs = 60 * 60 * 1000) {
+  const now = Date.now();
+  const hits = (inquiryHits.get(ip) || []).filter(t => now - t < windowMs);
+  hits.push(now); inquiryHits.set(ip, hits);
+  return hits.length > max;
+}
+
 app.post('/api/submit-inquiry', async (req, res) => {
   try {
-    const {
+    let {
       firstName, lastName, email, phone,
       city, notes, availability,
       practitioner, pracRole,
@@ -291,6 +276,9 @@ app.post('/api/submit-inquiry', async (req, res) => {
       service, price, date, time,
       source = 'Website',
     } = req.body;
+    const cap = (v, n) => String(v == null ? '' : v).slice(0, n);
+    firstName = cap(firstName, 80); lastName = cap(lastName, 80); email = cap(email, 120).trim(); phone = cap(phone, 30);
+    city = cap(city, 80); notes = cap(notes, 3000); practitioner = cap(practitioner, 80);
     const ad = cleanAd(req.body.ad);
     const medical = isMedicalPractitioner(practitioner, pracRole) || !practitioner;   // no practitioner = could be medical
 
@@ -312,10 +300,14 @@ app.post('/api/submit-inquiry', async (req, res) => {
     if (!firstName || !email) {
       return res.status(400).json({ error: 'Name and email are required.' });
     }
+    if (inquiryTooMany(req.ip)) return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]{2,}$/.test(String(email)) || String(email).length > 120) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
 
     const fullName = `${firstName} ${lastName}`.trim();
     // Which ad brought them here (campaign names only). Stored with the request, never sent to Slack or Klaviyo.
-    const adNote = ad && (ad.source || ad.campaign) ? 'Ad attribution: ' + [ad.source, ad.medium, ad.campaign, ad.content].filter(Boolean).join(' / ') : '';
+    const adNote = ad && ad.consent && (ad.source || ad.campaign) ? 'Ad attribution: ' + [ad.source, ad.medium, ad.campaign, ad.content].filter(Boolean).join(' / ') : '';
     const notesWithAd = [notes, adNote].filter(Boolean).join('\n');
     const ref = String(crypto.randomInt(1000, 10000));   // short reference shown in Slack and searchable in Airtable
 
@@ -363,7 +355,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
     });
 
     // Auto-reply to client
-    await sendAutoReply({ to: email, firstName, practitioner, consultTime });
+    await sendAutoReply({ to: email, firstName, practitioner: medical ? '' : practitioner, consultTime: medical ? '' : consultTime });
 
     // Internal notification
     await sendInternalNotification({
@@ -397,7 +389,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
     }
 
     // Ad conversion (only with consent, from a Meta ad, and once the Meta keys are set)
-    sendMetaLead({ ad, email, phone, firstName, lastName, req }).catch(() => {});
+    if (!medical) sendMetaLead({ ad, email, phone, firstName, lastName, req }).catch(() => {});   // never for medical practitioners
 
     res.json({ success: true });
   } catch (err) {
@@ -652,19 +644,7 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
 // ════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ════════════════════════════════════════════════════════
-app.get('/api/health', (req, res) => {
-  res.json({
-    status:    'ok',
-    timestamp: new Date().toISOString(),
-    services: {
-      stripe:   !!process.env.STRIPE_SECRET_KEY,
-      airtable: !!process.env.AIRTABLE_API_KEY,
-      klaviyo:  !!process.env.KLAVIYO_API_KEY,
-      gmail:    !!process.env.GOOGLE_REFRESH_TOKEN,
-      calendar: !!process.env.GOOGLE_REFRESH_TOKEN,
-    }
-  });
-});
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 
 // ════════════════════════════════════════════════════════
@@ -754,45 +734,10 @@ app.post('/api/portal/setup-payment', requireAuth(), async (req, res) => {
 // ════════════════════════════════════════════════════════
 // PORTAL — Pay for a confirmed booking using saved card
 // ════════════════════════════════════════════════════════
-app.post('/api/portal/pay-booking', requireAuth(), async (req, res) => {
-  try {
-    const { bookingId, amount } = req.body;
-    const { userId } = req.auth;
-    const user = await clerkClient.users.getUser(userId);
-    const customerId = user.privateMetadata?.stripeCustomerId;
-
-    if (!customerId) return res.status(400).json({ error: 'No payment method on file. Please add a card first.' });
-    if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
-
-    // Get saved payment methods for customer
-    const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
-    if (!paymentMethods.data.length) return res.status(400).json({ error: 'No saved card found. Please add a card first.' });
-
-    const paymentMethodId = paymentMethods.data[0].id;
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount:               Math.round(amount * 100),
-      currency:             'usd',
-      customer:             customerId,
-      payment_method:       paymentMethodId,
-      confirm:              true,
-      off_session:          true,
-      metadata:             { bookingId, userId },
-    });
-
-    // Update Airtable booking with payment info
-    if (base && bookingId) {
-      await base('Booking Requests').update(bookingId, {
-        'Payment Status':        'Paid',
-        'Stripe Payment Intent': paymentIntent.id,
-      });
-    }
-
-    res.json({ success: true, paymentIntentId: paymentIntent.id });
-  } catch (err) {
-    console.error('Pay booking error:', err.message);
-    res.status(500).json({ error: err.message || 'Payment failed' });
-  }
+// Switched off: this route took the booking and the amount from the browser without checking the booking
+// belongs to the signed-in member. Rebuild it to look the amount up server-side before re-enabling.
+app.post('/api/portal/pay-booking', requireAuth(), (req, res) => {
+  res.status(503).json({ error: 'Online payment from the portal is not available yet. Please contact us to pay.' });
 });
 
 
@@ -1070,11 +1015,11 @@ async function addToKlaviyo({ email, firstName, lastName, phone, source, listId,
       );
     }
 
-    console.log(`✓ Klaviyo: profile ${email} upserted`);
+    console.log('✓ Klaviyo: profile upserted');
   } catch (err) {
     const detail = err.response?.data || err.message;
-    console.error('Klaviyo error:', JSON.stringify(detail));
-    if (err.response?.status !== 409) alertSlack('klaviyo', 'Klaviyo is failing', JSON.stringify(detail));
+    console.error('Klaviyo error: HTTP', err.response?.status || '', err.response?.data?.errors?.[0]?.code || err.message);
+    if (err.response?.status !== 409) alertSlack('klaviyo', 'Klaviyo is failing', `HTTP ${err.response?.status || 'error'}: check the Railway logs`);
   }
 }
 
@@ -1097,7 +1042,12 @@ function htmlToPlainText(html) {
     .trim();
 }
 
+// Everything a visitor typed must be escaped before it goes into an email we send.
+const escHtml = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const oneLine = v => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').trim();
+
 function makeEmailMessage({ to, subject, html, attachments = [] }) {
+  to = oneLine(to); subject = oneLine(subject);   // a line break here would let someone add their own headers
   const outerBoundary = 'compound_outer';
   const altBoundary   = 'compound_alt';
   const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`;
@@ -1161,7 +1111,7 @@ async function sendGmail({ to, subject, html, attachments = [] }) {
       userId: 'me',
       requestBody: { raw: makeEmailMessage({ to, subject, html, attachments }) },
     });
-    console.log(`✓ Gmail sent to ${to}`);
+    console.log('✓ Gmail: message sent');
   } catch (err) {
     console.error('Gmail send error:', err.message);
     alertSlack('gmail', 'Gmail is failing — client emails are not going out', err.message);
@@ -1173,6 +1123,8 @@ async function sendGmail({ to, subject, html, attachments = [] }) {
 // HELPER: Send booking confirmation email
 // ════════════════════════════════════════════════════════
 async function sendConfirmationEmail({ to, clientName, practitioner, service, date, time, amount, meetLink }) {
+  clientName = escHtml(clientName); practitioner = escHtml(practitioner); service = escHtml(service); date = escHtml(date); time = escHtml(time); amount = escHtml(amount);
+  meetLink = /^https:\/\/meet\.google\.com\/[\w-]+$/.test(String(meetLink || '')) ? meetLink : '';
   const meetRow = meetLink
     ? `<tr><td style="color:#9A8E84;padding-right:16px">Google Meet</td><td><a href="${meetLink}" style="color:#8A5E38">${meetLink}</a></td></tr>`
     : '';
@@ -1209,6 +1161,7 @@ async function sendConfirmationEmail({ to, clientName, practitioner, service, da
 setTimeout(function googleCheck() { checkGoogleAuth(); setTimeout(googleCheck, 24 * 60 * 60 * 1000); }, 20 * 1000);
 
 async function sendAutoReply({ to, firstName, practitioner, consultTime }) {
+  firstName = escHtml(firstName); practitioner = escHtml(practitioner); consultTime = escHtml(consultTime);
   const consultNote = consultTime
     ? `<p style="font-size:14px;line-height:1.7">Your requested time is <strong>${consultTime}</strong> — I'll confirm this shortly.</p>`
     : '';
@@ -1241,11 +1194,11 @@ async function sendInternalNotification(data) {
   };
   const rows = Object.entries(data)
     .filter(([k]) => k !== 'type')
-    .map(([k, v]) => `<tr><td style="color:#9A8E84;padding-right:16px;padding-bottom:8px">${labels[k] || k}</td><td>${v || '—'}</td></tr>`)
+    .map(([k, v]) => `<tr><td style="color:#9A8E84;padding-right:16px;padding-bottom:8px">${escHtml(labels[k] || k)}</td><td>${escHtml(v) || '—'}</td></tr>`)
     .join('');
   await sendGmail({
     to: 'adrienne@compoundoc.com',
-    subject: `[${data.type}]${data.ref ? ' ' + data.ref : ''} ${data.clientName} — ${data.practitioner || ''}`,
+    subject: `[${data.type}]${data.ref ? ' ' + data.ref : ''} ${oneLine(data.clientName)} — ${oneLine(data.practitioner)}`,
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9f9f7">
         <h2 style="font-size:18px;margin-bottom:20px">${data.type}</h2>

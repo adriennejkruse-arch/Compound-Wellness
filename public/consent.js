@@ -156,7 +156,7 @@
   function buildBanner() {
     var css = document.createElement('style');
     css.textContent =
-      '.cwc{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;background:#FAF7F2;border-top:1px solid rgba(138,94,56,.35);box-shadow:0 -6px 24px rgba(44,36,32,.12);padding:16px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:14px;line-height:1.6;color:#2C2420}' +
+      '.cwc{position:fixed;left:0;right:0;bottom:0;z-index:1000;background:#FAF7F2;border-top:1px solid rgba(138,94,56,.35);box-shadow:0 -6px 24px rgba(44,36,32,.12);padding:16px 20px;font-family:"DM Sans",system-ui,sans-serif;font-size:14px;line-height:1.6;color:#2C2420}' +
       '.cwc-in{max-width:880px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}' +
       '.cwc p{flex:1 1 360px;margin:0}' +
       '.cwc a{color:#8A5E38;text-decoration:underline}' +
@@ -179,22 +179,29 @@
       var v = e.target && e.target.getAttribute && e.target.getAttribute('data-cwc');
       if (v) choose(v);
     });
-    document.body.appendChild(banner);
+    document.body.insertBefore(banner, document.body.firstChild);   // first in tab order, so keyboard users meet it straight away
   }
-  function showBanner() {
+  var opener = null;
+  function padPage() { document.body.style.paddingBottom = banner && !banner.hidden ? banner.offsetHeight + 'px' : ''; }
+  function showBanner(fromUser) {
     if (!banner) buildBanner();
     banner.hidden = false;
+    padPage();   // keep the last links on the page from hiding under the banner
+    if (fromUser === true) { opener = document.activeElement; var b = banner.querySelector('button'); if (b) b.focus(); }
   }
+  window.addEventListener('resize', padPage);
   function choose(v) {
     lsSet(CONSENT_KEY, v);
     consentState = v;
     if (banner) banner.hidden = true;
+    padPage();
+    if (opener && opener.focus) { opener.focus(); opener = null; }
     if (v === 'granted') grantedActions(); else deniedActions();
   }
 
   window.cwConsent = {
     state: function () { return state(); },
-    open: showBanner,
+    open: function () { showBanner(true); },
     onGranted: function (fn) { if (state() === 'granted') fn(); else onGrantedCallbacks.push(fn); },
   };
 
@@ -206,7 +213,7 @@
     // Any link or button marked data-cw-consent-open reopens the choice
     document.addEventListener('click', function (e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-cw-consent-open]') : null;
-      if (t) { e.preventDefault(); showBanner(); }
+      if (t) { e.preventDefault(); showBanner(true); }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

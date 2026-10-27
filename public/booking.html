@@ -11,9 +11,9 @@
 <style>
 :root {
   --ivory:#FAF7F2; --parchment:#F0EAE0; --linen:#E8DDD0;
-  --sand:#856545; --copper:#8A5E38; --cognac:#8A6040;
+  --sand:#7F6040; --copper:#8A5E38; --cognac:#8A6040;
   --bark:#6B5248; --espresso:#2C2420;
-  --text-body:#7A6E64; --text-dim:#7A6E64;
+  --text-body:#5E5248; --text-dim:#6B5F55;
   --green:#2C4235; --green-mid:#4A6858; --green-tint:#EFF4F1;
   --green-line:rgba(44,66,53,0.2);
   --line:rgba(196,168,130,0.3);
@@ -54,7 +54,7 @@ h1 em{font-style:italic;color:var(--copper)}
 .step:last-child{border-right:none}
 .step.active{background:var(--espresso)}
 .step.done{background:var(--parchment)}
-.step-n{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;color:var(--sand);flex-shrink:0}
+.step-n{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;color:var(--copper);flex-shrink:0}
 .step.active .step-n,.step.active .step-l{color:var(--ivory)}
 .step-l{font-size:9px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--bark);white-space:nowrap}
 .step.done .step-l{color:var(--cognac)}
@@ -100,6 +100,9 @@ h1 em{font-style:italic;color:var(--copper)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-dow{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--sand);text-align:center;padding:6px 0}
 .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all .2s;color:var(--bark);position:relative}
+.cal-day{font-family:inherit;background:none;padding:0}
+button.cal-day{color:var(--bark)}
+button.cal-day:focus-visible{outline:2px solid var(--espresso);outline-offset:1px;z-index:1}
 .cal-day:hover:not(.off){background:var(--parchment);border-color:var(--sand)}
 .cal-day.today{color:var(--copper);font-weight:500}
 .cal-day.sel{background:var(--espresso)!important;color:var(--ivory)!important;border-color:var(--espresso)!important}
@@ -120,8 +123,9 @@ h1 em{font-style:italic;color:var(--copper)}
   
 .form-group{display:flex;flex-direction:column;gap:5px}
 .form-group label{font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim)}
-.form-group input,.form-group textarea,.form-group select{background:transparent;border:none;border-bottom:1px solid var(--linen);padding:9px 0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--espresso);outline:none;transition:border-color .2s;width:100%}
+.form-group input,.form-group textarea,.form-group select{background:transparent;border:none;border-bottom:1px solid #8C7B6B;padding:9px 0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--espresso);outline:none;transition:border-color .2s;width:100%}
 .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--copper)}
+.form-group input:focus-visible,.form-group textarea:focus-visible,.form-group select:focus-visible{outline:2px solid var(--espresso);outline-offset:2px}
 .form-group textarea{resize:vertical;min-height:90px;line-height:1.6}
 .form-group input::placeholder,.form-group textarea::placeholder{color:var(--text-dim)}
 .form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23C4A882'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center}
@@ -141,7 +145,7 @@ h1 em{font-style:italic;color:var(--copper)}
 .summary{border:1px solid var(--line);position:sticky;top:86px;background:var(--ivory)}
 .summary-head{background:var(--espresso);padding:18px 22px}
 .summary-head h3{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--ivory);font-weight:300}
-.summary-head p{font-size:11px;color:rgba(250,247,242,.45);margin-top:2px}
+.summary-head p{font-size:11px;color:rgba(250,247,242,.78);margin-top:2px}
 .summary-body{padding:18px 22px}
 .sum-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);gap:10px}
 .sum-row:last-child{border-bottom:none}
@@ -288,7 +292,7 @@ a.wed-row:hover{border-color:var(--copper)}
       <div id="s1" class="panel fade">
         <div class="panel-section">
           <div class="panel-label">Choose Your Practitioner</div>
-          <div class="prac-grid">
+          <div class="prac-grid" role="radiogroup" aria-label="Choose your practitioner">
 
             <div class="prac-card inquiry" tabindex="0" role="radio" aria-checked="false" data-prac="angela" data-name="Dr. Angela Colombo, MD" data-type="consult">
               <img src="dr-angela.webp" alt="Dr. Angela Colombo" class="prac-photo">
@@ -352,9 +356,9 @@ a.wed-row:hover{border-color:var(--copper)}
           <div class="panel-label">Choose a Date</div>
           <div class="calendar-wrap">
             <div class="cal-header">
-              <button class="cal-nav-btn" onclick="calPrev()">‹</button>
-              <span class="cal-month" id="calMonth"></span>
-              <button class="cal-nav-btn" onclick="calNext()">›</button>
+              <button type="button" class="cal-nav-btn" aria-label="Previous month" onclick="calPrev()">‹</button>
+              <span class="cal-month" id="calMonth" aria-live="polite"></span>
+              <button type="button" class="cal-nav-btn" aria-label="Next month" onclick="calNext()">›</button>
             </div>
             <div class="cal-grid" id="calGrid"></div>
           </div>
@@ -381,19 +385,19 @@ a.wed-row:hover{border-color:var(--copper)}
             Your practitioner comes to you. Please provide your home address below.
           </div>
           <div class="form-row">
-            <div class="form-group"><label>First Name *</label><input type="text" id="f-first" placeholder="First name" aria-required="true"></div>
-            <div class="form-group"><label>Last Name *</label><input type="text" id="f-last" placeholder="Last name" aria-required="true"></div>
+            <div class="form-group"><label for="f-first">First Name *</label><input type="text" id="f-first" placeholder="First name" aria-required="true" autocomplete="given-name"></div>
+            <div class="form-group"><label for="f-last">Last Name *</label><input type="text" id="f-last" placeholder="Last name" aria-required="true" autocomplete="family-name"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Email *</label><input type="email" id="f-email" placeholder="your@email.com" aria-required="true"></div>
-            <div class="form-group"><label>Phone *</label><input type="tel" id="f-phone" placeholder="(555) 000-0000" aria-required="true"></div>
+            <div class="form-group"><label for="f-email">Email *</label><input type="email" id="f-email" placeholder="your@email.com" aria-required="true" autocomplete="email"></div>
+            <div class="form-group"><label for="f-phone">Phone *</label><input type="tel" id="f-phone" placeholder="(555) 000-0000" aria-required="true" autocomplete="tel"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Street Address *</label><input type="text" id="f-address" placeholder="123 Oceanview Dr" aria-required="true"></div>
-            <div class="form-group"><label>City *</label><input type="text" id="f-city" placeholder="Newport Beach" aria-required="true"></div>
+            <div class="form-group"><label for="f-address">Street Address *</label><input type="text" id="f-address" placeholder="123 Oceanview Dr" aria-required="true" autocomplete="street-address"></div>
+            <div class="form-group"><label for="f-city">City *</label><input type="text" id="f-city" placeholder="Newport Beach" aria-required="true" autocomplete="address-level2"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>Special Requests or Notes</label><textarea id="f-notes" placeholder="Please share anything we should know about your visit, such as parking or access. Do not include sensitive medical information here."></textarea></div>
+            <div class="form-group"><label for="f-notes">Special Requests or Notes</label><textarea id="f-notes" placeholder="Please share anything we should know about your visit, such as parking or access. Do not include sensitive medical information here."></textarea></div>
           </div>
         </div>
         <div class="panel-section">
@@ -435,9 +439,9 @@ a.wed-row:hover{border-color:var(--copper)}
           <div class="panel-label" style="margin-bottom:12px">Select a Date</div>
           <div class="calendar-wrap">
             <div class="cal-header">
-              <button class="cal-nav-btn" onclick="angelaCalPrev()">‹</button>
-              <span class="cal-month" id="angelaCalMonth"></span>
-              <button class="cal-nav-btn" onclick="angelaCalNext()">›</button>
+              <button type="button" class="cal-nav-btn" aria-label="Previous month" onclick="angelaCalPrev()">‹</button>
+              <span class="cal-month" id="angelaCalMonth" aria-live="polite"></span>
+              <button type="button" class="cal-nav-btn" aria-label="Next month" onclick="angelaCalNext()">›</button>
             </div>
             <div class="cal-grid" id="angelaCalGrid"></div>
           </div>
@@ -451,18 +455,18 @@ a.wed-row:hover{border-color:var(--copper)}
           <div class="panel-label">Your Details</div>
           <p style="font-size:13px;color:var(--text-body);margin-bottom:18px;line-height:1.75">For full concierge medicine appointments, complete this inquiry and Dr. Colombo's team will respond within 24 hours.</p>
           <div class="form-row">
-            <div class="form-group"><label>First Name *</label><input type="text" id="a-first" placeholder="First name"></div>
-            <div class="form-group"><label>Last Name *</label><input type="text" id="a-last" placeholder="Last name"></div>
+            <div class="form-group"><label for="a-first">First Name *</label><input type="text" id="a-first" placeholder="First name" autocomplete="given-name"></div>
+            <div class="form-group"><label for="a-last">Last Name *</label><input type="text" id="a-last" placeholder="Last name" autocomplete="family-name"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Email *</label><input type="email" id="a-email" placeholder="your@email.com"></div>
-            <div class="form-group"><label>Phone *</label><input type="tel" id="a-phone" placeholder="(555) 000-0000"></div>
+            <div class="form-group"><label for="a-email">Email *</label><input type="email" id="a-email" placeholder="your@email.com" autocomplete="email"></div>
+            <div class="form-group"><label for="a-phone">Phone *</label><input type="tel" id="a-phone" placeholder="(555) 000-0000" autocomplete="tel"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>City / Area</label><input type="text" id="a-city" placeholder="e.g. Newport Beach, Irvine…"></div>
+            <div class="form-group"><label for="a-city">City / Area</label><input type="text" id="a-city" placeholder="e.g. Newport Beach, Irvine…" autocomplete="address-level2"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>What brings you here?</label><textarea id="a-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
+            <div class="form-group"><label for="a-notes">What brings you here?</label><textarea id="a-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
           </div>
           <p class="note">All information is kept strictly confidential and reviewed only by Dr. Colombo and her team.</p>
         </div>
@@ -483,21 +487,21 @@ a.wed-row:hover{border-color:var(--copper)}
             <p id="inqText">Complete this form and we'll be in touch within 24 hours.</p>
           </div>
           <div class="form-row" style="margin-top:20px">
-            <div class="form-group"><label>First Name *</label><input type="text" id="i-first" placeholder="First name" aria-required="true"></div>
-            <div class="form-group"><label>Last Name *</label><input type="text" id="i-last" placeholder="Last name" aria-required="true"></div>
+            <div class="form-group"><label for="i-first">First Name *</label><input type="text" id="i-first" placeholder="First name" aria-required="true" autocomplete="given-name"></div>
+            <div class="form-group"><label for="i-last">Last Name *</label><input type="text" id="i-last" placeholder="Last name" aria-required="true" autocomplete="family-name"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Email *</label><input type="email" id="i-email" placeholder="your@email.com" aria-required="true"></div>
-            <div class="form-group"><label>Phone *</label><input type="tel" id="i-phone" placeholder="(555) 000-0000" aria-required="true"></div>
+            <div class="form-group"><label for="i-email">Email *</label><input type="email" id="i-email" placeholder="your@email.com" aria-required="true" autocomplete="email"></div>
+            <div class="form-group"><label for="i-phone">Phone *</label><input type="tel" id="i-phone" placeholder="(555) 000-0000" aria-required="true" autocomplete="tel"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>City / Area</label><input type="text" id="i-city" placeholder="e.g. Newport Beach, Laguna Hills…" aria-required="true"></div>
+            <div class="form-group"><label for="i-city">City / Area</label><input type="text" id="i-city" placeholder="e.g. Newport Beach, Laguna Hills…" aria-required="true" autocomplete="address-level2"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>What are you looking for?</label><textarea id="i-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
+            <div class="form-group"><label for="i-notes">What are you looking for?</label><textarea id="i-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>Preferred Days / Times</label><input type="text" id="i-avail" placeholder="e.g. Weekday mornings, Saturday afternoons…"></div>
+            <div class="form-group"><label for="i-avail">Preferred Days / Times</label><input type="text" id="i-avail" placeholder="e.g. Weekday mornings, Saturday afternoons…"></div>
           </div>
           <p class="note">All services are delivered in-home throughout Orange County and surrounding areas.</p>
         </div>
@@ -520,9 +524,9 @@ a.wed-row:hover{border-color:var(--copper)}
           <div class="panel-label" style="margin-bottom:12px">Select a Date</div>
           <div class="calendar-wrap">
             <div class="cal-header">
-              <button class="cal-nav-btn" onclick="adrienneCalPrev()">‹</button>
-              <span class="cal-month" id="adrienneCalMonth"></span>
-              <button class="cal-nav-btn" onclick="adrienneCalNext()">›</button>
+              <button type="button" class="cal-nav-btn" aria-label="Previous month" onclick="adrienneCalPrev()">‹</button>
+              <span class="cal-month" id="adrienneCalMonth" aria-live="polite"></span>
+              <button type="button" class="cal-nav-btn" aria-label="Next month" onclick="adrienneCalNext()">›</button>
             </div>
             <div class="cal-grid" id="adrienneCalGrid"></div>
           </div>
@@ -535,15 +539,15 @@ a.wed-row:hover{border-color:var(--copper)}
         <div class="panel-section">
           <div class="panel-label">Your Details</div>
           <div class="form-row">
-            <div class="form-group"><label>First Name *</label><input type="text" id="ad-first" placeholder="First name"></div>
-            <div class="form-group"><label>Last Name *</label><input type="text" id="ad-last" placeholder="Last name"></div>
+            <div class="form-group"><label for="ad-first">First Name *</label><input type="text" id="ad-first" placeholder="First name" autocomplete="given-name"></div>
+            <div class="form-group"><label for="ad-last">Last Name *</label><input type="text" id="ad-last" placeholder="Last name" autocomplete="family-name"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Email *</label><input type="email" id="ad-email" placeholder="your@email.com"></div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="ad-phone" placeholder="(555) 000-0000"></div>
+            <div class="form-group"><label for="ad-email">Email *</label><input type="email" id="ad-email" placeholder="your@email.com" autocomplete="email"></div>
+            <div class="form-group"><label for="ad-phone">Phone</label><input type="tel" id="ad-phone" placeholder="(555) 000-0000" autocomplete="tel"></div>
           </div>
           <div class="form-row full">
-            <div class="form-group"><label>What are you hoping to explore?</label><textarea id="ad-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
+            <div class="form-group"><label for="ad-notes">What are you hoping to explore?</label><textarea id="ad-notes" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div>
           </div>
           <p class="note">This is a complimentary Zoom consultation. A calendar invite will be sent to your email upon submission.</p>
         </div>
@@ -656,25 +660,40 @@ function setStep(n) {
     const s = +el.dataset.s;
     el.classList.toggle('active', s === n);
     el.classList.toggle('done',   s < n);
+    if (s === n) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current');
   });
 }
 
 // ─── PANELS ──────────────────────────────────────────────
 const PANELS = ['s1','s3','s4','s5','sAngela','sInquiry','sAdrienne'];
 function showPanel(id) {
+  document.getElementById('formAlert')?.remove();
   PANELS.forEach(p => document.getElementById(p).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
   // Hide events section once user enters the booking flow
   const evSec = document.getElementById('eventsSection');
   if (evSec) evSec.style.display = id === 's1' ? '' : 'none';
   window.scrollTo({top:0, behavior:'smooth'});
+  // Move keyboard and screen-reader focus to the new step's heading
+  if (window.__bookingStarted) {
+    const lab = document.getElementById(id).querySelector('.panel-label, h2, h3');
+    if (lab) { lab.setAttribute('tabindex', '-1'); lab.focus({ preventScroll: true }); }
+  }
 }
 
 // ─── PRACTITIONER SELECTION ──────────────────────────────
+document.addEventListener('click', () => { window.__bookingStarted = true; }, { once: true });
+document.addEventListener('keydown', () => { window.__bookingStarted = true; }, { once: true });
 document.querySelectorAll('.prac-card').forEach(card => {
+  card.addEventListener('keydown', function(e) {
+    const cards = [...document.querySelectorAll('.prac-card')], i = cards.indexOf(this);
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); const n = cards[(i + 1) % cards.length]; n.focus(); n.click(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); const n = cards[(i - 1 + cards.length) % cards.length]; n.focus(); n.click(); }
+  });
   card.addEventListener('click', function() {
-    document.querySelectorAll('.prac-card').forEach(c => c.classList.remove('sel'));
-    this.classList.add('sel');
+    document.querySelectorAll('.prac-card').forEach(c => { c.classList.remove('sel'); c.setAttribute('aria-checked', 'false'); });
+    this.classList.add('sel'); this.setAttribute('aria-checked', 'true');
     S.prac     = this.dataset.prac;
     S.pracName = this.dataset.name;
     S.pracType = this.dataset.type;
@@ -686,7 +705,7 @@ document.querySelectorAll('.prac-card').forEach(card => {
 // ─── NAVIGATION ──────────────────────────────────────────
 function goNext() {
   if (S.step === 1) {
-    if (!S.prac) { alert('Please select a practitioner first.'); return; }
+    if (!S.prac) { formAlert('Please select a practitioner first.', document.querySelector('.prac-card')?.id || null); document.querySelector('.prac-card')?.focus(); return; }
     if (S.pracType === 'book-request') {
       renderCalendar(); showPanel('s3'); setStep(3);
     } else if (S.pracType === 'consult') {
@@ -699,7 +718,7 @@ function goNext() {
       showPanel('sInquiry'); setStep(3);
     }
   } else if (S.step === 3) {
-    if (!S.date || !S.time) { alert('Please select a date and time.'); return; }
+    if (!S.date || !S.time) { formAlert(!S.date ? 'Please select a date.' : 'Please select a time.'); return; }
     showPanel('s4'); setStep(4);
   } else if (S.step === 4) {
     if (!validateDetails()) return;
@@ -711,6 +730,19 @@ function goBack() {
   if (S.step === 3) { showPanel('s1'); setStep(1); }
   else if (S.step === 4) { renderCalendar(); showPanel('s3'); setStep(3); }
   else if (S.step === 5) { showPanel('s4'); setStep(4); }
+}
+
+// ─── ACCESSIBLE CALENDAR DAYS ────────────────────────────
+const DAY_LABEL = key => new Date(key + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+function calDay({ avail, sel, d, key, today, fn }) {
+  const cls = ['cal-day', avail ? 'avail' : 'off', sel ? 'sel' : '', today ? 'today' : ''].filter(Boolean).join(' ');
+  return avail
+    ? `<button type="button" class="${cls}" data-key="${key}" aria-pressed="${sel}" aria-label="${DAY_LABEL(key)}" onclick="window.__calFocusKey='${key}';${fn}('${key}')">${d}</button>`
+    : `<button type="button" class="${cls}" disabled aria-label="${DAY_LABEL(key)}, unavailable">${d}</button>`;
+}
+function calRestoreFocus(gridId) {
+  const k = window.__calFocusKey; window.__calFocusKey = null;
+  if (k) { const el = document.querySelector('#' + gridId + ' [data-key="' + k + '"]'); if (el) el.focus(); }
 }
 
 // ─── CALENDAR ────────────────────────────────────────────
@@ -733,11 +765,9 @@ function renderCalendar() {
       const key  = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const avail= !tooSoon && [1,2,3,4,5].includes(date.getDay());
       const sel  = S.date === key;
-      const cls  = ['cal-day', !avail?'off':'', avail?'avail':'', sel?'sel':'', date.getTime()===today.getTime()?'today':''].filter(Boolean).join(' ');
-      return avail
-        ? `<div class="${cls}" onclick="pickDate('${key}')">${d}</div>`
-        : `<div class="${cls}">${d}</div>`;
+      return calDay({ avail, sel, d, key, today: date.getTime()===today.getTime(), fn: 'pickDate' });
     }).join('');
+  calRestoreFocus('calGrid');
   if (!S.date) document.getElementById('timesSection').style.display = 'none';
   else { document.getElementById('timesSection').style.display = ''; renderSlots(); }
 }
@@ -752,10 +782,10 @@ function pickDate(key) {
 function renderSlots() {
   const times=['9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM'];
   document.getElementById('slotsGrid').innerHTML = times.map(t =>
-    `<button class="slot${S.time===t?' sel':''}" onclick="pickTime('${t}')">${t}</button>`
+    `<button type="button" class="slot${S.time===t?' sel':''}" aria-pressed="${S.time===t}" onclick="pickTime('${t}')">${t}</button>`
   ).join('');
 }
-function pickTime(t) { S.time=t; renderSlots(); refreshSummary(); }
+function pickTime(t) { S.time=t; renderSlots(); refreshSummary(); document.querySelector('#slotsGrid .slot.sel')?.focus(); }
 
 // ─── ANGELA CALENDAR (Tue/Thu 9–11am, 15-min slots) ─────
 const AC = { y: new Date().getFullYear(), m: new Date().getMonth() };
@@ -780,11 +810,9 @@ function renderAngelaCalendar() {
       const avail= !tooSoon && (dow === 2 || dow === 4);
       const key  = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const sel  = S.angelaDate === key;
-      const cls  = ['cal-day', !avail?'off':'', avail?'avail':'', sel?'sel':'', date.getTime()===today.getTime()?'today':''].filter(Boolean).join(' ');
-      return avail
-        ? `<div class="${cls}" onclick="pickAngelaDate('${key}')">${d}</div>`
-        : `<div class="${cls}">${d}</div>`;
+      return calDay({ avail, sel, d, key, today: date.getTime()===today.getTime(), fn: 'pickAngelaDate' });
     }).join('');
+  calRestoreFocus('angelaCalGrid');
   document.getElementById('angelaTimesSection').style.display = S.angelaDate ? '' : 'none';
   if (S.angelaDate) renderAngelaSlots();
 }
@@ -797,14 +825,14 @@ function pickAngelaDate(key) {
 function renderAngelaSlots() {
   const times = ['9:00 AM','9:15 AM','9:30 AM','9:45 AM','10:00 AM','10:15 AM','10:30 AM','10:45 AM'];
   document.getElementById('angelaSlots').innerHTML = times.map(t =>
-    `<button class="slot${S.consultTime===t?' sel':''}" data-t="${t}" onclick="selectConsultSlot(this)">${t}</button>`
+    `<button type="button" class="slot${S.consultTime===t?' sel':''}" aria-pressed="${S.consultTime===t}" data-t="${t}" onclick="selectConsultSlot(this)">${t}</button>`
   ).join('');
 }
 
 // ─── ANGELA CONSULT SLOT ─────────────────────────────────
 function selectConsultSlot(btn) {
-  document.querySelectorAll('#angelaSlots .slot').forEach(b => b.classList.remove('sel'));
-  btn.classList.add('sel');
+  document.querySelectorAll('#angelaSlots .slot').forEach(b => { b.classList.remove('sel'); b.setAttribute('aria-pressed', 'false'); });
+  btn.classList.add('sel'); btn.setAttribute('aria-pressed', 'true');
   S.consultTime = btn.dataset.t;
 }
 
@@ -830,13 +858,11 @@ function renderAdrienneCalendar() {
     const tooSoon = date < minDate;
     const avail = !tooSoon && dow >= 1 && dow <= 5;
     const sel   = S.adrienneDate === key;
-    let cls = 'cal-day' + (!avail ? ' off' : ' avail') + (sel ? ' sel' : '') + (date.getTime() === today.getTime() ? ' today' : '');
-    html += avail
-      ? `<div class="${cls}" onclick="pickAdrienneDate('${key}')">${d}</div>`
-      : `<div class="${cls}">${d}</div>`;
+    html += calDay({ avail, sel, d, key, today: date.getTime() === today.getTime(), fn: 'pickAdrienneDate' });
   }
 
   document.getElementById('adrienneCalGrid').innerHTML = html;
+  calRestoreFocus('adrienneCalGrid');
   document.getElementById('adrienneTimesSection').style.display = S.adrienneDate ? '' : 'none';
   if (S.adrienneDate) renderAdrienneSlots();
 }
@@ -853,12 +879,27 @@ function renderAdrienneSlots() {
     ? ['10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM']   // Tue/Thu
     : ['9:00 AM','10:00 AM'];                                    // Mon/Wed/Fri
   document.getElementById('adrienneSlots').innerHTML = times.map(t =>
-    `<button class="slot${S.adrienneTime===t?' sel':''}" onclick="pickAdrienneTime('${t}')">${t}</button>`
+    `<button type="button" class="slot${S.adrienneTime===t?' sel':''}" aria-pressed="${S.adrienneTime===t}" onclick="pickAdrienneTime('${t}')">${t}</button>`
   ).join('');
 }
 function pickAdrienneTime(t) {
   S.adrienneTime = t;
   renderAdrienneSlots();
+  document.querySelector('#adrienneSlots .slot.sel')?.focus();
+}
+
+// ─── INLINE ERRORS (announced to screen readers; focus moves to the field that needs attention) ───
+function formAlert(msg, focusId) {
+  let box = document.getElementById('formAlert');
+  if (!box) { box = document.createElement('p'); box.id = 'formAlert'; box.setAttribute('role', 'alert'); box.style.cssText = 'color:#9B3B2E;font-size:14px;font-weight:500;margin:14px 0 0'; }
+  const panel = document.querySelector('.panel:not(.hidden)') || document.getElementById('mainPanel');
+  const row = panel.querySelector('.btn-row');
+  if (row && row.parentNode) row.parentNode.insertBefore(box, row); else panel.appendChild(box);
+  box.textContent = '';
+  setTimeout(() => { box.textContent = msg; }, 30);
+  document.querySelectorAll('[aria-invalid="true"]').forEach(e => e.removeAttribute('aria-invalid'));
+  const el = focusId && document.getElementById(focusId);
+  if (el) { el.setAttribute('aria-invalid', 'true'); el.focus(); }
 }
 
 // ─── FORM VALIDATION ─────────────────────────────────────
@@ -867,14 +908,14 @@ function validateDetails() {
   for (const id of fields) {
     const el = document.getElementById(id);
     if (!el || !el.value.trim()) {
-      if (el) el.focus();
-      alert('Please fill in all required fields.');
+      const name = (document.querySelector('label[for="' + id + '"]')?.textContent || 'this field').replace('*', '').trim().toLowerCase();
+      formAlert('Please enter your ' + name + '.', id);
       return false;
     }
   }
   const email = document.getElementById('f-email').value;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert('Please enter a valid email address.');
+    formAlert('Please enter a valid email address.', 'f-email');
     return false;
   }
   return true;
@@ -977,7 +1018,7 @@ async function submitBookingRequest() {
     if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Submission failed.'); }
     showRequestSuccess(payload.firstName, dateStr);
   } catch(err) {
-    alert('There was a problem submitting your request. Please check your connection and try again.');
+    formAlert('There was a problem submitting your request. Please check your connection and try again.');
     btn.textContent = orig;
     btn.disabled = false;
   }
@@ -989,14 +1030,14 @@ async function submitZoomBooking() {
   const originalText = btn.textContent;
 
   if (!S.adrienneDate || !S.adrienneTime) {
-    alert('Please select a date and time for your Zoom session.');
+    formAlert('Please select a date and time for your Zoom session.');
     return;
   }
 
   const first = document.getElementById('ad-first')?.value?.trim();
   const email = document.getElementById('ad-email')?.value?.trim();
   if (!first || !email) {
-    alert('Please enter your name and email.');
+    formAlert(!first ? 'Please enter your name.' : 'Please enter your email address.', !first ? 'ad-first' : 'ad-email');
     return;
   }
 
@@ -1033,7 +1074,7 @@ async function submitZoomBooking() {
     if (err instanceof TypeError || err.message === 'Failed to fetch' || err.message.includes('fetch')) {
       showInquirySuccess(first, `Adrienne Kruse — Zoom on ${dateStr} at ${S.adrienneTime}`);
     } else {
-      alert('There was a problem booking your session. Please try again or email us directly.');
+      formAlert('There was a problem booking your session. Please try again or email us directly.');
       btn.textContent = originalText;
       btn.disabled = false;
     }
@@ -1053,7 +1094,7 @@ async function submitInquiry(type) {
     const first = document.getElementById('a-first')?.value?.trim();
     const email = document.getElementById('a-email')?.value?.trim();
     if (!first || !email) {
-      alert('Please enter your name and email.');
+      formAlert(!first ? 'Please enter your name.' : 'Please enter your email address.', !first ? 'a-first' : 'a-email');
       btn.textContent = originalText; btn.disabled = false; return;
     }
     payload = {
@@ -1076,7 +1117,7 @@ async function submitInquiry(type) {
     const first = document.getElementById('i-first')?.value?.trim();
     const email = document.getElementById('i-email')?.value?.trim();
     if (!first || !email) {
-      alert('Please enter your name and email.');
+      formAlert(!first ? 'Please enter your name.' : 'Please enter your email address.', !first ? 'i-first' : 'i-email');
       btn.textContent = originalText; btn.disabled = false; return;
     }
     payload = {
@@ -1115,7 +1156,7 @@ async function submitInquiry(type) {
     if (err instanceof TypeError || err.message === 'Failed to fetch' || err.message.includes('fetch')) {
       showInquirySuccess(payload.firstName, payload.practitioner);
     } else {
-      alert('There was a problem submitting your inquiry. Please try again or email us directly.');
+      formAlert('There was a problem submitting your inquiry. Please try again or email us directly.');
       btn.textContent = originalText;
       btn.disabled = false;
     }
@@ -1136,6 +1177,7 @@ function showRequestSuccess(firstName, dateStr) {
   document.getElementById('stepsBar').classList.add('hidden');
   document.querySelector('.page-header').style.display = 'none';
   document.getElementById('successScreen').classList.remove('hidden');
+  { const h = document.getElementById('successHeading'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } }
 }
 
 function showInquirySuccess(firstName, practitioner) {
@@ -1151,6 +1193,7 @@ function showInquirySuccess(firstName, practitioner) {
   document.getElementById('stepsBar').classList.add('hidden');
   document.querySelector('.page-header').style.display = 'none';
   document.getElementById('successScreen').classList.remove('hidden');
+  { const h = document.getElementById('successHeading'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } }
 }
 
 // ─── SUMMARY ─────────────────────────────────────────────

@@ -73,10 +73,10 @@
 <style>
   :root {
     --ivory:#FAF7F2; --parchment:#F0EAE0; --linen:#E8DDD0;
-    --sand:#856545; --copper:#8A5E38; --cognac:#8A6040;
+    --sand:#7F6040; --copper:#8A5E38; --cognac:#8A6040;
     --bark:#6B5248; --espresso:#2C2420;
     --line:rgba(196,168,130,0.35); --line-warm:rgba(196,168,130,0.6);
-    --text-body:#7A6E64; --text-dim:#7A6E64;
+    --text-body:#5E5248; --text-dim:#6B5F55;
     /* deep earth green — accent only, never a full background */
     --green:#2C4235; --green-mid:#4A6858; --green-tint:#EFF4F1;
     --green-line:rgba(44,66,53,0.22);
@@ -182,6 +182,10 @@
   }
   .marquee span{font-family:'Cormorant Garamond',serif;font-size:13px;font-style:italic;color:var(--cognac);letter-spacing:.04em;flex-shrink:0}
   .marquee-dot{color:var(--copper);font-style:normal}
+  .marquee-wrap{position:relative}
+  .marquee-pause{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:2;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:var(--parchment);color:var(--espresso);border:1px solid var(--copper);padding:6px 12px;cursor:pointer;min-height:32px}
+  .marquee-pause:focus-visible{outline:2px solid var(--espresso);outline-offset:2px}
+  .marquee.paused{animation-play-state:paused}
   @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
   /* SECTIONS */
@@ -235,7 +239,7 @@
   .concierge-strip-text{display:flex;align-items:center;gap:18px}
   .concierge-strip-text::before{content:'';display:block;width:36px;height:1px;background:var(--copper);flex-shrink:0}
   .concierge-strip h4{font-family:'Cormorant Garamond',serif;font-size:clamp(18px,2.2vw,26px);font-weight:300;color:var(--ivory);line-height:1.2}
-  .concierge-strip h4 em{font-style:italic;color:var(--sand)}
+  .concierge-strip h4 em{font-style:italic;color:#C4A882}
   .concierge-strip p{font-size:12px;color:rgba(250,247,242,.5);max-width:520px;line-height:1.7}
   .concierge-badges{display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0}
   .concierge-badge{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:7px 14px;border:1px solid rgba(196,168,130,.25);color:rgba(250,247,242,.6)}
@@ -308,6 +312,7 @@
   .partnership-tile{padding:60px 52px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;overflow:hidden;cursor:default;transition:background .4s;background:var(--ivory)}
   .partnership-tile:nth-child(2n){border-right:none} .partnership-tile:nth-last-child(-n+2){border-bottom:none}
   .partnership-tile:hover{background:var(--parchment)}
+  .tile-number::before{content:attr(data-n)}
   .tile-number{font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:rgba(196,168,130,.13);line-height:1;position:absolute;top:20px;right:28px;letter-spacing:-.03em}
   .tile-label{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--copper);margin-bottom:20px;display:block}
   .partnership-tile h3{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--espresso);margin-bottom:16px;line-height:1.1}
@@ -320,7 +325,7 @@
   .final-cta-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(196,168,130,.08) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 15% 85%,rgba(44,66,53,.12) 0%,transparent 55%);background-image:linear-gradient(to right,rgba(196,168,130,.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(196,168,130,.04) 1px,transparent 1px);background-size:56px 56px}
   .final-cta-content{position:relative;z-index:1;padding:0 40px}
   .final-cta h2{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,7vw,88px);font-weight:300;line-height:1.0;letter-spacing:-.02em;margin-bottom:20px;color:var(--ivory)}
-  .final-cta h2 em{font-style:italic;color:var(--sand)}
+  .final-cta h2 em{font-style:italic;color:#C4A882}
   .final-cta p{font-size:14px;color:rgba(250,247,242,.55);margin-bottom:44px}
   .final-cta-actions{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap}
   .btn-primary-light{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;background:var(--copper);color:var(--ivory);padding:15px 34px;border:none;cursor:pointer;transition:background .3s;text-decoration:none;display:inline-block}
@@ -328,17 +333,21 @@
   .btn-ghost-light{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:rgba(250,247,242,.6);text-decoration:none;border-bottom:1px solid rgba(196,168,130,.4);padding-bottom:2px;cursor:pointer;transition:color .3s,border-color .3s}
   .btn-ghost-light:hover{color:var(--ivory);border-color:var(--sand)}
 
+  /* Tan labels sitting on dark bands need the lighter tan to stay readable */
+  [style*="background:var(--espresso)"] [style*="color:var(--sand)"]{color:#C4A882!important}
+
   /* FOOTER */
   footer{background:var(--espresso);border-top:1px solid rgba(196,168,130,.2);padding:60px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px}
   .footer-brand .brand-name{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .footer-brand .brand-name span{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--ivory);letter-spacing:.06em}
-  .footer-brand p{font-size:12px;color:rgba(250,247,242,.45);line-height:1.7}
-  .footer-nav h5{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--sand);margin-bottom:18px}
+  .footer-brand p{font-size:12px;color:rgba(250,247,242,.78);line-height:1.7}
+  .footer-nav h5{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:#C4A882;margin-bottom:18px}
   .footer-nav ul{list-style:none} .footer-nav ul li{margin-bottom:9px}
-  .footer-nav ul a{font-size:12px;color:rgba(250,247,242,.45);text-decoration:none;transition:color .3s;cursor:pointer}
-  .footer-nav ul a:hover{color:var(--sand)}
+  .footer-nav ul a{font-size:12px;color:rgba(250,247,242,.78);text-decoration:none;transition:color .3s;cursor:pointer}
+  .footer-nav ul a:hover{color:#C4A882}
   .footer-bottom{background:var(--espresso);border-top:1px solid rgba(196,168,130,.12);padding:22px 60px;display:flex;justify-content:space-between;align-items:center}
-  .footer-bottom p{font-size:11px;color:rgba(250,247,242,.28);letter-spacing:.05em}
+  .footer-bottom p{font-size:11px;color:rgba(250,247,242,.72);letter-spacing:.05em}
+  .footer-bottom a,.footer-bottom button{color:inherit}
 
   /* INNER HERO */
   .inner-hero{min-height:54vh;display:flex;align-items:flex-end;padding:0 60px 76px;position:relative;overflow:hidden;background:var(--ivory)}
@@ -482,8 +491,9 @@
   .contact-form-wrap{padding:60px 52px;background:var(--ivory)}
   .form-group{margin-bottom:26px}
   .form-group label{display:block;font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--copper);margin-bottom:10px}
-  .form-group input,.form-group select,.form-group textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--linen);color:var(--espresso);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;padding:11px 0;outline:none;transition:border-color .3s;cursor:auto}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:transparent;border:none;border-bottom:1px solid #8C7B6B;color:var(--espresso);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;padding:11px 0;outline:none;transition:border-color .3s;cursor:auto}
   .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--copper)}
+  .form-group input:focus-visible,.form-group select:focus-visible,.form-group textarea:focus-visible{outline:2px solid var(--espresso);outline-offset:2px}
   .form-group textarea{resize:none;height:96px} .form-group select option{background:var(--ivory);color:var(--espresso)}
   .form-group input::placeholder,.form-group textarea::placeholder{color:var(--text-dim)}
   .form-submit{width:100%;padding:17px;background:var(--copper);border:none;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ivory);cursor:pointer;transition:background .3s;margin-top:6px}
@@ -508,6 +518,7 @@
   .survey-option.selected{background:var(--parchment);border-color:var(--copper)}
   .survey-option.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--copper)}
   .survey-option input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+  .survey-option:focus-within{outline:2px solid var(--espresso);outline-offset:2px}
   .survey-radio{width:16px;height:16px;border:1px solid var(--sand);border-radius:50%;flex-shrink:0;transition:border-color .2s;position:relative;cursor:pointer}
   .survey-option.selected .survey-radio{border-color:var(--copper)}
   .survey-option.selected .survey-radio::after{content:'';position:absolute;inset:3px;background:var(--copper);border-radius:50%}
@@ -607,6 +618,7 @@
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
 <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
 <div class="grid-lines" aria-hidden="true"></div>
@@ -680,7 +692,7 @@
 </nav>
 
 <!-- ══════════ HOME ══════════ -->
-<div id="main-content" role="main"></div><div id="page-home" class="page active">
+<div id="main-content" tabindex="-1"></div><div id="page-home" role="main" class="page active">
   <section class="hero">
     <div class="hero-bg"></div>
     <div class="hero-photo-panel">
@@ -709,7 +721,7 @@
     <div class="hero-scroll">Scroll</div>
   </section>
 
-  <div class="marquee-wrap"><div class="marquee">
+  <div class="marquee-wrap"><button type="button" class="marquee-pause" id="marqueePause" aria-pressed="false" onclick="toggleMarquee(this)">Pause</button><div class="marquee">
     <span>Concierge Health Ecosystem</span><span class="marquee-dot"> · </span>
     <span>All Services Delivered In-Home</span><span class="marquee-dot"> · </span>
     <span>Clinical Research Meets Ancient Wisdom</span><span class="marquee-dot"> · </span>
@@ -821,10 +833,10 @@
     <div class="section-label" data-num="05">Partnerships</div>
     <div class="partnerships-header reveal"><h2>Designed for Individuals <em>and Groups.</em></h2><p>The Compound partners with organizations, properties, and brands to deliver elevated, personalized wellness experiences without compromising precision or care.</p></div>
     <div class="partnerships-grid reveal reveal-delay-1">
-      <div class="partnership-tile"><span class="tile-number">01</span><span class="tile-label">Partnership</span><h3>Corporate</h3><p>Physiology-based wellness systems that support how teams perform under pressure.</p><a href="#" class="tile-link" onclick="showPage('corporate');return false">Inquire About Partnership</a></div>
-      <div class="partnership-tile"><span class="tile-number">02</span><span class="tile-label">Partnership</span><h3>Hotels & Hospitality</h3><p>Bringing Precision Lifestyle Architecture directly to the guest — discreet, in-residence care aligned with your property.</p><a href="#" class="tile-link" onclick="showPage('hotels');return false">Inquire About Partnership</a></div>
-      <div class="partnership-tile"><span class="tile-number">03</span><span class="tile-label">Partnership</span><h3>Residential</h3><p>Ongoing, personalized care integrated into daily life — evolving as we come to know each resident.</p><a href="#" class="tile-link" onclick="showPage('residential');return false">Inquire About Partnership</a></div>
-      <div class="partnership-tile"><span class="tile-number">04</span><span class="tile-label">Partnership</span><h3>Weddings</h3><p>Precision preparation for the moments that matter most — so you can arrive fully present.</p><a href="#" class="tile-link" onclick="showPage('weddings');return false">Inquire About Partnership</a></div>
+      <div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="01"></span><span class="tile-label">Partnership</span><h3>Corporate</h3><p>Physiology-based wellness systems that support how teams perform under pressure.</p><a href="#" class="tile-link" onclick="showPage('corporate');return false">Inquire About Partnership</a></div>
+      <div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="02"></span><span class="tile-label">Partnership</span><h3>Hotels & Hospitality</h3><p>Bringing Precision Lifestyle Architecture directly to the guest — discreet, in-residence care aligned with your property.</p><a href="#" class="tile-link" onclick="showPage('hotels');return false">Inquire About Partnership</a></div>
+      <div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="03"></span><span class="tile-label">Partnership</span><h3>Residential</h3><p>Ongoing, personalized care integrated into daily life — evolving as we come to know each resident.</p><a href="#" class="tile-link" onclick="showPage('residential');return false">Inquire About Partnership</a></div>
+      <div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="04"></span><span class="tile-label">Partnership</span><h3>Weddings</h3><p>Precision preparation for the moments that matter most — so you can arrive fully present.</p><a href="#" class="tile-link" onclick="showPage('weddings');return false">Inquire About Partnership</a></div>
     </div>
   </section>
 
@@ -839,7 +851,7 @@
 </div>
 
 <!-- ══════════ PRACTITIONERS OVERVIEW ══════════ -->
-<div id="page-practitioners" class="page">
+<div id="page-practitioners" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Our Team</div><h2>The Architects<br>of Your <em>Health.</em></h2><p>True wellness is not the absence of illness — it is the presence of vitality. Our practitioners span the full spectrum from clinical science to holistic embodied practice, unified around a single biological blueprint for each client.</p></div></div>
     <section class="section section-alt" style="padding-top:0">
@@ -856,7 +868,7 @@
 </div>
 
 <!-- ══ DR. ANGELA COLOMBO ══ -->
-<div id="page-prac-angela" class="page">
+<div id="page-prac-angela" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Angela<br><em>Colombo, MD</em></h2><p>Holistic Concierge Family Physician — blending the precision of science-based medicine with the wisdom of natural healing.</p><a href="/booking.html?prac=angela" class="btn-primary">Book a Consultation</a></div></div>
     <section class="section">
@@ -896,7 +908,7 @@
 </div>
 
 <!-- ══ DR. ANDREW ADAMS ══ -->
-<div id="page-prac-andrew" class="page">
+<div id="page-prac-andrew" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Dr. Andrew<br><em>Adams, DC</em></h2><p>SOMA Therapist — trusted by elite athletes to deliver next-level care that prioritizes performance, precision, and longevity.</p><a href="/booking.html?prac=andrew" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
@@ -965,7 +977,7 @@
 </div>
 
 <!-- ══ CHRISTINE WINNEN ══ -->
-<div id="page-prac-christine" class="page">
+<div id="page-prac-christine" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Christine<br><em>Winnen, RN</em></h2><p>IV Drip & Injection Therapy — delivering vitamins, minerals, and hydration directly to the bloodstream as a rejuvenating ritual, not just a medical procedure.</p><a href="/booking.html?prac=christine" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
@@ -1020,7 +1032,7 @@
 </div>
 
 <!-- ══ BRANDEN CARRISALEZ ══ -->
-<div id="page-prac-branden" class="page">
+<div id="page-prac-branden" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Branden<br><em>Carrisalez</em></h2><p>Structural Integrationist — restoring balance, alignment, and ease within the body through precise hands-on fascia therapy.</p><a href="/booking.html?prac=branden" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
@@ -1061,7 +1073,7 @@
 </div>
 
 <!-- ══ COCO POOVEY ══ -->
-<div id="page-prac-coco" class="page">
+<div id="page-prac-coco" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Practitioner</div><h2>Coco<br><em>Poovey</em></h2><p>Holistic Wellness Integrator — guiding sacred embodiment through sound healing, Reiki, and yoga. A doorway inward, a return to presence.</p><a href="/booking.html?prac=coco" class="btn-primary">Book a Session</a></div></div>
     <section class="section">
@@ -1109,7 +1121,7 @@
 </div>
 
 <!-- ══ ADRIENNE KRUSE ══ -->
-<div id="page-prac-adrienne" class="page">
+<div id="page-prac-adrienne" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Co-Founder & Practitioner</div><h2>Adrienne<br><em>Kruse</em></h2><p>Co-Founder and Director of Holistic Services — guiding individuals and small groups toward nervous system regulation, clarity in decision-making, and sustainable transformation through community-anchored care.</p><a href="/booking.html?prac=adrienne" class="btn-primary">Inquire</a></div></div>
     <section class="section">
@@ -1177,7 +1189,7 @@
 </div>
 
 <!-- ══════════ SERVICES LANDING ══════════ -->
-<div id="page-services" class="page">
+<div id="page-services" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Services</div><h2>What We <em>Offer.</em></h2><p>From a 24/7 personal concierge physician to holistic memberships, individual sessions, and transformative cohort programs — a full spectrum of care delivered to your home.</p></div></div>
     <section class="section section-alt" style="padding-top:0">
@@ -1217,7 +1229,7 @@
 </div>
 
 <!-- ══════════ CONCIERGE MEDICINE ══════════ -->
-<div id="page-concierge-medicine" class="page">
+<div id="page-concierge-medicine" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
       <div class="inner-hero-eyebrow">Services — Dr. Angela Colombo, MD</div>
@@ -1321,7 +1333,7 @@
 </div>
 
 <!-- ══════════ HOLISTIC ENCLAVE ══════════ -->
-<div id="page-holistic-enclave" class="page">
+<div id="page-holistic-enclave" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
       <div class="inner-hero-eyebrow">Services — Membership</div>
@@ -1406,7 +1418,7 @@
 </div>
 
 <!-- ══════════ INDIVIDUAL SERVICES ══════════ -->
-<div id="page-individual-services" class="page">
+<div id="page-individual-services" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Services — À La Carte</div><h2>Individual<br><em>Services.</em></h2><p>Every clinical and holistic service available as a standalone, in-home experience. Book what you need, when you need it — no membership required.</p></div></div>
     <section class="section">
@@ -1464,10 +1476,10 @@
 </div>
 
 <!-- ══════════ PATHWAYS ══════════ -->
-<div id="page-pathways" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Core Offering</div><h2>Curated Pathways.<br><em>Designed as a System.</em></h2><p>Personalized, multi-modal care designed to deliver measurable, lasting change. Each pathway integrates clinical insight and embodied practices to guide you from your current state to where you want to operate.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="pathways-grid reveal"><div class="pathway-card"><span class="pathway-num">01</span><h3>The Reset</h3><span class="pathway-tag">Return to Baseline</span><p class="pathway-for">For chronic stress, burnout, and nervous system dysregulation.</p><p class="pathway-outcome">Outcome: Stability, regulation, restored baseline.</p><button type="button" class="pathway-cta" onclick="showPage('reset')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">02</span><h3>The Foundation</h3><span class="pathway-tag">Build What Sustains You</span><p class="pathway-for">For inconsistent energy, sleep, and overall physiological health.</p><p class="pathway-outcome">Outcome: Resilience, stability, sustainable wellness.</p><button type="button" class="pathway-cta" onclick="showPage('foundation')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">03</span><h3>The Elevation</h3><span class="pathway-tag">Refine How You Operate</span><p class="pathway-for">For high-functioning individuals seeking precision performance.</p><p class="pathway-outcome">Outcome: Enhanced focus, recovery, long-term vitality.</p><button type="button" class="pathway-cta" onclick="showPage('elevation')">Explore Pathway</button></div></div></section><section class="section"><div class="how-grid"><div class="how-left reveal"><h2>To Be Known:<br><em>Wellness Without Guesswork.</em></h2><p>Every pathway follows the same rigorous four-step methodology — ensuring care is continuously refined as your system evolves.</p></div><div class="how-steps reveal reveal-delay-1"><div class="how-step"><span class="step-num">01</span><div class="step-content"><h4>Assessment</h4><p>A comprehensive understanding of your physiology, lifestyle, and goals.</p></div></div><div class="how-step"><span class="step-num">02</span><div class="step-content"><h4>Curation</h4><p>A personalized pathway built from the right combination of modalities.</p></div></div><div class="how-step"><span class="step-num">03</span><div class="step-content"><h4>Integration</h4><p>Coordinated sessions that build on one another — never fragmented.</p></div></div><div class="how-step"><span class="step-num">04</span><div class="step-content"><h4>Adaptation</h4><p>Your pathway evolves as your system responds and progresses.</p></div></div></div></div></section><section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin Your <em>Pathway.</em></h2><p>A personalized system designed around you.</p><div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Start With an Assessment</a></div></div></section></div></div>
+<div id="page-pathways" role="main" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Core Offering</div><h2>Curated Pathways.<br><em>Designed as a System.</em></h2><p>Personalized, multi-modal care designed to deliver measurable, lasting change. Each pathway integrates clinical insight and embodied practices to guide you from your current state to where you want to operate.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="pathways-grid reveal"><div class="pathway-card"><span class="pathway-num">01</span><h3>The Reset</h3><span class="pathway-tag">Return to Baseline</span><p class="pathway-for">For chronic stress, burnout, and nervous system dysregulation.</p><p class="pathway-outcome">Outcome: Stability, regulation, restored baseline.</p><button type="button" class="pathway-cta" onclick="showPage('reset')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">02</span><h3>The Foundation</h3><span class="pathway-tag">Build What Sustains You</span><p class="pathway-for">For inconsistent energy, sleep, and overall physiological health.</p><p class="pathway-outcome">Outcome: Resilience, stability, sustainable wellness.</p><button type="button" class="pathway-cta" onclick="showPage('foundation')">Explore Pathway</button></div><div class="pathway-card"><span class="pathway-num">03</span><h3>The Elevation</h3><span class="pathway-tag">Refine How You Operate</span><p class="pathway-for">For high-functioning individuals seeking precision performance.</p><p class="pathway-outcome">Outcome: Enhanced focus, recovery, long-term vitality.</p><button type="button" class="pathway-cta" onclick="showPage('elevation')">Explore Pathway</button></div></div></section><section class="section"><div class="how-grid"><div class="how-left reveal"><h2>To Be Known:<br><em>Wellness Without Guesswork.</em></h2><p>Every pathway follows the same rigorous four-step methodology — ensuring care is continuously refined as your system evolves.</p></div><div class="how-steps reveal reveal-delay-1"><div class="how-step"><span class="step-num">01</span><div class="step-content"><h4>Assessment</h4><p>A comprehensive understanding of your physiology, lifestyle, and goals.</p></div></div><div class="how-step"><span class="step-num">02</span><div class="step-content"><h4>Curation</h4><p>A personalized pathway built from the right combination of modalities.</p></div></div><div class="how-step"><span class="step-num">03</span><div class="step-content"><h4>Integration</h4><p>Coordinated sessions that build on one another — never fragmented.</p></div></div><div class="how-step"><span class="step-num">04</span><div class="step-content"><h4>Adaptation</h4><p>Your pathway evolves as your system responds and progresses.</p></div></div></div></div></section><section class="final-cta"><div class="final-cta-bg"></div><div class="final-cta-content reveal"><h2>Begin Your <em>Pathway.</em></h2><p>A personalized system designed around you.</p><div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Start With an Assessment</a></div></div></section></div></div>
 
 <!-- ══ RESET ══ -->
-<div id="page-reset" class="page"><div style="padding-top:100px">
+<div id="page-reset" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Pathway 01</div>
   <h2>The <em>Reset.</em></h2>
@@ -1597,7 +1609,7 @@
 </div></div>
 
 <!-- ══ FOUNDATION ══ -->
-<div id="page-foundation" class="page"><div style="padding-top:100px">
+<div id="page-foundation" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Pathway 02</div>
   <h2>The <em>Foundation.</em></h2>
@@ -1724,7 +1736,7 @@
 </div></div>
 
 <!-- ══ ELEVATION ══ -->
-<div id="page-elevation" class="page"><div style="padding-top:100px">
+<div id="page-elevation" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Pathway 03</div>
   <h2>The <em>Elevation.</em></h2>
@@ -1854,10 +1866,10 @@
 </div></div>
 
 <!-- ══════════ PARTNERSHIPS ══════════ -->
-<div id="page-partnerships" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Partnerships</div><h2>Expanding the<br><em>Architecture of Care.</em></h2><p>The Compound Wellness partners with organizations, properties, and communities to deliver elevated, personalized wellness experiences. The clinical precision remains identical — only the delivery adapts.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="partnerships-grid reveal"><div class="partnership-tile"><span class="tile-number">01</span><span class="tile-label">Partnership</span><h3>Corporate</h3><p>Physiology-based wellness systems for high-performing teams — moving beyond isolated workshops into cohesive, integrated care.</p><a href="#" class="tile-link" onclick="showPage('corporate');return false">Explore Corporate</a></div><div class="partnership-tile"><span class="tile-number">02</span><span class="tile-label">Partnership</span><h3>Hotels & Hospitality</h3><p>Bringing Precision Lifestyle Architecture directly to the guest — discreet, in-residence wellness seamlessly aligned with your property.</p><a href="#" class="tile-link" onclick="showPage('hotels');return false">Explore Hotels</a></div><div class="partnership-tile"><span class="tile-number">03</span><span class="tile-label">Partnership</span><h3>Residential</h3><p>Ongoing, personalized care integrated into daily life — becoming more precise the longer we know each resident.</p><a href="#" class="tile-link" onclick="showPage('residential');return false">Explore Residential</a></div><div class="partnership-tile"><span class="tile-number">04</span><span class="tile-label">Partnership</span><h3>Weddings</h3><p>Precision preparation for the moments that matter most — so you can arrive feeling calm, present, and fully yourself.</p><a href="#" class="tile-link" onclick="showPage('weddings');return false">Explore Weddings</a></div></div></section></div></div>
+<div id="page-partnerships" role="main" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Partnerships</div><h2>Expanding the<br><em>Architecture of Care.</em></h2><p>The Compound Wellness partners with organizations, properties, and communities to deliver elevated, personalized wellness experiences. The clinical precision remains identical — only the delivery adapts.</p></div></div><section class="section section-alt" style="padding-top:0"><div class="partnerships-grid reveal"><div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="01"></span><span class="tile-label">Partnership</span><h3>Corporate</h3><p>Physiology-based wellness systems for high-performing teams — moving beyond isolated workshops into cohesive, integrated care.</p><a href="#" class="tile-link" onclick="showPage('corporate');return false">Explore Corporate</a></div><div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="02"></span><span class="tile-label">Partnership</span><h3>Hotels & Hospitality</h3><p>Bringing Precision Lifestyle Architecture directly to the guest — discreet, in-residence wellness seamlessly aligned with your property.</p><a href="#" class="tile-link" onclick="showPage('hotels');return false">Explore Hotels</a></div><div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="03"></span><span class="tile-label">Partnership</span><h3>Residential</h3><p>Ongoing, personalized care integrated into daily life — becoming more precise the longer we know each resident.</p><a href="#" class="tile-link" onclick="showPage('residential');return false">Explore Residential</a></div><div class="partnership-tile"><span class="tile-number" aria-hidden="true" data-n="04"></span><span class="tile-label">Partnership</span><h3>Weddings</h3><p>Precision preparation for the moments that matter most — so you can arrive feeling calm, present, and fully yourself.</p><a href="#" class="tile-link" onclick="showPage('weddings');return false">Explore Weddings</a></div></div></section></div></div>
 
 <!-- ══ CORPORATE ══ -->
-<div id="page-corporate" class="page"><div style="padding-top:100px">
+<div id="page-corporate" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Partnership — Corporate</div>
   <h2>Corporate Wellness,<br><em>Re-Engineered.</em></h2>
@@ -1958,7 +1970,7 @@
   <div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Inquire About Partnership</a></div>
 </div></section>
 </div></div>
-<div id="page-hotels" class="page"><div style="padding-top:100px">
+<div id="page-hotels" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Partnership — Hotels & Hospitality</div>
   <h2>A New Standard for<br><em>Guest Experience.</em></h2>
@@ -2055,7 +2067,7 @@
   <div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Inquire About Partnership</a></div>
 </div></section>
 </div></div>
-<div id="page-residential" class="page"><div style="padding-top:100px">
+<div id="page-residential" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Partnership — Residential</div>
   <h2>To Be <em>Known.</em></h2>
@@ -2151,7 +2163,7 @@
   <div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Inquire About Partnership</a></div>
 </div></section>
 </div></div>
-<div id="page-weddings" class="page"><div style="padding-top:100px">
+<div id="page-weddings" role="main" class="page"><div style="padding-top:100px">
 <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content">
   <div class="inner-hero-eyebrow">Partnership — Weddings</div>
   <h2>Precision for the Moments<br>That <em>Matter Most.</em></h2>
@@ -2237,7 +2249,7 @@
   <div class="final-cta-actions"><a href="/booking.html" class="btn-primary-light">Inquire About Wedding Experiences</a></div>
 </div></section>
 </div></div>
-<div id="page-about" class="page">
+<div id="page-about" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">About</div><h2>The Architects<br>of Your <em>Health.</em></h2><p>True wellness is not the absence of illness — it is the presence of vitality. The Compound Wellness was built on the belief that being known is the foundation of effective care.</p></div></div>
 
@@ -2336,7 +2348,7 @@
 </div>
 
 <!-- ══════════ COHORTS PAGE ══════════ -->
-<div id="page-cohorts" class="page">
+<div id="page-cohorts" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Community Programs · Led by Adrienne Kruse</div><h2>Three Months.<br><em>Together.</em></h2><p>Intentional, small-group commitments built around nervous system regulation, community, and real transformation. Two cohorts — both led personally by Adrienne Kruse, both three months, both limited to twelve people.</p></div></div>
 
@@ -2444,10 +2456,10 @@
 </div>
 
 <!-- ══════════ CONTACT ══════════ -->
-<div id="page-contact" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Contact</div><h2>Begin Your<br><em>Pathway.</em></h2><p>Whether you're starting your own wellness journey or exploring a partnership, we begin the same way — by understanding you.</p></div></div><section class="section" style="padding-top:0"><div class="contact-grid reveal"><div class="contact-info"><h3>A system designed around you.</h3><p>Wellness cannot be standardized. It requires understanding the full picture of your physiology, lifestyle, and demands.</p><p>Complete the form and a member of The Compound team will be in touch to schedule your initial assessment.</p><div style="margin-top:44px"><div class="mantra-item"><h4>Individual Pathways</h4><p>Begin with a comprehensive assessment to design your personalized pathway.</p></div><div class="mantra-item"><h4>Partnership Inquiries</h4><p>For corporate, hotel, residential, and wedding partnership opportunities.</p></div></div></div><div class="contact-form-wrap"><div class="form-group"><label>Full Name</label><input id="contact-name" type="text" placeholder="Your name"></div><div class="form-group"><label>Email</label><input id="contact-email" type="email" placeholder="your@email.com"></div><div class="form-group"><label>Message</label><textarea id="contact-message" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div><button type="button" id="contact-submit" class="form-submit">Submit Inquiry</button></div></div></section></div></div>
+<div id="page-contact" role="main" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Contact</div><h2>Begin Your<br><em>Pathway.</em></h2><p>Whether you're starting your own wellness journey or exploring a partnership, we begin the same way — by understanding you.</p></div></div><section class="section" style="padding-top:0"><div class="contact-grid reveal"><div class="contact-info"><h3>A system designed around you.</h3><p>Wellness cannot be standardized. It requires understanding the full picture of your physiology, lifestyle, and demands.</p><p>Complete the form and a member of The Compound team will be in touch to schedule your initial assessment.</p><div style="margin-top:44px"><div class="mantra-item"><h4>Individual Pathways</h4><p>Begin with a comprehensive assessment to design your personalized pathway.</p></div><div class="mantra-item"><h4>Partnership Inquiries</h4><p>For corporate, hotel, residential, and wedding partnership opportunities.</p></div></div></div><div class="contact-form-wrap"><div class="form-group"><label for="contact-name">Full Name</label><input id="contact-name" type="text" placeholder="Your name" autocomplete="name"></div><div class="form-group"><label for="contact-email">Email</label><input id="contact-email" type="email" placeholder="your@email.com" autocomplete="email"></div><div class="form-group"><label for="contact-message">Message</label><textarea id="contact-message" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div><button type="button" id="contact-submit" class="form-submit">Submit Inquiry</button></div></div></section></div></div>
 
 <!-- ══════════ ASSESSMENT SURVEY ══════════ -->
-<div id="page-survey" class="page">
+<div id="page-survey" role="main" class="page">
   <div style="padding-top:100px">
     <div class="inner-hero" style="min-height:38vh">
       <div class="inner-hero-bg"></div>
@@ -2476,70 +2488,70 @@
 
         <div class="survey-screen active" id="survey-screen-1">
           <span class="survey-q-label">Energy & Vitality</span>
-          <h2 class="survey-q">How would you describe your overall <em>energy levels</em> on a typical day?</h2>
+          <h2 class="survey-q" id="q1-heading">How would you describe your overall <em>energy levels</em> on a typical day?</h2>
           <p class="survey-sub">Think about how you feel from morning through evening on most days.</p>
-          <div class="survey-scale" id="q1">
-            <label class="survey-option" onclick="selectOption(this,'q1',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel depleted most of the time — getting through the day takes real effort</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q1',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">My energy is inconsistent — I have good moments but also noticeable crashes</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q1',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I manage well enough, but I rarely feel genuinely energized or vibrant</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q1',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I generally feel good — with occasional dips I recover from easily</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q1',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel consistently energized and capable throughout the day</span></label>
+          <div class="survey-scale" id="q1" role="radiogroup" aria-labelledby="q1-heading">
+            <label class="survey-option"><input type="radio" name="q1" value="1" onchange="selectOption(this.closest('.survey-option'),'q1',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel depleted most of the time — getting through the day takes real effort</span></label>
+            <label class="survey-option"><input type="radio" name="q1" value="2" onchange="selectOption(this.closest('.survey-option'),'q1',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">My energy is inconsistent — I have good moments but also noticeable crashes</span></label>
+            <label class="survey-option"><input type="radio" name="q1" value="3" onchange="selectOption(this.closest('.survey-option'),'q1',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I manage well enough, but I rarely feel genuinely energized or vibrant</span></label>
+            <label class="survey-option"><input type="radio" name="q1" value="4" onchange="selectOption(this.closest('.survey-option'),'q1',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I generally feel good — with occasional dips I recover from easily</span></label>
+            <label class="survey-option"><input type="radio" name="q1" value="5" onchange="selectOption(this.closest('.survey-option'),'q1',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel consistently energized and capable throughout the day</span></label>
           </div>
           <div class="survey-nav"><span></span><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-1" disabled>Continue →</button></div>
         </div>
 
         <div class="survey-screen" id="survey-screen-2">
           <span class="survey-q-label">Physical Comfort & Movement</span>
-          <h2 class="survey-q">How comfortable do you feel <em>moving through your day?</em></h2>
+          <h2 class="survey-q" id="q2-heading">How comfortable do you feel <em>moving through your day?</em></h2>
           <p class="survey-sub">Consider everyday activities — walking, sitting, reaching — and any discomfort you notice.</p>
-          <div class="survey-scale" id="q2">
-            <label class="survey-option" onclick="selectOption(this,'q2',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I experience noticeable discomfort or limitation in many daily activities</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q2',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">I have recurring areas of tension or stiffness that affect how I move</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q2',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I move reasonably well, though I notice more restriction than I'd like</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q2',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I feel fairly mobile and comfortable in most situations</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q2',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel fluid, capable, and comfortable in my body most of the time</span></label>
+          <div class="survey-scale" id="q2" role="radiogroup" aria-labelledby="q2-heading">
+            <label class="survey-option"><input type="radio" name="q2" value="1" onchange="selectOption(this.closest('.survey-option'),'q2',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I experience noticeable discomfort or limitation in many daily activities</span></label>
+            <label class="survey-option"><input type="radio" name="q2" value="2" onchange="selectOption(this.closest('.survey-option'),'q2',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">I have recurring areas of tension or stiffness that affect how I move</span></label>
+            <label class="survey-option"><input type="radio" name="q2" value="3" onchange="selectOption(this.closest('.survey-option'),'q2',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I move reasonably well, though I notice more restriction than I'd like</span></label>
+            <label class="survey-option"><input type="radio" name="q2" value="4" onchange="selectOption(this.closest('.survey-option'),'q2',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I feel fairly mobile and comfortable in most situations</span></label>
+            <label class="survey-option"><input type="radio" name="q2" value="5" onchange="selectOption(this.closest('.survey-option'),'q2',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel fluid, capable, and comfortable in my body most of the time</span></label>
           </div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-2" disabled>Continue →</button></div>
         </div>
 
         <div class="survey-screen" id="survey-screen-3">
           <span class="survey-q-label">Rest & Recovery</span>
-          <h2 class="survey-q">How well do you feel you <em>recover and rest?</em></h2>
+          <h2 class="survey-q" id="q3-heading">How well do you feel you <em>recover and rest?</em></h2>
           <p class="survey-sub">This includes how you feel after sleep, physical activity, and periods of stress.</p>
-          <div class="survey-scale" id="q3">
-            <label class="survey-option" onclick="selectOption(this,'q3',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I rarely feel rested — I wake up tired and struggle to recover from exertion or stress</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q3',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">My rest is unpredictable — sometimes adequate, often not</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q3',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I get by, but I know I could feel more restored and recovered</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q3',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I generally recover well, with occasional harder periods</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q3',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I sleep well and recover efficiently — I feel genuinely restored most of the time</span></label>
+          <div class="survey-scale" id="q3" role="radiogroup" aria-labelledby="q3-heading">
+            <label class="survey-option"><input type="radio" name="q3" value="1" onchange="selectOption(this.closest('.survey-option'),'q3',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I rarely feel rested — I wake up tired and struggle to recover from exertion or stress</span></label>
+            <label class="survey-option"><input type="radio" name="q3" value="2" onchange="selectOption(this.closest('.survey-option'),'q3',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">My rest is unpredictable — sometimes adequate, often not</span></label>
+            <label class="survey-option"><input type="radio" name="q3" value="3" onchange="selectOption(this.closest('.survey-option'),'q3',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I get by, but I know I could feel more restored and recovered</span></label>
+            <label class="survey-option"><input type="radio" name="q3" value="4" onchange="selectOption(this.closest('.survey-option'),'q3',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I generally recover well, with occasional harder periods</span></label>
+            <label class="survey-option"><input type="radio" name="q3" value="5" onchange="selectOption(this.closest('.survey-option'),'q3',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I sleep well and recover efficiently — I feel genuinely restored most of the time</span></label>
           </div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-3" disabled>Continue →</button></div>
         </div>
 
         <div class="survey-screen" id="survey-screen-4">
           <span class="survey-q-label">Connection & Fulfillment</span>
-          <h2 class="survey-q">How <em>fulfilled</em> do you feel in your relationships and sense of connection?</h2>
+          <h2 class="survey-q" id="q4-heading">How <em>fulfilled</em> do you feel in your relationships and sense of connection?</h2>
           <p class="survey-sub">Consider your relationships — with others, with your community, and with yourself.</p>
-          <div class="survey-scale" id="q4">
-            <label class="survey-option" onclick="selectOption(this,'q4',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel quite disconnected — from others and from a sense of purpose or meaning</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q4',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">I have some meaningful connections, but often feel isolated or unsupported</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q4',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">My relationships are generally okay, though I'd like to feel more present in them</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q4',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I feel fairly well supported and connected in most areas of my life</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q4',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel genuinely fulfilled in my relationships and deeply connected to what matters to me</span></label>
+          <div class="survey-scale" id="q4" role="radiogroup" aria-labelledby="q4-heading">
+            <label class="survey-option"><input type="radio" name="q4" value="1" onchange="selectOption(this.closest('.survey-option'),'q4',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel quite disconnected — from others and from a sense of purpose or meaning</span></label>
+            <label class="survey-option"><input type="radio" name="q4" value="2" onchange="selectOption(this.closest('.survey-option'),'q4',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">I have some meaningful connections, but often feel isolated or unsupported</span></label>
+            <label class="survey-option"><input type="radio" name="q4" value="3" onchange="selectOption(this.closest('.survey-option'),'q4',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">My relationships are generally okay, though I'd like to feel more present in them</span></label>
+            <label class="survey-option"><input type="radio" name="q4" value="4" onchange="selectOption(this.closest('.survey-option'),'q4',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I feel fairly well supported and connected in most areas of my life</span></label>
+            <label class="survey-option"><input type="radio" name="q4" value="5" onchange="selectOption(this.closest('.survey-option'),'q4',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel genuinely fulfilled in my relationships and deeply connected to what matters to me</span></label>
           </div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-4" disabled>Continue →</button></div>
         </div>
 
         <div class="survey-screen" id="survey-screen-5">
           <span class="survey-q-label">Stress & Nervous System</span>
-          <h2 class="survey-q">How well do you feel you <em>manage stress and return to calm?</em></h2>
+          <h2 class="survey-q" id="q5-heading">How well do you feel you <em>manage stress and return to calm?</em></h2>
           <p class="survey-sub">Think about how often you feel overwhelmed and how easily you recover your sense of ease.</p>
-          <div class="survey-scale" id="q5">
-            <label class="survey-option" onclick="selectOption(this,'q5',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel chronically stressed or on edge — calm is hard to access even when nothing is wrong</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q5',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">Stress is a frequent presence and it takes me a long time to decompress</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q5',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I manage, but I often wish I had better tools for finding calm quickly</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q5',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I handle stress reasonably well and usually return to calm within a day</span></label>
-            <label class="survey-option" onclick="selectOption(this,'q5',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel well-regulated — stress doesn't derail me and calm comes naturally</span></label>
+          <div class="survey-scale" id="q5" role="radiogroup" aria-labelledby="q5-heading">
+            <label class="survey-option"><input type="radio" name="q5" value="1" onchange="selectOption(this.closest('.survey-option'),'q5',1)"><div class="survey-radio"></div><span class="survey-option-num">01</span><span class="survey-option-text">I feel chronically stressed or on edge — calm is hard to access even when nothing is wrong</span></label>
+            <label class="survey-option"><input type="radio" name="q5" value="2" onchange="selectOption(this.closest('.survey-option'),'q5',2)"><div class="survey-radio"></div><span class="survey-option-num">02</span><span class="survey-option-text">Stress is a frequent presence and it takes me a long time to decompress</span></label>
+            <label class="survey-option"><input type="radio" name="q5" value="3" onchange="selectOption(this.closest('.survey-option'),'q5',3)"><div class="survey-radio"></div><span class="survey-option-num">03</span><span class="survey-option-text">I manage, but I often wish I had better tools for finding calm quickly</span></label>
+            <label class="survey-option"><input type="radio" name="q5" value="4" onchange="selectOption(this.closest('.survey-option'),'q5',4)"><div class="survey-radio"></div><span class="survey-option-num">04</span><span class="survey-option-text">I handle stress reasonably well and usually return to calm within a day</span></label>
+            <label class="survey-option"><input type="radio" name="q5" value="5" onchange="selectOption(this.closest('.survey-option'),'q5',5)"><div class="survey-radio"></div><span class="survey-option-num">05</span><span class="survey-option-text">I feel well-regulated — stress doesn't derail me and calm comes naturally</span></label>
           </div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-5" disabled>Continue →</button></div>
         </div>
@@ -2551,7 +2563,7 @@
           <span class="survey-q-label" id="q6-label">A Little More About You</span>
           <h2 class="survey-q" id="q6-q"></h2>
           <p class="survey-sub" id="q6-sub"></p>
-          <div class="survey-scale" id="q6"></div>
+          <div class="survey-scale" id="q6" role="radiogroup" aria-labelledby="q6-q"></div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-6" disabled>Continue →</button></div>
         </div>
 
@@ -2559,7 +2571,7 @@
           <span class="survey-q-label" id="q7-label">Going Deeper</span>
           <h2 class="survey-q" id="q7-q"></h2>
           <p class="survey-sub" id="q7-sub"></p>
-          <div class="survey-scale" id="q7"></div>
+          <div class="survey-scale" id="q7" role="radiogroup" aria-labelledby="q7-q"></div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-7" disabled>Continue →</button></div>
         </div>
 
@@ -2567,16 +2579,16 @@
           <span class="survey-q-label" id="q8-label">Your Intention</span>
           <h2 class="survey-q" id="q8-q"></h2>
           <p class="survey-sub" id="q8-sub"></p>
-          <div class="survey-scale" id="q8"></div>
+          <div class="survey-scale" id="q8" role="radiogroup" aria-labelledby="q8-q"></div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-8" disabled>Continue →</button></div>
         </div>
 
         <!-- ── Q9: OPEN ENDED ── -->
         <div class="survey-screen" id="survey-screen-9">
           <span class="survey-q-label">Your Intention</span>
-          <h2 class="survey-q">If you could change <em>one thing</em> about your daily routine, what would it be?</h2>
-          <p class="survey-sub">There's no right answer. Write freely — this helps us understand what matters most to you right now.</p>
-          <textarea class="survey-textarea" id="q9-text" placeholder="Share whatever comes to mind..." oninput="checkTextarea()" rows="5" maxlength="1000"></textarea>
+          <h2 class="survey-q" id="q9-heading">If you could change <em>one thing</em> about your daily routine, what would it be?</h2>
+          <p class="survey-sub">There's no right answer. Write freely, but please do not include sensitive medical information. This helps us understand what matters most to you right now.</p>
+          <textarea class="survey-textarea" id="q9-text" aria-labelledby="q9-heading" placeholder="Share whatever comes to mind..." oninput="checkTextarea()" rows="5" maxlength="1000"></textarea>
           <div style="text-align:right;margin-top:6px"><span id="char-count" style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--text-dim)">0 / 1000</span></div>
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="goNext()" id="btn-9" disabled>Continue →</button></div>
         </div>
@@ -2589,24 +2601,24 @@
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
             <div class="form-group">
-              <label>First Name</label>
-              <input type="text" id="survey-first" placeholder="Your first name" oninput="checkContact()">
+              <label for="survey-first">First Name</label>
+              <input type="text" id="survey-first" placeholder="Your first name" oninput="checkContact()" autocomplete="given-name">
             </div>
             <div class="form-group">
-              <label>Last Name</label>
-              <input type="text" id="survey-last" placeholder="Your last name" oninput="checkContact()">
+              <label for="survey-last">Last Name</label>
+              <input type="text" id="survey-last" placeholder="Your last name" oninput="checkContact()" autocomplete="family-name">
             </div>
           </div>
           <div class="form-group" style="margin-bottom:24px">
-            <label>Email Address</label>
-            <input type="email" id="survey-email" placeholder="your@email.com" oninput="checkContact()">
+            <label for="survey-email">Email Address</label>
+            <input type="email" id="survey-email" placeholder="your@email.com" oninput="checkContact()" autocomplete="email">
           </div>
           <div class="form-group" style="margin-bottom:24px">
-            <label>Phone <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
-            <input type="tel" id="survey-phone" placeholder="(555) 000-0000" oninput="checkContact()">
+            <label for="survey-phone">Phone <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
+            <input type="tel" id="survey-phone" placeholder="(555) 000-0000" oninput="checkContact()" autocomplete="tel">
           </div>
           <div class="form-group" style="margin-bottom:8px">
-            <label>How did you hear about us? <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
+            <label for="contact-source">How did you hear about us? <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
             <select id="contact-source" onchange="checkContact()">
               <option value="">Select one</option>
               <option>A friend or colleague</option>
@@ -2619,7 +2631,7 @@
           </div>
 
           <div style="margin-top:20px;padding:16px 20px;background:var(--parchment);border:1px solid var(--line);font-size:11px;color:var(--text-body);line-height:1.7">
-            By submitting, you consent to being contacted by The Compound Wellness team about your wellness assessment results. We do not share your information with third parties. You may opt out at any time.
+            By submitting, you consent to being contacted by The Compound Wellness team about your wellness assessment results. We share your information only with the service providers that help us run our business (see our <a href="/privacy">privacy policy</a>) and never sell it. You may opt out at any time.
           </div>
 
           <div class="survey-nav"><button type="button" class="survey-btn-back" onclick="goBack()">← Back</button><button type="button" class="survey-btn-next" onclick="completeSurvey()" id="btn-10" disabled>See My Results →</button></div>
@@ -2899,8 +2911,8 @@ function buildScreenFlow() {
     fup.options.forEach((opt, oi) => {
       const lbl = document.createElement('label');
       lbl.className = 'survey-option';
-      lbl.innerHTML = `<div class="survey-radio"></div><span class="survey-option-num">0${oi+1}</span><span class="survey-option-text">${opt}</span>`;
-      lbl.onclick = () => selectOption(lbl, 'q'+sn, oi+1);
+      lbl.innerHTML = `<input type="radio" name="q${sn}" value="${oi+1}"><div class="survey-radio"></div><span class="survey-option-num">0${oi+1}</span><span class="survey-option-text">${opt}</span>`;
+      lbl.querySelector('input').addEventListener('change', () => selectOption(lbl, 'q'+sn, oi+1));
       container.appendChild(lbl);
     });
   });
@@ -2914,6 +2926,7 @@ function goToScreen(id) {
   currentScreen = id;
   updateProgressBar();
   window.scrollTo({top: document.getElementById('page-survey').offsetTop + 60, behavior:'smooth'});
+  const hd = target && target.querySelector('h2, h3'); if (hd) { hd.setAttribute('tabindex','-1'); hd.focus({preventScroll:true}); }
   // Update URL to reflect result vs in-progress assessment
   if (id === 'result') {
     history.pushState({page:'survey',screen:'result'}, '', '/assessment/results');
@@ -3094,6 +3107,7 @@ updateProgressBar();
     }
   }
   window.addEventListener('resize',checkHamburger);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { const a = document.activeElement; if (a && a.closest && a.closest('nav, .nav')) a.blur(); } });
 
   // Contact form submission
   document.getElementById('contact-submit').addEventListener('click', async function() {
@@ -3188,6 +3202,11 @@ updateProgressBar();
     'survey':             { title:'Take the Assessment — The Compound Wellness', desc:'Answer a few questions and we\'ll recommend the right practitioners and pathway for your goals.' },
   };
 
+  function toggleMarquee(btn) {
+    const m = document.querySelector('.marquee'); const on = m.classList.toggle('paused');
+    btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'Play' : 'Pause';
+  }
+
   function showPage(id, pushHistory=true){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const t=document.getElementById('page-'+id);
@@ -3209,7 +3228,7 @@ updateProgressBar();
     if(announcer) announcer.textContent = '';
     setTimeout(() => {
       const heading = t.querySelector('h1,h2');
-      if(heading) { heading.setAttribute('tabindex','-1'); heading.focus(); }
+      if(heading && !window.__initialRoute) { heading.setAttribute('tabindex','-1'); heading.focus(); }
       if(announcer) announcer.textContent = 'Navigated to: ' + (meta ? meta.title.split(' — ')[0] : id);
     }, 150);
     document.title = meta.title;
@@ -3232,6 +3251,7 @@ updateProgressBar();
   // Route on initial page load from URL
   (function routeOnLoad(){
     const id = PATH_TO_PAGE[location.pathname] || 'home';
+    window.__initialRoute = true; setTimeout(() => { window.__initialRoute = false; }, 600);
     showPage(id, false);
     // replace state so popstate has data on first entry
     history.replaceState({page:id}, '', location.pathname);

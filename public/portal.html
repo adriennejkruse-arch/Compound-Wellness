@@ -17,9 +17,9 @@
 <style>
 :root{
   --ivory:#FAF7F2;--parchment:#F0EAE0;--linen:#E8DDD0;
-  --sand:#C4A882;--copper:#B8916A;--cognac:#8A6040;
+  --sand:#C4A882;--copper:#8A5E38;--cognac:#8A6040;
   --bark:#6B5248;--espresso:#2C2420;
-  --text-body:#7A6E64;--text-dim:#7A6E64;--line:rgba(196,168,130,.3);
+  --text-body:#5E5248;--text-dim:#6B5F55;--line:rgba(196,168,130,.3);
   --green:#2C4235;--green-mid:#4A6858;--green-tint:#EFF4F1;--green-line:rgba(44,66,53,.2);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -164,6 +164,7 @@ a{color:inherit;text-decoration:none}
 </nav>
 
 <!-- ══ LOGIN SCREEN ════════════════════════════════════════ -->
+<span id="portal-main" tabindex="-1"></span>
 <div id="screen-login" class="screen active" role="main">
   <div class="login-wrap">
     <div class="login-eyebrow">Member Access</div>
@@ -203,7 +204,7 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <!-- ══ PORTAL SCREEN ═══════════════════════════════════════ -->
-<div id="screen-portal" class="screen" role="main" id="portal-main">
+<div id="screen-portal" class="screen" role="main">
   <div class="portal-grid">
 
     <!-- Sidebar -->
@@ -497,11 +498,13 @@ function renderOverviewStats(bookings) {
 
   const next = bookings.find(b => b.status === 'Approved' || b.status === 'Confirmed');
   document.getElementById('overviewNextSession').innerHTML = next
-    ? `<div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;margin-bottom:4px">${next.date || 'TBD'}</div>
-       <div style="font-size:13px;color:var(--bark);margin-bottom:2px">${next.details || ''}</div>
-       <div style="font-size:11px;color:var(--text-body)">with ${next.practitioner}</div>`
+    ? `<div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;margin-bottom:4px">${escP(next.date || 'TBD')}</div>
+       <div style="font-size:13px;color:var(--bark);margin-bottom:2px">${escP(next.details || '')}</div>
+       <div style="font-size:11px;color:var(--text-body)">with ${escP(next.practitioner)}</div>`
     : `<div style="font-size:13px;color:var(--text-body);font-style:italic">No upcoming sessions. <button onclick="showPortalPanel('book')" style="background:none;border:none;color:var(--copper);cursor:pointer;font-size:13px;padding:0">Book one →</button></div>`;
 }
+
+const escP = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 function renderSessionList(bookings) {
   const list = document.getElementById('sessionList');
@@ -511,12 +514,12 @@ function renderSessionList(bookings) {
   }
   list.innerHTML = bookings.map(b => `
     <div class="session-row" role="listitem">
-      <span class="session-date">${b.date || '—'}</span>
+      <span class="session-date">${escP(b.date || '—')}</span>
       <div>
-        <div class="session-practitioner">${b.practitioner || '—'}</div>
-        <div class="session-service">${b.details || ''}</div>
+        <div class="session-practitioner">${escP(b.practitioner || '—')}</div>
+        <div class="session-service">${escP(b.details || '')}</div>
       </div>
-      <span class="session-badge badge-${(b.status||'').toLowerCase()}">${b.status || 'Pending'}</span>
+      <span class="session-badge badge-${escP((b.status||'').toLowerCase())}">${escP(b.status || 'Pending')}</span>
       <span class="session-amount">${b.amount > 0 ? '$' + b.amount : b.paymentStatus === 'Paid' ? 'Paid' : 'Included'}</span>
     </div>`).join('');
 }
@@ -527,11 +530,11 @@ function renderUpcoming(bookings) {
     ? upcoming.map(b => `
       <div class="upcoming-card">
         <div>
-          <div class="upcoming-date">${b.date || 'Date TBD'}</div>
-          <div class="upcoming-service">${b.details || ''}</div>
-          <div class="upcoming-practitioner">with ${b.practitioner || '—'}</div>
+          <div class="upcoming-date">${escP(b.date || 'Date TBD')}</div>
+          <div class="upcoming-service">${escP(b.details || '')}</div>
+          <div class="upcoming-practitioner">with ${escP(b.practitioner || '—')}</div>
         </div>
-        <div><span class="session-badge badge-${(b.status||'').toLowerCase()}">${b.status}</span></div>
+        <div><span class="session-badge badge-${escP((b.status||'').toLowerCase())}">${escP(b.status)}</span></div>
       </div>`).join('')
     : `<div style="font-size:13px;color:var(--text-body);font-style:italic;padding:20px 0">No pending sessions.</div>`;
 }
@@ -546,12 +549,12 @@ function renderPendingPayments(bookings) {
   el.innerHTML = unpaid.map(b => `
     <div style="border:1px solid var(--line);padding:18px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
       <div>
-        <div style="font-size:13px;font-weight:400;color:var(--espresso);margin-bottom:2px">${b.practitioner}</div>
-        <div style="font-size:11px;color:var(--text-body)">${b.date || 'Date TBD'} · ${b.details || ''}</div>
+        <div style="font-size:13px;font-weight:400;color:var(--espresso);margin-bottom:2px">${escP(b.practitioner)}</div>
+        <div style="font-size:11px;color:var(--text-body)">${escP(b.date || 'Date TBD')} · ${escP(b.details || '')}</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <span style="font-family:'Cormorant Garamond',serif;font-size:20px">$${b.amount}</span>
-        <button class="btn btn-primary" onclick="payBooking('${b.id}', ${b.amount})" style="font-size:9px">Pay Now</button>
+        <button class="btn btn-primary" onclick="payBooking('${escP(String(b.id).replace(/[^\w]/g,''))}', ${Number(b.amount)||0})" style="font-size:9px">Pay Now</button>
       </div>
     </div>`).join('');
 }
@@ -613,7 +616,7 @@ function showAddCard() {
   const elements = stripe.elements();
   cardElement = elements.create('card', {
     style: {
-      base: { fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#2C2420', '::placeholder': { color: '#7A6E64' } }
+      base: { fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#2C2420', '::placeholder': { color: '#6B5F55' } }
     }
   });
   cardElement.mount('#card-element');

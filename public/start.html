@@ -174,7 +174,6 @@ $('leadForm').addEventListener('submit', async e => {
       }),
     });
     if (!res.ok) throw new Error('failed');
-    if (window.cwMeta && eventId) cwMeta.lead(eventId);       // browser-side Lead, matched to the server copy by event id
     $('formWrap').hidden = true; $('done').hidden = false; $('done-h').focus();
   } catch (ex) {
     err.textContent = 'We could not send your request. Please check your connection and try again, or email adrienne@compoundoc.com.';

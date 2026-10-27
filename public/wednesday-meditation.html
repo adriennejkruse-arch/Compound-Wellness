@@ -16,7 +16,7 @@
 <script src="/consent.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ivory:#FAF7F2;--parchment:#F0EAE0;--linen:#E8DDD0;--sand:#C4A882;--copper:#8A5E38;--cognac:#8A6040;--espresso:#2C2420;--body:#5E5248;--muted:#8C8077;--line:rgba(196,168,130,.4);--err:#9B3B2E}
+:root{--ivory:#FAF7F2;--parchment:#F0EAE0;--linen:#E8DDD0;--sand:#C4A882;--copper:#8A5E38;--cognac:#8A6040;--espresso:#2C2420;--body:#5E5248;--muted:#6B5F55;--line:rgba(196,168,130,.4);--err:#9B3B2E}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--ivory);color:var(--espresso);font-family:'DM Sans',sans-serif;font-weight:300;font-size:16px;line-height:1.7;min-height:100vh;display:flex;flex-direction:column}
@@ -69,7 +69,7 @@ section{margin-top:56px}
 .map iframe{display:block;width:100%;height:320px;border:0}
 .maplinks{text-align:center;margin-top:12px;font-size:14px}
 .amts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:16px}
-.amt{font:inherit;font-size:17px;background:#fff;border:1px solid var(--line);color:var(--espresso);min-width:76px;padding:11px 16px;cursor:pointer;text-align:center}
+.amt{font:inherit;font-size:17px;background:#fff;border:1px solid #8C7B6B;color:var(--espresso);min-width:76px;padding:11px 16px;cursor:pointer;text-align:center}
 .amt:hover{border-color:var(--copper)}
 .amt.on{background:var(--parchment);border-color:var(--copper)}
 .amt.other{display:flex;align-items:center;gap:4px;cursor:text}
@@ -81,7 +81,7 @@ section{margin-top:56px}
 footer{padding:26px 24px;text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line)}
 footer a{color:var(--muted)}
 /* registration dialog */
-.overlay{position:fixed;inset:0;background:rgba(44,36,32,.55);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50}
+.overlay{position:fixed;inset:0;background:rgba(44,36,32,.55);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:1100}
 .overlay.open{display:flex}
 .dlg{position:relative;background:var(--ivory);width:100%;max-width:480px;padding:34px 28px 28px;margin:auto}
 .dlg .x{position:absolute;top:10px;right:12px;background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;width:40px;height:40px}
@@ -90,7 +90,7 @@ footer a{color:var(--muted)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);font-weight:500;margin-bottom:5px}
-.field input{width:100%;font:inherit;font-size:16px;color:var(--espresso);background:#fff;border:1px solid var(--line);padding:11px 13px;min-height:46px}
+.field input{width:100%;font:inherit;font-size:16px;color:var(--espresso);background:#fff;border:1px solid #8C7B6B;padding:11px 13px;min-height:46px}
 .field input:focus{outline:2px solid var(--copper);outline-offset:1px;border-color:var(--copper)}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .ok{text-align:center}
@@ -147,7 +147,7 @@ footer a{color:var(--muted)}
     <div id="donate-page"></div>
   </section>
 
-  <p class="fine">We use your name, email, and phone number only to hold your spot and send you reminders. See our <a href="/privacy">privacy policy</a>. To cancel, reply to your confirmation email so we can offer your spot to someone else.</p>
+  <p class="fine">We use your name, email, and phone number to hold your spot, send you reminders, and share news about Wednesday Meditation. You can unsubscribe at any time. See our <a href="/privacy">privacy policy</a>. To cancel, reply to your confirmation email so we can offer your spot to someone else.</p>
 </main>
 
 <footer>The Compound Wellness · 2801 W Coast Hwy STE 370, Newport Beach, CA · <a href="/privacy">Privacy</a> · <button type="button" data-cw-consent-open style="background:none;border:none;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;text-decoration:underline;cursor:pointer">Cookie choices</button></footer>
@@ -187,7 +187,7 @@ footer a{color:var(--muted)}
 
 <script>
 'use strict';
-let data = null, active = null, reg = null, lastFocus = null;
+let data = null, active = null, reg = null, lastFocus = null, lastDate = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -237,7 +237,7 @@ function renderDonate(containerId) {
   const d = data.donation;
   $(containerId).innerHTML = `<div class="donate" data-box="${containerId}">
     <div class="amts">
-      ${d.presets.map(a => `<button type="button" class="amt" data-amt="${a}">$${a}</button>`).join('')}
+      ${d.presets.map(a => `<button type="button" class="amt" aria-pressed="false" data-amt="${a}">$${a}</button>`).join('')}
       <label class="amt other"><span aria-hidden="true">$</span><input type="number" inputmode="decimal" min="${d.min}" max="${d.max}" step="1" placeholder="Other" aria-label="Other amount in dollars"></label>
     </div>
     <button class="btn" type="button" data-go>Donate</button>
@@ -252,7 +252,7 @@ document.addEventListener('click', e => {
   const amt = e.target.closest('.amt[data-amt]');
   if (amt) {
     const box = amt.closest('.donate');
-    box.querySelectorAll('.amt[data-amt]').forEach(b => b.classList.toggle('on', b === amt));
+    box.querySelectorAll('.amt[data-amt]').forEach(b => { b.classList.toggle('on', b === amt); b.setAttribute('aria-pressed', String(b === amt)); });
     box.querySelector('.other input').value = '';
     box.querySelector('.err').textContent = '';
     return;
@@ -263,7 +263,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   if (e.target.matches('.amt.other input')) {
     const box = e.target.closest('.donate');
-    box.querySelectorAll('.amt[data-amt]').forEach(b => b.classList.remove('on'));
+    box.querySelectorAll('.amt[data-amt]').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
     box.querySelector('.err').textContent = '';
   }
 });
@@ -298,13 +298,20 @@ function openDlg(date, opener) {
   $('regerr').textContent = ''; $('regbtn').disabled = false; $('regbtn').textContent = 'Reserve my spot';
   $('overlay').classList.add('open'); $('overlay').setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  document.querySelectorAll('header.top, main, footer').forEach(el => el.setAttribute('inert', ''));   // nothing behind the dialog can be reached
+  lastDate = date;
   setTimeout(() => $('f-first').focus(), 30);
 }
 function closeDlg() {
   $('overlay').classList.remove('open'); $('overlay').setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
-  if (reg) { load(); }   // refresh spots left after a registration
-  if (lastFocus && lastFocus.focus) lastFocus.focus();
+  document.querySelectorAll('[inert]').forEach(el => el.removeAttribute('inert'));
+  const back = () => {
+    const b = lastDate && document.querySelector(`button[data-date="${lastDate}"]`);
+    const target = b || (lastFocus && document.contains(lastFocus) ? lastFocus : $('reg-h'));
+    if (target) { if (!target.hasAttribute('tabindex') && !/^(BUTTON|A|INPUT)$/.test(target.tagName)) target.setAttribute('tabindex', '-1'); target.focus(); }
+  };
+  if (reg) { load().then(back); } else { back(); }   // refresh spots left after a registration
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('overlay').classList.contains('open')) closeDlg(); });
 $('overlay').addEventListener('mousedown', e => { if (e.target === $('overlay')) closeDlg(); });
