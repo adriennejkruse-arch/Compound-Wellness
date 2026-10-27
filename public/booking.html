@@ -4,13 +4,7 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-MFCNF2ME2S"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-MFCNF2ME2S', { page_location: location.origin + location.pathname });
-</script>
+<script src="/consent.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Book a Session — The Compound Wellness</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -219,6 +213,17 @@ a.wed-row:hover{border-color:var(--copper)}
 .wed-row .wm.low{color:var(--copper);font-weight:500}
 .wed-row .wb{font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);white-space:nowrap}
 .wed-row.full{opacity:.6}
+.cm{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.cm.hidden{display:none}
+.cm-bg{position:absolute;inset:0;background:rgba(44,36,32,.6)}
+.cm-box{position:relative;background:var(--ivory);max-width:440px;width:100%;max-height:92vh;overflow-y:auto;padding:32px 28px 26px;text-align:center;box-shadow:0 24px 60px rgba(44,36,32,.3)}
+.cm-photo{width:112px;height:112px;border-radius:50%;object-fit:cover;object-position:center top;display:block;margin:0 auto 18px;border:1px solid var(--line)}
+.cm-box h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;line-height:1.2;color:var(--espresso);margin-bottom:10px}
+.cm-lead{font-size:16px;color:var(--espresso);margin-bottom:10px}
+.cm-fine{font-size:12px;color:#5E5248;line-height:1.6;margin-bottom:20px}
+.cm-btns{display:flex;flex-direction:column;gap:10px}
+.cm-btns .btn{width:100%;padding:15px 20px}
+.cm-box button:focus-visible{outline:2px solid var(--espresso);outline-offset:3px}
 .events-divider{display:flex;align-items:center;gap:16px;margin:44px 0 36px;color:var(--sand);font-size:9px;letter-spacing:.22em;text-transform:uppercase}
 .events-divider::before,.events-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 
@@ -612,6 +617,21 @@ a.wed-row:hover{border-color:var(--copper)}
 
 </div>
 
+<!-- FREE CONSULTATION OFFER (shown once, only to visitors who arrived from a Meta ad) -->
+<div id="consultModal" class="cm hidden" role="dialog" aria-modal="true" aria-labelledby="cmTitle" aria-describedby="cmDesc">
+  <div class="cm-bg" onclick="cmClose(false)"></div>
+  <div class="cm-box">
+    <img class="cm-photo" src="/dr-angela.webp" alt="Dr. Angela Colombo" width="112" height="112">
+    <h2 id="cmTitle">Interested in exploring peptide optimization or assisted weight loss?</h2>
+    <p class="cm-lead">Book a free 15 minute consultation with Dr. Colombo.</p>
+    <p class="cm-fine" id="cmDesc">Treatment is recommended only if it is medically appropriate for you after a consultation. Your booking request will still be sent.</p>
+    <div class="cm-btns">
+      <button type="button" class="btn" id="cmYes" onclick="cmClose(true)">Request free consultation</button>
+      <button type="button" class="btn ghost" id="cmNo" onclick="cmClose(false)">No thanks, continue my request</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── DATA ────────────────────────────────────────────────
 const INQUIRY_TEXT = {
@@ -877,6 +897,48 @@ function renderReview() {
   ).join('');
 }
 
+// ─── FREE CONSULTATION POPUP (Meta-ad visitors only) ─────
+let cmResolve = null, cmContact = null, cmOffered = false, cmOpener = null;
+function contactFrom(prefix) {
+  const v = id => (document.getElementById(prefix + '-' + id)?.value || '').trim();
+  return { firstName: v('first'), lastName: v('last'), email: v('email'), phone: v('phone') };
+}
+// Resolves once the visitor has answered. Closing it any way (button, Esc, outside click) continues their original request.
+function consultPopup(getContact) {
+  return new Promise(resolve => {
+    if (cmOffered || !(window.cwAd && cwAd.isMeta())) return resolve();
+    cmOffered = true; cmResolve = resolve; cmContact = getContact; cmOpener = document.activeElement;
+    const m = document.getElementById('consultModal');
+    m.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('cmYes').focus(), 30);
+  });
+}
+function cmClose(yes) {
+  const m = document.getElementById('consultModal');
+  if (m.classList.contains('hidden')) return;
+  m.classList.add('hidden'); document.body.style.overflow = '';
+  if (yes && cmContact) {
+    // One tap: send a second request to Dr. Colombo using the contact details they already entered.
+    fetch('/api/submit-inquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      ...cmContact(), notes: 'Requested a free 15-minute consultation (offered while booking).',
+      practitioner: 'Dr. Angela Colombo', pracRole: 'angela', source: 'Booking — Angela Consult',
+    }) }).catch(() => {});
+  }
+  if (cmOpener && cmOpener.focus) cmOpener.focus();
+  const r = cmResolve; cmResolve = null; cmContact = null; if (r) r();
+}
+document.addEventListener('keydown', e => {
+  const m = document.getElementById('consultModal');
+  if (m.classList.contains('hidden')) return;
+  if (e.key === 'Escape') return cmClose(false);
+  if (e.key === 'Tab') {   // keep focus inside the dialog
+    const f = [document.getElementById('cmYes'), document.getElementById('cmNo')];
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[1].focus(); }
+    else if (!e.shiftKey && i === 1) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
 // ─── BOOKING REQUEST SUBMIT ──────────────────────────────
 async function submitBookingRequest() {
   const btn = document.getElementById('btnSubmitRequest');
@@ -905,6 +967,7 @@ async function submitBookingRequest() {
   };
 
   // Try the real API endpoint; fall back gracefully if running locally without a server
+  await consultPopup(() => contactFrom('f'));
   try {
     const res = await fetch('/api/submit-inquiry', {
       method:'POST',
@@ -955,6 +1018,8 @@ async function submitZoomBooking() {
     pracRole:    'Cohort Programs — Free Zoom',
     source:      'Booking — Adrienne Free Zoom',
   };
+
+  await consultPopup(() => contactFrom('ad'));
 
   try {
     const res = await fetch('/api/submit-inquiry', {
@@ -1029,6 +1094,8 @@ async function submitInquiry(type) {
       source:      'Booking — Inquiry',
     };
   }
+
+  if (type !== 'angela') await consultPopup(() => contactFrom('i'));   // Dr. Colombo's own flow doesn't need the offer
 
   try {
     const res = await fetch('/api/submit-inquiry', {

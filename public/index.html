@@ -4,13 +4,7 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-MFCNF2ME2S"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-MFCNF2ME2S', { page_location: location.origin + location.pathname });
-</script>
+<script src="/consent.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -841,7 +835,7 @@
     <div class="footer-nav"><h5>Explore</h5><ul><li><a href="#" onclick="showPage('pathways');return false">Pathways</a></li><li><a href="#" onclick="showPage('services');return false">Services</a></li><li><a href="#" onclick="showPage('practitioners');return false">Practitioners</a></li><li><a href="#" onclick="showPage('survey');return false">Wellness Assessment</a></li><li><a href="#" onclick="showPage('about');return false">About</a></li><li><a href="#" onclick="showPage('contact');return false">Contact</a></li></ul></div>
     <div class="footer-nav"><h5>Partnerships</h5><ul><li><a href="#" onclick="showPage('corporate');return false">Corporate</a></li><li><a href="#" onclick="showPage('hotels');return false">Hotels</a></li><li><a href="#" onclick="showPage('residential');return false">Residential</a></li><li><a href="#" onclick="showPage('weddings');return false">Weddings</a></li></ul></div>
   </footer>
-  <div class="footer-bottom"><p>© 2025 The Compound Wellness. Precision Lifestyle Architecture.</p><p>compoundoc.com</p></div>
+  <div class="footer-bottom"><p>© 2025 The Compound Wellness. Precision Lifestyle Architecture.</p><p>compoundoc.com · <a href="/privacy">Privacy</a> · <button type="button" data-cw-consent-open style="background:none;border:none;font:inherit;color:inherit;text-decoration:underline;cursor:pointer">Cookie choices</button></p></div>
 </div>
 
 <!-- ══════════ PRACTITIONERS OVERVIEW ══════════ -->
@@ -2596,20 +2590,20 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
             <div class="form-group">
               <label>First Name</label>
-              <input type="text" id="contact-first" placeholder="Your first name" oninput="checkContact()">
+              <input type="text" id="survey-first" placeholder="Your first name" oninput="checkContact()">
             </div>
             <div class="form-group">
               <label>Last Name</label>
-              <input type="text" id="contact-last" placeholder="Your last name" oninput="checkContact()">
+              <input type="text" id="survey-last" placeholder="Your last name" oninput="checkContact()">
             </div>
           </div>
           <div class="form-group" style="margin-bottom:24px">
             <label>Email Address</label>
-            <input type="email" id="contact-email" placeholder="your@email.com" oninput="checkContact()">
+            <input type="email" id="survey-email" placeholder="your@email.com" oninput="checkContact()">
           </div>
           <div class="form-group" style="margin-bottom:24px">
             <label>Phone <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
-            <input type="tel" id="contact-phone" placeholder="(555) 000-0000" oninput="checkContact()">
+            <input type="tel" id="survey-phone" placeholder="(555) 000-0000" oninput="checkContact()">
           </div>
           <div class="form-group" style="margin-bottom:8px">
             <label>How did you hear about us? <span style="font-weight:300;text-transform:none;letter-spacing:0;color:var(--text-dim)">(optional)</span></label>
@@ -2981,18 +2975,30 @@ function checkTextarea() {
 }
 
 function checkContact() {
-  const first = document.getElementById('contact-first').value.trim();
-  const email = document.getElementById('contact-email').value.trim();
+  const first = document.getElementById('survey-first').value.trim();
+  const email = document.getElementById('survey-email').value.trim();
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   document.getElementById('btn-10').disabled = !(first && validEmail);
 }
 
 function completeSurvey() {
+  // Save the person as an inquiry: name and email only. Their answers stay on this screen and are never stored.
+  fetch('/api/submit-inquiry', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      firstName: document.getElementById('survey-first').value.trim(),
+      lastName:  (document.getElementById('survey-last') || { value: '' }).value.trim(),
+      email:     document.getElementById('survey-email').value.trim(),
+      phone:     (document.getElementById('survey-phone') || { value: '' }).value.trim(),
+      notes:     'Completed the online assessment and asked for a pathway summary.',
+      source:    'Website Inquiry',
+    }),
+  }).catch(() => { /* the result still shows; the server alerts us if saving fails */ });
   const score = ['q1','q2','q3','q4','q5'].reduce((s,q) => s + (answers[q]||3), 0) / 5;
   const track = score <= 2.4 ? 'reset' : score <= 3.7 ? 'foundation' : 'elevation';
   const pw = pathwayContent[track];
-  const firstName = document.getElementById('contact-first').value.trim();
-  const email = document.getElementById('contact-email').value.trim();
+  const firstName = document.getElementById('survey-first').value.trim();
+  const email = document.getElementById('survey-email').value.trim();
 
   // Populate result
   document.getElementById('result-greeting').textContent = `${firstName}, based on your responses we've prepared a suggested starting pathway. This is a starting point — your actual pathway will be designed in conversation with our team, built around the full picture of who you are.`;
@@ -3037,7 +3043,7 @@ function resetSurvey() {
   document.querySelectorAll('.survey-btn-next').forEach(b => { if(b.id && b.id.startsWith('btn-')) b.disabled = true; });
   const ta = document.getElementById('q9-text');
   if(ta) { ta.value=''; document.getElementById('char-count').textContent='0 / 1000'; }
-  ['contact-first','contact-last','contact-email','contact-phone'].forEach(id => {
+  ['survey-first','survey-last','survey-email','survey-phone'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value='';
   });
   currentScreen = 1;

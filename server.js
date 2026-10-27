@@ -67,11 +67,11 @@ app.use(express.urlencoded({ extended: true }));
 // console violations, then remove the Report-Only fallback below.
 const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://js.stripe.com https://cdnjs.cloudflare.com https://smart-gannet-54.clerk.accounts.dev",
+  "script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com https://js.stripe.com https://cdnjs.cloudflare.com https://smart-gannet-54.clerk.accounts.dev",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://api.bufferapp.com https://api.stripe.com https://m.stripe.com https://m.stripe.network https://smart-gannet-54.clerk.accounts.dev https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://cdnjs.cloudflare.com",
+  "connect-src 'self' https://www.facebook.com https://connect.facebook.net https://api.bufferapp.com https://api.stripe.com https://m.stripe.com https://m.stripe.network https://smart-gannet-54.clerk.accounts.dev https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://cdnjs.cloudflare.com",
   "frame-src https://js.stripe.com https://hooks.stripe.com https://smart-gannet-54.clerk.accounts.dev https://www.google.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
@@ -223,6 +223,61 @@ app.post('/api/stripe-webhook', async (req, res) => {
 
 
 // ════════════════════════════════════════════════════════
+// PRIVACY HELPERS — medical practitioners get "super generic" treatment
+// ════════════════════════════════════════════════════════
+// Dr. Colombo, Dr. Adams and Christine Winnen provide medical care, so nothing about who they saw, or
+// when, is sent to Slack or Klaviyo. The other practitioners are not medical and keep normal detail.
+function isMedicalPractitioner(practitioner, pracRole) {
+  return /colombo|adams|winnen/i.test(String(practitioner || '')) || ['angela', 'andrew', 'christine'].includes(String(pracRole || '').toLowerCase());
+}
+
+// ── Meta Conversions API (server side). Does nothing unless META_PIXEL_ID and META_CAPI_TOKEN are set,
+// the visitor accepted cookies, and the request came from a Meta ad. Sends hashed contact details and a
+// generic "Lead" event only: no practitioner, service, notes or health information.
+const META_GRAPH_VERSION = process.env.META_GRAPH_VERSION || 'v23.0';
+const sha256 = v => crypto.createHash('sha256').update(String(v).trim().toLowerCase()).digest('hex');
+function cleanAd(ad) {
+  if (!ad || typeof ad !== 'object') return null;
+  const t = (v, n = 80) => (typeof v === 'string' ? v.replace(/[^\w .:@+\-]/g, '').slice(0, n) : '');
+  const fb = v => (typeof v === 'string' && /^fb\.\d\.\d+\.[\w-]+$/.test(v) ? v : null);
+  return {
+    source: t(ad.source), medium: t(ad.medium), campaign: t(ad.campaign), content: t(ad.content), term: t(ad.term),
+    landed: typeof ad.landed === 'string' && /^\/[\w\-\/]*$/.test(ad.landed) ? ad.landed : '/start',
+    consent: ad.consent === true, eventId: typeof ad.eventId === 'string' && /^[\w-]{8,64}$/.test(ad.eventId) ? ad.eventId : null,
+    fbp: fb(ad.fbp), fbc: fb(ad.fbc),
+  };
+}
+async function sendMetaLead({ ad, email, phone, firstName, lastName, req }) {
+  const pixelId = process.env.META_PIXEL_ID, token = process.env.META_CAPI_TOKEN;
+  if (!pixelId || !token || !ad || !ad.consent || !ad.eventId) return;
+  const d = String(phone || '').replace(/\D/g, '');
+  const ph = d.length === 10 ? '1' + d : (d.length === 11 && d[0] === '1' ? d : null);
+  const user_data = { em: [sha256(email)], fn: [sha256(firstName || '')], client_ip_address: req.ip, client_user_agent: req.get('user-agent') || '' };
+  if (lastName) user_data.ln = [sha256(lastName)];
+  if (ph) user_data.ph = [sha256(ph)];
+  if (ad.fbp) user_data.fbp = ad.fbp;
+  if (ad.fbc) user_data.fbc = ad.fbc;
+  const body = {
+    data: [{ event_name: 'Lead', event_time: Math.floor(Date.now() / 1000), event_id: ad.eventId, action_source: 'website',
+             event_source_url: 'https://www.compoundoc.com' + ad.landed, user_data }],
+  };
+  if (process.env.META_TEST_EVENT_CODE) body.test_event_code = process.env.META_TEST_EVENT_CODE;
+  try {
+    await axios.post(`https://graph.facebook.com/${META_GRAPH_VERSION}/${pixelId}/events`, body, { params: { access_token: token }, timeout: 5000 });
+    console.log('✓ Meta CAPI: Lead sent');
+  } catch (err) {
+    const status = err.response && err.response.status;
+    const msg = (err.response && err.response.data && err.response.data.error && err.response.data.error.message) || err.message;
+    alertSlack('meta-capi', 'Meta Conversions API is failing', `${status || ''} ${msg}`.slice(0, 250));
+  }
+}
+
+app.get('/api/meta-config', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ pixelId: process.env.META_PIXEL_ID || null });
+});
+
+// ════════════════════════════════════════════════════════
 // INQUIRY SUBMISSION
 // For Adrienne, Andrew, Christine, Branden (inquiry-only)
 // ════════════════════════════════════════════════════════
@@ -236,6 +291,8 @@ app.post('/api/submit-inquiry', async (req, res) => {
       service, price, date, time,
       source = 'Website',
     } = req.body;
+    const ad = cleanAd(req.body.ad);
+    const medical = isMedicalPractitioner(practitioner, pracRole) || !practitioner;   // no practitioner = could be medical
 
     // Map incoming source values to allowed Airtable single-select options
     const sourceMap = {
@@ -257,6 +314,9 @@ app.post('/api/submit-inquiry', async (req, res) => {
     }
 
     const fullName = `${firstName} ${lastName}`.trim();
+    // Which ad brought them here (campaign names only). Stored with the request, never sent to Slack or Klaviyo.
+    const adNote = ad && (ad.source || ad.campaign) ? 'Ad attribution: ' + [ad.source, ad.medium, ad.campaign, ad.content].filter(Boolean).join(' / ') : '';
+    const notesWithAd = [notes, adNote].filter(Boolean).join('\n');
     const ref = String(crypto.randomInt(1000, 10000));   // short reference shown in Slack and searchable in Airtable
 
     // Resolve the date/time string — some flows use `date`+`time`, others pack it into `consultTime`
@@ -269,7 +329,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
       'Email':           email,
       'Phone':           phone  || '',
       'City':            city   || '',
-      'Notes':           notes  || '',
+      'Notes':           notesWithAd,
       'Source Form':     airtableSource,
       'Submission Date': nowPST(),
     });
@@ -280,7 +340,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
       'Client Name':            fullName,
       'Requested Practitioner': practitioner || '',
       'Requested Time':         requestedTime,
-      'Inquiry Details':        [service, availability ? `Availability: ${availability}` : '', notes].filter(Boolean).join('\n') || '',
+      'Inquiry Details':        [service, availability ? `Availability: ${availability}` : '', notesWithAd].filter(Boolean).join('\n') || '',
       'Submission Date (PST)':  nowPST(),
       'Status':                 'Pending',
     };
@@ -297,7 +357,8 @@ app.post('/api/submit-inquiry', async (req, res) => {
       firstName,
       lastName:    lastName || '',
       phone,
-      source:      'Website inquiry',
+      // Medical practitioners: nothing but name, contact details and time. Others may include who it was for.
+      source:      medical ? 'Website inquiry' : 'Inquiry — ' + practitioner,
       listId:      process.env.KLAVIYO_INQUIRIES_LIST_ID || process.env.KLAVIYO_LIST_ID,
     });
 
@@ -311,17 +372,32 @@ app.post('/api/submit-inquiry', async (req, res) => {
       clientName:  fullName,
       clientEmail: email,
       practitioner,
-      notes,
+      notes: notesWithAd,
       consultTime,
     });
 
-    // Slack gets no names, practitioner, service or notes: just a reference to look up in the secure system.
     const isContactForm = source === 'Website Inquiry';
-    notifySlack({
-      title: `${isContactForm ? 'NEW INQUIRY' : 'NEW BOOKING'} — #${ref}`,
-      lines: [isContactForm ? 'New inquiry received.' : 'New appointment received.'],
-      link: 'Open secure booking system.',
-    });
+    if (medical) {
+      // Super generic: just a reference to look up in the secure system.
+      notifySlack({
+        title: `${isContactForm ? 'NEW INQUIRY' : 'NEW BOOKING'} — #${ref}`,
+        lines: [isContactForm ? 'New inquiry received.' : 'New appointment received.'],
+        link: 'Open secure booking system.',
+      });
+    } else {
+      notifySlack({
+        title: `NEW BOOKING — #${ref}`,
+        lines: [
+          `*From:* ${fullName}`,
+          `*Practitioner:* ${practitioner}`,
+          (requestedDate || requestedTime) ? `*Requested:* ${[requestedDate, requestedTime].filter(Boolean).join(' · ')}` : '',
+        ],
+        link: 'Open secure booking system.',
+      });
+    }
+
+    // Ad conversion (only with consent, from a Meta ad, and once the Meta keys are set)
+    sendMetaLead({ ad, email, phone, firstName, lastName, req }).catch(() => {});
 
     res.json({ success: true });
   } catch (err) {
@@ -814,6 +890,10 @@ app.get('/privacy', (req, res) => {
 
 // The IV quiz was retired. Send any old links to Christine's page instead.
 app.get('/iv-quiz', (req, res) => res.redirect(302, '/practitioners/christine-winnen'));
+
+app.get('/start', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'start.html'));
+});
 
 app.get(['/wednesday-meditation', '/wednesday'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'wednesday-meditation.html'));
