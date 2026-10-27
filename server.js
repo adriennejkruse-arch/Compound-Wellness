@@ -177,9 +177,8 @@ app.post('/api/stripe-webhook', async (req, res) => {
       email:       m.clientEmail,
       firstName:   m.clientName.split(' ')[0] || m.clientName,
       lastName:    m.clientName.split(' ').slice(1).join(' ') || '',
-      source:      'Booking — ' + m.practitioner,
+      source:      'Website booking',
       listId:      process.env.KLAVIYO_BOOKINGS_LIST_ID || process.env.KLAVIYO_LIST_ID,
-      properties:  { practitioner: m.practitioner, service: m.service, bookedDate: m.date },
     });
 
     // Create Google Calendar event with Meet link
@@ -258,6 +257,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
     }
 
     const fullName = `${firstName} ${lastName}`.trim();
+    const ref = String(crypto.randomInt(1000, 10000));   // short reference shown in Slack and searchable in Airtable
 
     // Resolve the date/time string — some flows use `date`+`time`, others pack it into `consultTime`
     const requestedDate = date || consultTime || '';
@@ -276,7 +276,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
 
     // Save booking details to Booking Requests table, linked back to the contact
     const bookingFields = {
-      'Request Name':           `${fullName} — ${practitioner || 'General'}`,
+      'Request Name':           `${fullName} — ${practitioner || 'General'} (#${ref})`,
       'Client Name':            fullName,
       'Requested Practitioner': practitioner || '',
       'Requested Time':         requestedTime,
@@ -296,9 +296,9 @@ app.post('/api/submit-inquiry', async (req, res) => {
       email,
       firstName,
       lastName:    lastName || '',
-      source:      'Inquiry — ' + (practitioner || 'General'),
+      phone,
+      source:      'Website inquiry',
       listId:      process.env.KLAVIYO_INQUIRIES_LIST_ID || process.env.KLAVIYO_LIST_ID,
-      properties:  { practitioner, city, phone },
     });
 
     // Auto-reply to client
@@ -307,6 +307,7 @@ app.post('/api/submit-inquiry', async (req, res) => {
     // Internal notification
     await sendInternalNotification({
       type:        'New Inquiry',
+      ref:         '#' + ref,
       clientName:  fullName,
       clientEmail: email,
       practitioner,
@@ -314,13 +315,12 @@ app.post('/api/submit-inquiry', async (req, res) => {
       consultTime,
     });
 
+    // Slack gets no names, practitioner, service or notes: just a reference to look up in the secure system.
+    const isContactForm = source === 'Website Inquiry';
     notifySlack({
-      title: 'New inquiry',
-      lines: [
-        `*From:* ${fullName}`,
-        `*Practitioner:* ${practitioner || 'General'}`,
-        (requestedDate || requestedTime) ? `*Requested:* ${[requestedDate, requestedTime].filter(Boolean).join(' · ')}` : '',
-      ],
+      title: `${isContactForm ? 'NEW INQUIRY' : 'NEW BOOKING'} — #${ref}`,
+      lines: [isContactForm ? 'New inquiry received.' : 'New appointment received.'],
+      link: 'Open secure booking system.',
     });
 
     res.json({ success: true });
@@ -793,7 +793,6 @@ app.get('/sitemap.xml', (req, res) => {
     { loc: '/about',                             priority: '0.7', freq: 'monthly' },
     { loc: '/contact',                           priority: '0.8', freq: 'monthly' },
     { loc: '/assessment',                        priority: '0.8', freq: 'monthly' },
-    { loc: '/iv-quiz',                           priority: '0.7', freq: 'monthly' },
     { loc: '/wednesday-meditation',              priority: '0.8', freq: 'weekly' },
     { loc: '/privacy',                           priority: '0.3', freq: 'yearly' },
   ];
@@ -813,9 +812,8 @@ app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
 
-app.get('/iv-quiz', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'iv-quiz.html'));
-});
+// The IV quiz was retired. Send any old links to Christine's page instead.
+app.get('/iv-quiz', (req, res) => res.redirect(302, '/practitioners/christine-winnen'));
 
 app.get(['/wednesday-meditation', '/wednesday'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'wednesday-meditation.html'));
@@ -888,10 +886,10 @@ async function saveToAirtable(tableName, fields, options) {
 // health details and live in Airtable / the admin dashboard.
 // Fire-and-forget — a Slack outage never blocks a submission.
 // ════════════════════════════════════════════════════════
-function notifySlack({ title, lines }) {
+function notifySlack({ title, lines = [], link = 'Open admin dashboard' }) {
   const url = process.env.SLACK_WEBHOOK_URL;
   if (!url) return;
-  const text = [`*${title}*`, ...lines.filter(Boolean), '<https://www.compoundoc.com/admin.html|Open admin dashboard>'].join('\n');
+  const text = [`*${title}*`, ...lines.filter(Boolean), `<https://www.compoundoc.com/admin.html|${link}>`].join('\n');
   axios.post(url, { text }, { timeout: 5000 })
     .then(() => console.log(`✓ Slack: ${title} posted`))
     .catch(err => console.error('Slack notify error:', err.message));
@@ -936,7 +934,16 @@ async function checkGoogleAuth() {
 // ════════════════════════════════════════════════════════
 // HELPER: Add contact to Klaviyo list
 // ════════════════════════════════════════════════════════
-async function addToKlaviyo({ email, firstName, lastName, source, listId, properties = {} }) {
+// Klaviyo is a marketing tool without a HIPAA agreement, so it only ever receives name, contact details and
+// the time of the inquiry. Never pass a practitioner, service, or health detail in `properties`.
+function toE164(phone) {
+  const d = String(phone || '').replace(/\D/g, '');
+  if (d.length === 10) return '+1' + d;
+  if (d.length === 11 && d[0] === '1') return '+' + d;
+  return undefined;
+}
+
+async function addToKlaviyo({ email, firstName, lastName, phone, source, listId, properties = {} }) {
   if (!process.env.KLAVIYO_API_KEY) {
     console.warn('Klaviyo not configured — skipping');
     return;
@@ -952,7 +959,8 @@ async function addToKlaviyo({ email, firstName, lastName, source, listId, proper
             email,
             first_name:  firstName,
             last_name:   lastName,
-            properties:  { source, ...properties },
+            ...(toE164(phone) ? { phone_number: toE164(phone) } : {}),
+            properties:  { source, inquiry_time: nowPST(), ...properties },
           }
         }
       },
@@ -1149,7 +1157,7 @@ async function sendInternalNotification(data) {
   const labels = {
     clientName: 'Client', clientEmail: 'Email', practitioner: 'Practitioner',
     service: 'Service', date: 'Date', time: 'Time', amount: 'Amount',
-    notes: 'Notes', consultTime: 'Consult Time',
+    notes: 'Notes', consultTime: 'Consult Time', ref: 'Reference',
   };
   const rows = Object.entries(data)
     .filter(([k]) => k !== 'type')
@@ -1157,7 +1165,7 @@ async function sendInternalNotification(data) {
     .join('');
   await sendGmail({
     to: 'adrienne@compoundoc.com',
-    subject: `[${data.type}] ${data.clientName} — ${data.practitioner || ''}`,
+    subject: `[${data.type}]${data.ref ? ' ' + data.ref : ''} ${data.clientName} — ${data.practitioner || ''}`,
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9f9f7">
         <h2 style="font-size:18px;margin-bottom:20px">${data.type}</h2>

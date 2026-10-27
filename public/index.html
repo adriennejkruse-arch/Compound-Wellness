@@ -9,7 +9,7 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-MFCNF2ME2S');
+  gtag('config', 'G-MFCNF2ME2S', { page_location: location.origin + location.pathname });
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -2450,7 +2450,7 @@
 </div>
 
 <!-- ══════════ CONTACT ══════════ -->
-<div id="page-contact" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Contact</div><h2>Begin Your<br><em>Pathway.</em></h2><p>Whether you're starting your own wellness journey or exploring a partnership, we begin the same way — by understanding you.</p></div></div><section class="section" style="padding-top:0"><div class="contact-grid reveal"><div class="contact-info"><h3>A system designed around you.</h3><p>Wellness cannot be standardized. It requires understanding the full picture of your physiology, lifestyle, and demands.</p><p>Complete the form and a member of The Compound team will be in touch to schedule your initial assessment.</p><div style="margin-top:44px"><div class="mantra-item"><h4>Individual Pathways</h4><p>Begin with a comprehensive assessment to design your personalized pathway.</p></div><div class="mantra-item"><h4>Partnership Inquiries</h4><p>For corporate, hotel, residential, and wedding partnership opportunities.</p></div></div></div><div class="contact-form-wrap"><div class="form-group"><label>Full Name</label><input id="contact-name" type="text" placeholder="Your name"></div><div class="form-group"><label>Email</label><input id="contact-email" type="email" placeholder="your@email.com"></div><div class="form-group"><label>I Am Inquiring About</label><select id="contact-service"><option value="">Select an option</option><option>Individual Pathway — The Reset</option><option>Individual Pathway — The Foundation</option><option>Individual Pathway — The Elevation</option><option>Dr. Angela Colombo — Concierge Medicine</option><option>Dr. Andrew Adams — SOMA Therapy</option><option>Christine Winnen — IV Therapy</option><option>Branden Carrisalez — Structural Integration</option><option>Coco Poovey — Holistic Healing</option><option>Adrienne Kruse — The Women's Cohort</option><option>Adrienne Kruse — The Executive Cohort</option><option>Adrienne Kruse — 1-on-1 Coaching</option><option>Corporate Partnership</option><option>Hotel Partnership</option><option>Residential Partnership</option><option>Wedding Experiences</option><option>General Inquiry</option></select></div><div class="form-group"><label>Message</label><textarea id="contact-message" placeholder="Tell us about yourself and what you're looking for..."></textarea></div><button type="button" id="contact-submit" class="form-submit">Submit Inquiry</button></div></div></section></div></div>
+<div id="page-contact" class="page"><div style="padding-top:100px"><div class="inner-hero"><div class="inner-hero-bg"></div><div class="inner-hero-content"><div class="inner-hero-eyebrow">Contact</div><h2>Begin Your<br><em>Pathway.</em></h2><p>Whether you're starting your own wellness journey or exploring a partnership, we begin the same way — by understanding you.</p></div></div><section class="section" style="padding-top:0"><div class="contact-grid reveal"><div class="contact-info"><h3>A system designed around you.</h3><p>Wellness cannot be standardized. It requires understanding the full picture of your physiology, lifestyle, and demands.</p><p>Complete the form and a member of The Compound team will be in touch to schedule your initial assessment.</p><div style="margin-top:44px"><div class="mantra-item"><h4>Individual Pathways</h4><p>Begin with a comprehensive assessment to design your personalized pathway.</p></div><div class="mantra-item"><h4>Partnership Inquiries</h4><p>For corporate, hotel, residential, and wedding partnership opportunities.</p></div></div></div><div class="contact-form-wrap"><div class="form-group"><label>Full Name</label><input id="contact-name" type="text" placeholder="Your name"></div><div class="form-group"><label>Email</label><input id="contact-email" type="email" placeholder="your@email.com"></div><div class="form-group"><label>Message</label><textarea id="contact-message" placeholder="Please tell us what you're inquiring about and do not include sensitive medical information here."></textarea></div><button type="button" id="contact-submit" class="form-submit">Submit Inquiry</button></div></div></section></div></div>
 
 <!-- ══════════ ASSESSMENT SURVEY ══════════ -->
 <div id="page-survey" class="page">
@@ -3093,7 +3093,6 @@ updateProgressBar();
   document.getElementById('contact-submit').addEventListener('click', async function() {
     const fullName = document.getElementById('contact-name').value.trim();
     const email    = document.getElementById('contact-email').value.trim();
-    const service  = document.getElementById('contact-service').value;
     const notes    = document.getElementById('contact-message').value.trim();
     if (!fullName || !email) { alert('Please enter your name and email.'); return; }
     const [firstName, ...rest] = fullName.split(' ');
@@ -3104,13 +3103,12 @@ updateProgressBar();
       const res = await fetch('/api/submit-inquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, service, notes, source: 'Website Inquiry' })
+        body: JSON.stringify({ firstName, lastName, email, notes, source: 'Website Inquiry' })
       });
       if (res.ok) {
         this.textContent = 'Inquiry Submitted!';
         document.getElementById('contact-name').value = '';
         document.getElementById('contact-email').value = '';
-        document.getElementById('contact-service').value = '';
         document.getElementById('contact-message').value = '';
       } else {
         this.textContent = 'Submit Inquiry';
