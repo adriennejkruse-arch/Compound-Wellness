@@ -82,11 +82,11 @@ function reflectionFor(iso) {
 }
 
 // ── Emails ───────────────────────────────────────────────────────────────────
-const wrap = inner => `
+const wrap = (inner, signoff = true) => `
   <div style="font-family:'Georgia',serif;max-width:560px;margin:0 auto;color:#2C2420;background:#FAF7F2;padding:40px 32px">
     <p style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A5E38;margin:0 0 24px">The Compound Wellness</p>
     ${inner}
-    <p style="font-size:13px;color:#7A6E64;margin:28px 0 0">— Adrienne &amp; The Compound Team</p>
+    ${signoff ? '<p style="font-size:13px;color:#7A6E64;margin:28px 0 0">— Adrienne &amp; The Compound Team</p>' : ''}
     <p style="font-size:12px;color:#9A8E84;margin:20px 0 0">The Compound Wellness · compoundoc.com</p>
   </div>`;
 
@@ -168,7 +168,7 @@ function messageEmail({ firstName, iso, subject, text }) {
       <p style="font-size:15px;line-height:1.7;margin:0 0 18px">Hi ${esc(firstName)},</p>
       ${paras}
       <div style="height:18px"></div>
-      ${reflectionBlock(iso)}`),
+      ${reflectionBlock(iso)}`, false),   // the message is signed in its own text
   };
 }
 
