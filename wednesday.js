@@ -18,7 +18,7 @@ const { QUOTES, ART } = require('./wednesday-content');
 const CFG = {
   id: 'wedmed',
   title: 'Wednesday Meditation',
-  capacity: 12,                         // spots per Wednesday
+  capacity: 10,                         // spots per Wednesday
   startHour: 18, startMinute: 0,        // 6:00 PM Pacific
   durationMinutes: 90,                  // only used for the calendar file attached to the confirmation
   tz: 'America/Los_Angeles',
@@ -345,7 +345,7 @@ function register(deps) {
 
   // ── Add registrations by hand (admin dashboard) ───────────────────────────
   // For people who signed up another way, e.g. a past Wednesday. Writes Airtable + Klaviyo and posts one
-  // Slack summary. Deliberately sends nothing to the attendees and ignores the 12-spot limit.
+  // Slack summary. Deliberately sends nothing to the attendees and ignores the spot limit.
   app.post('/api/admin/wednesday/add-registrations', adminAuth, async (req, res) => {
     try {
       const date = String((req.body && req.body.date) || '');
