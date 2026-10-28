@@ -156,9 +156,12 @@ const linkify = html => html.replace(/https?:\/\/(?:[A-Za-z0-9\-._~:\/?#@!$'()*+
   return `<a href="${url}" style="color:#8A5E38">${url}</a>${tail}`;
 });
 
+// The studio address, wherever it appears in the text, becomes a tap-for-directions link.
+const linkAddress = html => html.replace(/419 N\.? PCH,? Laguna Beach,? CA 92651/gi, a => `<a href="${esc(CFG.googleMapsUrl)}" style="color:#8A5E38">${a}</a>`);
+
 function messageEmail({ firstName, iso, subject, text }) {
   const paras = String(text).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
-    .map(p => `<p style="font-size:15px;line-height:1.7;margin:0 0 18px">${linkify(esc(p)).replace(/\n/g, '<br>')}</p>`).join('');
+    .map(p => `<p style="font-size:15px;line-height:1.7;margin:0 0 18px">${linkAddress(linkify(esc(p))).replace(/\n/g, '<br>')}</p>`).join('');
   return {
     subject,
     html: wrap(`
