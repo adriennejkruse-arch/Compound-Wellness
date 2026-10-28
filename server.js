@@ -1104,9 +1104,10 @@ function makeEmailMessage({ to, subject, html, attachments = [] }) {
   return Buffer.from(raw).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-async function sendGmail({ to, subject, html, attachments = [] }) {
+async function sendGmail({ to, subject, html, attachments = [], strict = false }) {
   if (!process.env.GOOGLE_REFRESH_TOKEN) {
     console.warn('Gmail not configured — skipping email');
+    if (strict) throw new Error('Gmail is not connected, so nothing was sent.');
     return;
   }
   try {
@@ -1118,6 +1119,7 @@ async function sendGmail({ to, subject, html, attachments = [] }) {
   } catch (err) {
     console.error('Gmail send error:', err.message);
     alertSlack('gmail', 'Gmail is failing — client emails are not going out', err.message);
+    if (strict) throw new Error('Gmail rejected the message: ' + err.message);
   }
 }
 

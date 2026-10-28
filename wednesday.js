@@ -9,6 +9,7 @@
  *   POST /api/wednesday-meditations/donate     optional donation -> Stripe Checkout (hosted by Stripe)
  *   POST /api/admin/wednesday/send-reminders   admin only: send the day-of email now (supports dryRun)
  *   POST /api/admin/wednesday/add-registrations admin only: add people to a past or current Wednesday (no emails to them)
+ *   POST /api/admin/wednesday/send-message     admin only: email a custom note to everyone registered for a date (supports dryRun and testTo)
  *
  * Registrations are stored in the existing Airtable "Event Bookings" table. To free a spot,
  * set that row's Status to "Cancelled" (add that option to the Status field if needed).
@@ -144,6 +145,26 @@ function reminderEmail({ firstName, iso }) {
       <p style="font-size:13px;color:#7A6E64;line-height:1.7;margin:0">If you can no longer make it, please reply to this email as early as you can so we can open your spot to someone else.</p>
       ${donateLine}
       <div style="height:26px"></div>
+      ${reflectionBlock(iso)}`),
+  };
+}
+
+// A free-form note from the admin panel. Plain text in, styled email out, with the week's quote and art at the bottom.
+const linkify = html => html.replace(/https?:\/\/(?:[A-Za-z0-9\-._~:\/?#@!$'()*+,;=%]|&amp;)+/g, u => {
+  const tail = (u.match(/[.,;:!?)]+$/) || [''])[0];
+  const url = tail ? u.slice(0, -tail.length) : u;
+  return `<a href="${url}" style="color:#8A5E38">${url}</a>${tail}`;
+});
+
+function messageEmail({ firstName, iso, subject, text }) {
+  const paras = String(text).split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+    .map(p => `<p style="font-size:15px;line-height:1.7;margin:0 0 18px">${linkify(esc(p)).replace(/\n/g, '<br>')}</p>`).join('');
+  return {
+    subject,
+    html: wrap(`
+      <p style="font-size:15px;line-height:1.7;margin:0 0 18px">Hi ${esc(firstName)},</p>
+      ${paras}
+      <div style="height:18px"></div>
       ${reflectionBlock(iso)}`),
   };
 }
@@ -412,6 +433,57 @@ function register(deps) {
     return { sent, date: iso, dryRun };
   }
 
+  // ── Free-form message to everyone registered for a date ──────────────────
+  // Remembers who already got a given message (until the server restarts), so a double click or a
+  // retry after a partial failure never emails the same person twice.
+  const messaged = new Map();
+  async function sendMessage(iso, { subject, text, dryRun = false, testTo = '' }) {
+    if (!base) return { sent: 0, note: 'Airtable not configured' };
+    const id = eventId(iso);
+    if (!ID_RE.test(id)) return { sent: 0, note: 'bad date' };
+    const mail = who => messageEmail({ firstName: who, iso, subject, text });
+    if (testTo) {
+      const m = mail('Friend');
+      await sendGmail({ to: testTo, subject: `[TEST] ${m.subject}`, html: m.html, strict: true });
+      return { test: true, sent: 1, to: testTo };
+    }
+    const rows = await base('Event Bookings').select({ filterByFormula: activeFilter(id), fields: ['Email', 'First Name'], maxRecords: 100 }).all();
+    const seen = new Set(), people = [];
+    for (const r of rows) {
+      const email = String(r.fields['Email'] || '').trim();
+      if (!email || seen.has(email.toLowerCase())) continue;   // one email per address, even with a plus one
+      seen.add(email.toLowerCase());
+      people.push({ email, name: r.fields['First Name'] || 'Friend' });
+    }
+    if (dryRun) return { dryRun: true, date: iso, total: people.length, recipients: people.map(p => ({ name: p.name, email: p.email })) };
+    const key = iso + ':' + require('crypto').createHash('sha256').update(subject + '\n' + text).digest('hex');
+    const done = messaged.get(key) || new Set(); messaged.set(key, done);
+    let sent = 0, already = 0; const failed = [];
+    for (const p of people) {
+      if (done.has(p.email.toLowerCase())) { already++; continue; }
+      try {
+        const m = mail(p.name);
+        await sendGmail({ to: p.email, subject: m.subject, html: m.html, strict: true });
+        done.add(p.email.toLowerCase()); sent++;
+      } catch (err) { failed.push({ name: p.name, email: p.email, error: err.message }); }
+    }
+    console.log(`📅 Wednesday Meditation message for ${iso}: ${sent} sent, ${already} already sent, ${failed.length} failed`);
+    return { date: iso, total: people.length, sent, alreadySent: already, failed };
+  }
+
+  app.post('/api/admin/wednesday/send-message', adminAuth, async (req, res) => {
+    try {
+      const b = req.body || {};
+      const iso = String(b.date || todayPT());
+      const subject = String(b.subject || '').trim(), text = String(b.text || '').trim(), testTo = String(b.testTo || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+      if (!subject || subject.length > 150 || /[\r\n]/.test(subject)) return res.status(400).json({ error: 'Add a one-line subject (150 characters or fewer).' });
+      if (!text || text.length > 5000) return res.status(400).json({ error: 'Add a message (5,000 characters or fewer).' });
+      if (testTo && (testTo.length > 200 || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(testTo))) return res.status(400).json({ error: 'That test email address does not look right.' });
+      res.json(await sendMessage(iso, { subject, text, dryRun: !!b.dryRun, testTo }));
+    } catch (err) { res.status(500).json({ error: err.message }); }
+  });
+
   const remindedFor = new Set();
   async function reminderTick() {
     try {
@@ -440,4 +512,4 @@ function register(deps) {
   return { handleDonationPaid };
 }
 
-module.exports = { register, CFG, upcomingDates, reflectionFor, confirmationEmail, reminderEmail, thankYouEmail, icsFile, validateRegistration, ptWallToUtcMs, todayPT };
+module.exports = { register, CFG, upcomingDates, reflectionFor, confirmationEmail, reminderEmail, messageEmail, thankYouEmail, icsFile, validateRegistration, ptWallToUtcMs, todayPT };

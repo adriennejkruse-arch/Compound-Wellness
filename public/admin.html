@@ -639,10 +639,35 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
       <!-- ── QR CODES ───────────────────────────────────────── -->
       <!-- ── WEDNESDAY MEDITATION ─────────────────────────── -->
       <div id="panel-wednesday" class="panel">
+        <div class="tcard" style="max-width:720px;margin-bottom:24px">
+          <div class="thead"><span class="thead-title">Send a message to everyone registered</span></div>
+          <div style="padding:20px">
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">Emails everyone registered for the Wednesday you pick, with that week's quote and artwork at the bottom. Each person gets it once, even if you press Send twice. Use <strong>Send test to me</strong> first to see exactly how it looks.</p>
+            <label for="wsDate" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Wednesday</label><br>
+            <input id="wsDate" type="date" class="search" style="margin:4px 0 14px"><br>
+            <label for="wsSubject" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Subject</label>
+            <input id="wsSubject" type="text" maxlength="150" class="search" style="width:100%;margin:4px 0 14px" value="Tonight at 6pm: Wednesday Meditation has moved inside">
+            <label for="wsText" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Message (a blank line starts a new paragraph; each person is greeted by first name)</label>
+            <textarea id="wsText" rows="16" maxlength="5000" class="search" style="width:100%;margin:4px 0 14px;font-family:inherit;line-height:1.6">We’ve moved inside for the next season. We are going to continue at 6pm every Wednesday. The address is 419 N PCH, Laguna Beach CA 92651. We will be locking the doors at 6:15 after our intuitive movement.
+
+We only have a set amount of spots available so you will need to RSVP at the link to claim your spot. If you’re bringing a plus one, fill out a second RSVP for them as well. The Link: https://www.compoundoc.com/wednesday-meditation
+
+We are asking for a $5 donation to cover the cost of the space. You can donate at the link or bring cash/venmo/zelle at the class
+
+I have been doing most of this manually because I love texting all yall and it’s a bit of a practice in and of itself for me but as we’ve grown so much in such a short amount of time, I am adding you all to a more automated system shortly. Opt out anytime
+
+What an absolute blast, see yall there!! ✨</textarea>
+            <label for="wsTest" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Send the test to</label><br>
+            <input id="wsTest" type="email" class="search" style="margin:4px 0 14px;min-width:260px" value="adrienne@compoundoc.com"><br>
+            <button class="btn btn-sm" id="wsTestBtn" onclick="wsSend(true)">Send test to me</button>
+            <button class="btn btn-primary btn-sm" id="wsGo" onclick="wsSend(false)">Send to everyone registered</button>
+            <div id="wsOut" role="status" style="margin-top:16px;font-size:12px;line-height:1.8"></div>
+          </div>
+        </div>
         <div class="tcard" style="max-width:720px">
           <div class="thead"><span class="thead-title">Add registrations by hand</span></div>
           <div style="padding:20px">
-            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">For people who joined another way, such as a past Wednesday. They are saved to Airtable (Event Bookings) and Klaviyo, and one summary is posted to Slack. <strong>Nothing is emailed to them</strong>, and the 12-spot limit is ignored.</p>
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">For people who joined another way, such as a past Wednesday. They are saved to Airtable (Event Bookings) and Klaviyo, and one summary is posted to Slack. <strong>Nothing is emailed to them</strong>, and the spot limit is ignored.</p>
             <label for="wmDate" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Wednesday</label><br>
             <input id="wmDate" type="date" class="search" style="margin:4px 0 14px">
             <label for="wmPeople" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">One person per line: Name, email, phone</label>
@@ -867,6 +892,44 @@ function showPanel(id) {
   const el = document.getElementById('wmDate');
   if (el) el.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 })();
+(function defaultWsDate() {
+  const d = new Date(), el = document.getElementById('wsDate');   // today (the Wednesday you are most likely messaging)
+  if (el) el.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+})();
+async function wsPost(body) {
+  const r = await fetch('/api/admin/wednesday/send-message', { method: 'POST', headers: adminHeaders(), body: JSON.stringify(body) });
+  if (r.status === 401) { doLogout(); throw new Error('Your session expired. Please sign in again.'); }
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+  return j;
+}
+async function wsSend(isTest) {
+  const out = document.getElementById('wsOut'), go = document.getElementById('wsGo'), tb = document.getElementById('wsTestBtn');
+  const date = document.getElementById('wsDate').value, subject = document.getElementById('wsSubject').value.trim(), text = document.getElementById('wsText').value.trim();
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  if (!date || !subject || !text) { out.textContent = 'Choose a date and fill in the subject and message.'; return; }
+  const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  go.disabled = tb.disabled = true; out.textContent = isTest ? 'Sending test…' : 'Checking who is registered…';
+  try {
+    if (isTest) {
+      const testTo = document.getElementById('wsTest').value.trim();
+      if (!testTo) throw new Error('Enter an email address for the test.');
+      const j = await wsPost({ date, subject, text, testTo });
+      out.innerHTML = `<strong>Test sent to ${esc(j.to)}.</strong> Check your inbox (and spam) to see how it looks.`;
+      return;
+    }
+    const pre = await wsPost({ date, subject, text, dryRun: true });
+    if (!pre.total) { out.textContent = `Nobody is registered for ${label}.`; return; }
+    const names = pre.recipients.map(p => p.name).join(', ');
+    if (!confirm(`Send this email to ${pre.total} ${pre.total === 1 ? 'person' : 'people'} registered for ${label}?\n\n${names}\n\nThis cannot be undone.`)) { out.textContent = 'Cancelled. Nothing was sent.'; return; }
+    out.textContent = 'Sending…';
+    const j = await wsPost({ date, subject, text });
+    out.innerHTML = `<strong>${j.sent} of ${j.total} sent for ${esc(label)}.</strong>` +
+      (j.alreadySent ? `<br>${j.alreadySent} already had this message, so they were skipped.` : '') +
+      (j.failed && j.failed.length ? '<br>Did not send: ' + j.failed.map(f => `${esc(f.name)} (${esc(f.error)})`).join('; ') + '<br>Press Send again to retry only those people.' : '');
+  } catch (e) { out.textContent = e.message; }
+  finally { go.disabled = tb.disabled = false; }
+}
 async function wmAdd() {
   const date = document.getElementById('wmDate').value;
   const out = document.getElementById('wmOut'), btn = document.getElementById('wmGo');
