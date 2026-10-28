@@ -30,7 +30,7 @@ const QUOTES = [
   { text: "To see a World in a Grain of Sand, and a Heaven in a Wild Flower, hold Infinity in the palm of your hand, and Eternity in an hour.", author: "William Blake", source: "Auguries of Innocence" },
   { text: "My experience is what I agree to attend to.", author: "William James", source: "The Principles of Psychology (1890)" },
   { text: "The art of being wise is the art of knowing what to overlook.", author: "William James", source: "The Principles of Psychology (1890)" },
-  { text: "All the unhappiness of men arises from one single fact, that they cannot stay quietly in their own chamber.", author: "Blaise Pascal", source: "Pensées, trans. W. F. Trotter" },
+  { text: "My actions are my only true belongings… My actions are the ground upon which I stand.", author: "Thich Nhat Hanh" },
   { text: "First keep thyself in peace, and then shalt thou be able to be a peacemaker towards others.", author: "Thomas à Kempis", source: "The Imitation of Christ" },
   { text: "Be patient toward all that is unsolved in your heart and try to love the questions themselves.", author: "Rainer Maria Rilke", source: "Letters to a Young Poet (1903–1908)" },
   { text: "Instructions for living a life: Pay attention. Be astonished. Tell about it.", author: "Mary Oliver", source: "“Sometimes”" },
