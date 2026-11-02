@@ -501,9 +501,12 @@ app.get('/api/admin/contacts', adminAuth, async (req, res) => {
   }
 });
 
-// One-time bulk add of leads that came from somewhere else (for example a Meta lead form export).
-// Saves each person to Contacts only, so they show in the admin panel, and posts ONE summary to Slack.
-// Deliberately sends no email to the people, adds nobody to Klaviyo, and sends nothing to Meta.
+// Bulk add of leads that came from somewhere else (for example a Meta lead form export).
+// Import: each person is saved to Contacts (so they show in the admin panel) and gets their own generic Slack message.
+// Nobody is added to Klaviyo and nothing is sent to Meta. Emails are a separate step below, so they are never sent by accident.
+const leadMail = require('./leadmail');
+const FOLLOWUP_MARK = /Follow-up email (sent|already sent)/i;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 function usPhone(raw) {
   const t = String(raw || '').replace(/^p:/i, '').trim();
   const d = t.replace(/\D/g, '');
@@ -512,44 +515,106 @@ function usPhone(raw) {
   if (d.length === 10 && !t.startsWith('+')) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
   return t.startsWith('+') ? '+' + d : d;
 }
+const capStr = (v, n) => String(v == null ? '' : v).slice(0, n);
+const validEmail = e => /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]{2,}$/.test(e);
+// Clean up a pasted list: trims, skips test leads, bad rows and repeats. Returns { good, skipped }.
+function cleanLeadRows(rows) {
+  const good = [], skipped = [], seen = new Set();
+  for (const raw of (Array.isArray(rows) ? rows : []).slice(0, 200)) {
+    const name = oneLine(capStr(raw && raw.name, 120)), email = oneLine(capStr(raw && raw.email, 120)), phone = usPhone(capStr(raw && raw.phone, 40));
+    const who = name || email || '(blank row)';
+    if (/<test lead|dummy data/i.test(name + email + (raw && raw.phone)) || /@meta\.com$/i.test(email)) { skipped.push({ name: who, reason: 'Meta test lead' }); continue; }
+    if (!name || !validEmail(email)) { skipped.push({ name: who, reason: 'missing name or valid email' }); continue; }
+    const key = email.toLowerCase();
+    if (seen.has(key)) { skipped.push({ name, reason: 'listed twice' }); continue; }
+    seen.add(key);
+    good.push({ name, email, phone, key });
+  }
+  return { good, skipped };
+}
+async function slackPost(text) {
+  const url = process.env.SLACK_WEBHOOK_URL; if (!url) return false;
+  for (let i = 0; i < 2; i++) {
+    try { await axios.post(url, { text }, { timeout: 8000 }); return true; }
+    catch (err) { if (!(err.response && err.response.status === 429)) return false; await sleep(2000); }
+  }
+  return false;
+}
+
 app.post('/api/admin/import-leads', adminAuth, async (req, res) => {
   try {
     if (!base) return res.status(503).json({ error: 'Airtable is not connected.' });
     const b = req.body || {};
-    const label = String(b.source || 'Meta Lead Form').replace(/[^\w .\-]/g, '').trim().slice(0, 40) || 'Meta Lead Form';
-    const cap = (v, n) => String(v == null ? '' : v).slice(0, n);
-    const people = Array.isArray(b.people) ? b.people.slice(0, 200) : [];
-    if (!people.length) return res.status(400).json({ error: 'Add at least one person.' });
+    const label = String(b.source || 'Meta Leads').replace(/[^\w .\-]/g, '').trim().slice(0, 40) || 'Meta Leads';
+    const already = new Set((Array.isArray(b.alreadyEmailed) ? b.alreadyEmailed : []).map(e => String(e).trim().toLowerCase()));
+    const { good, skipped } = cleanLeadRows(b.people);
+    if (!good.length && !skipped.length) return res.status(400).json({ error: 'Add at least one person.' });
     const existing = new Set((await base('Contacts').select({ fields: ['Email'] }).all()).map(r => String(r.fields['Email'] || '').trim().toLowerCase()).filter(Boolean));
-    const seen = new Set(), todo = [], skipped = [];
-    for (const raw of people) {
-      const name = oneLine(cap(raw && raw.name, 120)).trim(), email = oneLine(cap(raw && raw.email, 120)).trim(), phone = usPhone(cap(raw && raw.phone, 40));
-      const who = name || email || '(blank row)';
-      if (/<test lead|dummy data/i.test(name + email + (raw && raw.phone)) || /@meta\.com$/i.test(email)) { skipped.push({ name: who, reason: 'Meta test lead' }); continue; }
-      if (!name || !/^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]{2,}$/.test(email)) { skipped.push({ name: who, reason: 'missing name or valid email' }); continue; }
-      const key = email.toLowerCase();
-      if (seen.has(key)) { skipped.push({ name, reason: 'listed twice' }); continue; }
-      seen.add(key);
-      if (existing.has(key)) { skipped.push({ name, reason: 'already in Contacts' }); continue; }
-      todo.push({ name, email, phone });
-    }
-    if (b.dryRun) return res.json({ dryRun: true, total: people.length, wouldAdd: todo.map(p => ({ name: p.name, email: p.email, phone: p.phone })), skipped });
-    let added = 0; const failed = [];
+    const todo = [];
+    for (const p of good) { if (existing.has(p.key)) skipped.push({ name: p.name, reason: 'already in Contacts' }); else todo.push(p); }
+    if (b.dryRun) return res.json({ dryRun: true, wouldAdd: todo.map(p => ({ name: p.name, email: p.email, phone: p.phone, alreadyEmailed: already.has(p.key) })), skipped });
+    let added = 0, slacked = 0; const failed = [];
     for (const p of todo) {
+      const ref = String(crypto.randomInt(1000, 10000));
       try {
         await base('Contacts').create({
           'Name': p.name, 'Email': p.email, 'Phone': p.phone, 'City': '',
-          'Notes': `${label} lead, added in bulk from the lead export on ${nowPST()}.`,
+          'Notes': `${label} lead (#${ref}), added from the lead export on ${nowPST()}.` + (already.has(p.key) ? ' Follow-up email already sent personally by Adrienne.' : ''),
           'Source Form': label, 'Submission Date': nowPST(),
         }, { typecast: true });
         added++;
+      } catch (err) { failed.push({ name: p.name, error: err.message }); continue; }
+      // One generic message per lead (no name, contact details or health detail), spaced to stay inside Slack's rate limit.
+      if (await slackPost(['*NEW META LEAD — #' + ref + '*', 'New lead received.', '<https://www.compoundoc.com/admin.html|Open secure booking system.>'].join('\n'))) slacked++;
+      await sleep(Number(process.env.LEAD_SLACK_DELAY_MS ?? 1100));
+    }
+    console.log(`✓ Lead import (${label}): ${added} added, ${slacked} Slack messages, ${skipped.length} skipped, ${failed.length} failed`);
+    if (failed.length) alertSlack('lead-import', `Lead import: ${failed.length} could not be saved`, failed[0].error);
+    res.json({ added, slacked, skipped, failed, label });
+  } catch (err) { console.error('Import leads error:', err.message); res.status(500).json({ error: err.message }); }
+});
+
+// Personal follow-up email to imported leads. Only people already in Contacts, only once each (recorded in their Notes),
+// and never anyone marked as already emailed. dryRun lists who would get it; testTo sends one copy to that address only.
+app.post('/api/admin/leads-followup', adminAuth, async (req, res) => {
+  try {
+    if (!base) return res.status(503).json({ error: 'Airtable is not connected.' });
+    const b = req.body || {};
+    const subject = oneLine(capStr(b.subject, 150)), text = capStr(b.text, 5000).trim(), testTo = oneLine(capStr(b.testTo, 200));
+    if (!subject) return res.status(400).json({ error: 'Add a one-line subject.' });
+    if (!text) return res.status(400).json({ error: 'Add the email text.' });
+    if (testTo) {
+      if (!validEmail(testTo)) return res.status(400).json({ error: 'That test email address does not look right.' });
+      const m = leadMail.followupEmail({ text, name: 'Maria', subject: '[TEST] ' + subject });
+      await sendGmail({ to: testTo, subject: m.subject, html: m.html, strict: true });
+      return res.json({ test: true, to: testTo });
+    }
+    const label = String(b.source || 'Meta Leads').replace(/[^\w .\-]/g, '').trim().slice(0, 40) || 'Meta Leads';
+    const { good, skipped } = cleanLeadRows(b.people);
+    const rows = await base('Contacts').select({ fields: ['Email', 'Name', 'Notes', 'Source Form'] }).all();
+    const byEmail = new Map(rows.map(r => [String(r.fields['Email'] || '').trim().toLowerCase(), r]));
+    const send = [];
+    for (const p of good) {
+      const rec = byEmail.get(p.key);
+      if (!rec) { skipped.push({ name: p.name, reason: 'not in Contacts yet (import first)' }); continue; }
+      if (String(rec.fields['Source Form'] || '') !== label) { skipped.push({ name: p.name, reason: `in Contacts, but not as "${label}" (existing client or inquiry)` }); continue; }
+      if (FOLLOWUP_MARK.test(String(rec.fields['Notes'] || ''))) { skipped.push({ name: p.name, reason: 'already emailed' }); continue; }
+      send.push({ ...p, rec });
+    }
+    if (b.dryRun) return res.json({ dryRun: true, recipients: send.map(p => ({ name: p.name, email: p.email, greeting: 'Hi ' + leadMail.firstNameOf(p.name) + ',' })), skipped });
+    let sent = 0; const failed = [];
+    for (const p of send) {
+      try {
+        const m = leadMail.followupEmail({ text, name: p.name, subject });
+        await sendGmail({ to: p.email, subject: m.subject, html: m.html, strict: true });
+        sent++;
+        try { await base('Contacts').update(p.rec.id, { 'Notes': [String(p.rec.fields['Notes'] || '').trim(), `Follow-up email sent ${nowPST()}.`].filter(Boolean).join(' ') }); }
+        catch (e) { console.error('Could not record follow-up on', p.rec.id, e.message); }
       } catch (err) { failed.push({ name: p.name, error: err.message }); }
     }
-    console.log(`✓ Lead import (${label}): ${added} added, ${skipped.length} skipped, ${failed.length} failed`);
-    if (failed.length) alertSlack('lead-import', `Lead import: ${failed.length} could not be saved`, failed[0].error);
-    if (added) notifySlack({ title: `NEW LEADS — ${added} from ${label}`, lines: ['Added in bulk to the admin panel.'], link: 'Open secure booking system.' });
-    res.json({ total: people.length, added, skipped, failed, label });
-  } catch (err) { console.error('Import leads error:', err.message); res.status(500).json({ error: err.message }); }
+    console.log(`✓ Lead follow-up emails: ${sent} sent, ${skipped.length} skipped, ${failed.length} failed`);
+    res.json({ sent, skipped, failed });
+  } catch (err) { console.error('Leads follow-up error:', err.message); res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/admin/bookings', adminAuth, async (req, res) => {

@@ -350,14 +350,44 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
       <!-- ── CONTACTS ──────────────────────────────────────── -->
       <div id="panel-contacts" class="panel">
         <details class="tcard" style="margin-bottom:24px">
-          <summary class="thead" style="cursor:pointer"><span class="thead-title">Import leads (for example from a Meta lead form)</span></summary>
+          <summary class="thead" style="cursor:pointer"><span class="thead-title">Import leads and follow up (for example from a Meta lead form)</span></summary>
           <div style="padding:20px;max-width:760px">
-            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">Paste rows copied from your spreadsheet: <strong>email, full name, phone</strong> (tabs or commas, any column order). Each person is saved to Contacts with the source below, and <strong>one summary</strong> is posted to Slack. <strong>Nobody is emailed or added to Klaviyo.</strong> People already in Contacts, repeats and Meta test leads are skipped.</p>
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7"><strong>Step 1 — Import.</strong> Paste rows copied from your spreadsheet: <strong>email, full name, phone</strong> (tabs or commas, any column order). Each person is saved to Contacts and Airtable with the source below, and <strong>each gets their own Slack message</strong> (generic: no name or details). Nobody is emailed or added to Klaviyo in this step. People already in Contacts, repeats and Meta test leads are skipped.</p>
             <label for="ilSource" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Source label</label><br>
-            <input id="ilSource" type="text" maxlength="40" class="search" style="margin:4px 0 14px" value="Meta Lead Form"><br>
+            <input id="ilSource" type="text" maxlength="40" class="search" style="margin:4px 0 14px" value="Meta Leads"><br>
             <label for="ilRows" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Leads, one per line</label>
-            <textarea id="ilRows" rows="10" class="search" style="width:100%;margin:4px 0 12px;font-family:inherit;line-height:1.6" placeholder="jane@example.com, Jane Doe, (949) 555-0100"></textarea>
-            <button class="btn btn-primary btn-sm" id="ilGo" onclick="ilImport()">Import leads</button>
+            <textarea id="ilRows" rows="9" class="search" style="width:100%;margin:4px 0 12px;font-family:inherit;line-height:1.6" placeholder="jane@example.com, Jane Doe, (949) 555-0100"></textarea>
+            <label for="ilSkip" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Already emailed by you (these will not get the follow-up). One email address per line</label>
+            <textarea id="ilSkip" rows="2" class="search" style="width:100%;margin:4px 0 12px;font-family:inherit;line-height:1.6"></textarea>
+            <button class="btn btn-primary btn-sm" id="ilGo" onclick="ilImport()">Import leads and post to Slack</button>
+            <hr style="border:none;border-top:1px solid var(--line,#ddd);margin:26px 0 18px">
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7"><strong>Step 2 — Follow-up email.</strong> Sent one at a time, from you, to the people in the list above who are in Contacts and have not been emailed. <strong>{name}</strong> becomes their first name. Send yourself a test first. Each send is recorded in the person's Notes so nobody gets it twice.</p>
+            <label for="ilSubject" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Subject</label>
+            <input id="ilSubject" type="text" maxlength="150" class="search" style="width:100%;margin:4px 0 14px" value="Following up on your inquiry with The Compound">
+            <label for="ilText" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Email text (a blank line starts a new paragraph)</label>
+            <textarea id="ilText" rows="22" maxlength="5000" class="search" style="width:100%;margin:4px 0 14px;font-family:inherit;line-height:1.6">Hi {name},
+
+Thank you for reaching out to The Compound. I wanted to follow up personally on your inquiry and see how we can best support you.
+
+We bring personalized, concierge-level wellness directly to your home, including IV hydration, hormone panels, and heavy metal detox through physician-guided care, with no additional charge for in-home service in Orange County.
+
+Our goal is to get you feeling your best.
+
+As a next step, I'd love to offer you a complimentary 15-minute consultation with Dr. Angela Colombo, our concierge physician. It's a relaxed conversation to talk through your goals, answer any questions, and recommend the options best suited to you, with no obligation.
+
+You can reply with a few times that work for you, or book directly here: https://www.compoundoc.com/booking.html
+
+Looking forward to connecting!
+
+Warmly,
+
+Adrienne
+Co-Founder, The Compound
+(949)590-0179 | compoundoc.com</textarea>
+            <label for="ilTest" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Send the test to</label><br>
+            <input id="ilTest" type="email" class="search" style="margin:4px 0 14px;min-width:260px" value="adrienne@compoundoc.com"><br>
+            <button class="btn btn-sm" id="ilTestBtn" onclick="ilFollow(true)">Send test to me</button>
+            <button class="btn btn-primary btn-sm" id="ilSendBtn" onclick="ilFollow(false)">Send follow-up emails</button>
             <div id="ilOut" role="status" style="margin-top:16px;font-size:12px;line-height:1.8"></div>
           </div>
         </details>
@@ -874,31 +904,66 @@ function ilParse(text) {
     return { name, email, phone };
   });
 }
+function ilBusy(on) { ['ilGo', 'ilTestBtn', 'ilSendBtn'].forEach(id => { document.getElementById(id).disabled = on; }); }
+async function ilPost(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: adminHeaders(), body: JSON.stringify(body) });
+  if (r.status === 401) { doLogout(); throw new Error('Your session expired. Please sign in again.'); }
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Something went wrong.'); return j;
+}
+const ilEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const ilSkipText = sk => sk.length ? `\n\nSkipped (${sk.length}):\n` + sk.map(s => `• ${s.name}: ${s.reason}`).join('\n') : '';
 async function ilImport() {
-  const out = document.getElementById('ilOut'), btn = document.getElementById('ilGo');
-  const people = ilParse(document.getElementById('ilRows').value), source = document.getElementById('ilSource').value.trim() || 'Meta Lead Form';
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const out = document.getElementById('ilOut');
+  const people = ilParse(document.getElementById('ilRows').value), source = document.getElementById('ilSource').value.trim() || 'Meta Leads';
+  const alreadyEmailed = document.getElementById('ilSkip').value.split('\n').map(s => s.trim()).filter(Boolean);
   if (!people.length) { out.textContent = 'Paste at least one lead.'; return; }
-  const post = async extra => {
-    const r = await fetch('/api/admin/import-leads', { method: 'POST', headers: adminHeaders(), body: JSON.stringify({ source, people, ...extra }) });
-    if (r.status === 401) { doLogout(); throw new Error('Your session expired. Please sign in again.'); }
-    const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Something went wrong.'); return j;
-  };
-  btn.disabled = true; out.textContent = 'Checking the list…';
+  ilBusy(true); out.textContent = 'Checking the list…';
   try {
-    const pre = await post({ dryRun: true });
-    const skipNote = pre.skipped.length ? `\n\nSkipped (${pre.skipped.length}):\n` + pre.skipped.map(s => `• ${s.name}: ${s.reason}`).join('\n') : '';
-    if (!pre.wouldAdd.length) { out.innerHTML = 'Nothing new to add.<br>' + pre.skipped.map(s => `${esc(s.name)}: ${esc(s.reason)}`).join('<br>'); return; }
-    if (!confirm(`Add ${pre.wouldAdd.length} new ${pre.wouldAdd.length === 1 ? 'lead' : 'leads'} as "${source}" and post one Slack summary?\n\nNo one will be emailed.${skipNote}`)) { out.textContent = 'Cancelled. Nothing was added.'; return; }
-    out.textContent = 'Importing…';
-    const j = await post({});
-    out.innerHTML = `<strong>${j.added} of ${pre.wouldAdd.length} added as ${esc(j.label)}.</strong>` +
-      (j.skipped.length ? '<br>Skipped: ' + j.skipped.map(s => `${esc(s.name)} (${esc(s.reason)})`).join('; ') : '') +
-      (j.failed.length ? '<br>Could not save: ' + j.failed.map(f => `${esc(f.name)} (${esc(f.error)})`).join('; ') : '') +
-      (j.added ? '<br>Refresh the Contacts list to see them.' : '');
+    const pre = await ilPost('/api/admin/import-leads', { source, people, alreadyEmailed, dryRun: true });
+    if (!pre.wouldAdd.length) { out.innerHTML = 'Nothing new to add.<br>' + pre.skipped.map(s => `${ilEsc(s.name)}: ${ilEsc(s.reason)}`).join('<br>'); return; }
+    if (!confirm(`Add ${pre.wouldAdd.length} new ${pre.wouldAdd.length === 1 ? 'lead' : 'leads'} as "${source}" and post ${pre.wouldAdd.length} individual Slack ${pre.wouldAdd.length === 1 ? 'message' : 'messages'}?\n\nNo one will be emailed in this step.${ilSkipText(pre.skipped)}`)) { out.textContent = 'Cancelled. Nothing was added.'; return; }
+    out.textContent = `Importing ${pre.wouldAdd.length} leads and posting to Slack (about ${Math.ceil(pre.wouldAdd.length * 1.2)} seconds)…`;
+    const j = await ilPost('/api/admin/import-leads', { source, people, alreadyEmailed });
+    out.innerHTML = `<strong>${j.added} added as ${ilEsc(j.label)}; ${j.slacked} Slack messages posted.</strong>` +
+      (j.skipped.length ? '<br>Skipped: ' + j.skipped.map(s => `${ilEsc(s.name)} (${ilEsc(s.reason)})`).join('; ') : '') +
+      (j.failed.length ? '<br>Could not save: ' + j.failed.map(f => `${ilEsc(f.name)} (${ilEsc(f.error)})`).join('; ') : '') +
+      (j.slacked < j.added ? '<br>Some Slack messages did not post. Check the Slack webhook.' : '');
     if (j.added && typeof loadDB === 'function') { try { await loadDB(); } catch (e) {} }
   } catch (e) { out.textContent = e.message; }
-  finally { btn.disabled = false; }
+  finally { ilBusy(false); }
+}
+async function ilFollow(isTest) {
+  const out = document.getElementById('ilOut');
+  const subject = document.getElementById('ilSubject').value.trim(), text = document.getElementById('ilText').value.trim();
+  if (!subject || !text) { out.textContent = 'Fill in the subject and the email text.'; return; }
+  ilBusy(true);
+  try {
+    if (isTest) {
+      const testTo = document.getElementById('ilTest').value.trim();
+      if (!testTo) throw new Error('Enter an email address for the test.');
+      out.textContent = 'Sending test…';
+      const j = await ilPost('/api/admin/leads-followup', { subject, text, testTo });
+      out.innerHTML = `<strong>Test sent to ${ilEsc(j.to)}.</strong> Check your inbox (and spam). It starts "Hi Maria," as an example.`;
+      return;
+    }
+    const people = ilParse(document.getElementById('ilRows').value);
+    const skip = new Set(document.getElementById('ilSkip').value.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean));
+    if (!people.length) { out.textContent = 'Paste the leads in Step 1 first.'; return; }
+    out.textContent = 'Checking who is eligible…';
+    const source = document.getElementById('ilSource').value.trim() || 'Meta Leads';
+    const pre = await ilPost('/api/admin/leads-followup', { subject, text, people, source, dryRun: true });
+    const recipients = pre.recipients.filter(r => !skip.has(r.email.toLowerCase()));
+    const skipped = pre.skipped.concat(pre.recipients.filter(r => skip.has(r.email.toLowerCase())).map(r => ({ name: r.name, reason: 'you already emailed them' })));
+    if (!recipients.length) { out.innerHTML = 'Nobody to email.<br>' + skipped.map(s => `${ilEsc(s.name)}: ${ilEsc(s.reason)}`).join('<br>'); return; }
+    if (!confirm(`Send this email, one at a time, to ${recipients.length} ${recipients.length === 1 ? 'person' : 'people'}?\n\n${recipients.map(r => r.greeting + ' ' + r.email).join('\n')}${ilSkipText(skipped)}\n\nThis cannot be undone.`)) { out.textContent = 'Cancelled. Nothing was sent.'; return; }
+    out.textContent = 'Sending…';
+    const only = people.filter(p => recipients.some(r => r.email.toLowerCase() === p.email.toLowerCase()));
+    const j = await ilPost('/api/admin/leads-followup', { subject, text, people: only, source });
+    out.innerHTML = `<strong>${j.sent} of ${recipients.length} emails sent.</strong>` +
+      (j.skipped.length ? '<br>Skipped: ' + j.skipped.map(s => `${ilEsc(s.name)} (${ilEsc(s.reason)})`).join('; ') : '') +
+      (j.failed.length ? '<br>Did not send: ' + j.failed.map(f => `${ilEsc(f.name)} (${ilEsc(f.error)})`).join('; ') + '<br>Press Send again to retry only those people.' : '');
+  } catch (e) { out.textContent = e.message; }
+  finally { ilBusy(false); }
 }
 async function wmAdd() {
   const date = document.getElementById('wmDate').value;
