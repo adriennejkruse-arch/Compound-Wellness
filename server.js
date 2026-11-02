@@ -501,6 +501,57 @@ app.get('/api/admin/contacts', adminAuth, async (req, res) => {
   }
 });
 
+// One-time bulk add of leads that came from somewhere else (for example a Meta lead form export).
+// Saves each person to Contacts only, so they show in the admin panel, and posts ONE summary to Slack.
+// Deliberately sends no email to the people, adds nobody to Klaviyo, and sends nothing to Meta.
+function usPhone(raw) {
+  const t = String(raw || '').replace(/^p:/i, '').trim();
+  const d = t.replace(/\D/g, '');
+  if (!d) return '';
+  if (/^\+?1\d{10}$/.test(t.replace(/[^\d+]/g, '')) && d.length === 11) return `(${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
+  if (d.length === 10 && !t.startsWith('+')) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  return t.startsWith('+') ? '+' + d : d;
+}
+app.post('/api/admin/import-leads', adminAuth, async (req, res) => {
+  try {
+    if (!base) return res.status(503).json({ error: 'Airtable is not connected.' });
+    const b = req.body || {};
+    const label = String(b.source || 'Meta Lead Form').replace(/[^\w .\-]/g, '').trim().slice(0, 40) || 'Meta Lead Form';
+    const cap = (v, n) => String(v == null ? '' : v).slice(0, n);
+    const people = Array.isArray(b.people) ? b.people.slice(0, 200) : [];
+    if (!people.length) return res.status(400).json({ error: 'Add at least one person.' });
+    const existing = new Set((await base('Contacts').select({ fields: ['Email'] }).all()).map(r => String(r.fields['Email'] || '').trim().toLowerCase()).filter(Boolean));
+    const seen = new Set(), todo = [], skipped = [];
+    for (const raw of people) {
+      const name = oneLine(cap(raw && raw.name, 120)).trim(), email = oneLine(cap(raw && raw.email, 120)).trim(), phone = usPhone(cap(raw && raw.phone, 40));
+      const who = name || email || '(blank row)';
+      if (/<test lead|dummy data/i.test(name + email + (raw && raw.phone)) || /@meta\.com$/i.test(email)) { skipped.push({ name: who, reason: 'Meta test lead' }); continue; }
+      if (!name || !/^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]{2,}$/.test(email)) { skipped.push({ name: who, reason: 'missing name or valid email' }); continue; }
+      const key = email.toLowerCase();
+      if (seen.has(key)) { skipped.push({ name, reason: 'listed twice' }); continue; }
+      seen.add(key);
+      if (existing.has(key)) { skipped.push({ name, reason: 'already in Contacts' }); continue; }
+      todo.push({ name, email, phone });
+    }
+    if (b.dryRun) return res.json({ dryRun: true, total: people.length, wouldAdd: todo.map(p => ({ name: p.name, email: p.email, phone: p.phone })), skipped });
+    let added = 0; const failed = [];
+    for (const p of todo) {
+      try {
+        await base('Contacts').create({
+          'Name': p.name, 'Email': p.email, 'Phone': p.phone, 'City': '',
+          'Notes': `${label} lead, added in bulk from the lead export on ${nowPST()}.`,
+          'Source Form': label, 'Submission Date': nowPST(),
+        }, { typecast: true });
+        added++;
+      } catch (err) { failed.push({ name: p.name, error: err.message }); }
+    }
+    console.log(`✓ Lead import (${label}): ${added} added, ${skipped.length} skipped, ${failed.length} failed`);
+    if (failed.length) alertSlack('lead-import', `Lead import: ${failed.length} could not be saved`, failed[0].error);
+    if (added) notifySlack({ title: `NEW LEADS — ${added} from ${label}`, lines: ['Added in bulk to the admin panel.'], link: 'Open secure booking system.' });
+    res.json({ total: people.length, added, skipped, failed, label });
+  } catch (err) { console.error('Import leads error:', err.message); res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/admin/bookings', adminAuth, async (req, res) => {
   if (!base) return res.json({ bookings: [] });
   try {

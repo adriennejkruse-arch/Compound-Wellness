@@ -349,13 +349,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;font-weight:300;font-size
 
       <!-- ── CONTACTS ──────────────────────────────────────── -->
       <div id="panel-contacts" class="panel">
+        <details class="tcard" style="margin-bottom:24px">
+          <summary class="thead" style="cursor:pointer"><span class="thead-title">Import leads (for example from a Meta lead form)</span></summary>
+          <div style="padding:20px;max-width:760px">
+            <p style="font-size:12px;color:var(--text-body);margin-bottom:14px;line-height:1.7">Paste rows copied from your spreadsheet: <strong>email, full name, phone</strong> (tabs or commas, any column order). Each person is saved to Contacts with the source below, and <strong>one summary</strong> is posted to Slack. <strong>Nobody is emailed or added to Klaviyo.</strong> People already in Contacts, repeats and Meta test leads are skipped.</p>
+            <label for="ilSource" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Source label</label><br>
+            <input id="ilSource" type="text" maxlength="40" class="search" style="margin:4px 0 14px" value="Meta Lead Form"><br>
+            <label for="ilRows" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper)">Leads, one per line</label>
+            <textarea id="ilRows" rows="10" class="search" style="width:100%;margin:4px 0 12px;font-family:inherit;line-height:1.6" placeholder="jane@example.com, Jane Doe, (949) 555-0100"></textarea>
+            <button class="btn btn-primary btn-sm" id="ilGo" onclick="ilImport()">Import leads</button>
+            <div id="ilOut" role="status" style="margin-top:16px;font-size:12px;line-height:1.8"></div>
+          </div>
+        </details>
         <div class="tcard">
           <div class="thead">
             <span class="thead-title">Contacts</span>
             <div class="tcontrols">
               <input class="search" placeholder="Name, email, city…" oninput="filterT('contacts',this.value)">
               <select class="fsel" id="cf" onchange="filterT('contacts','')">
-                <option value="">All Sources</option><option>Booking</option><option>Inquiry</option><option>Member</option>
+                <option value="">All Sources</option><option>Booking</option><option>Inquiry</option><option>Member</option><option>Meta</option>
               </select>
               <button class="btn btn-primary btn-sm" onclick="openAddContact()">+ Add</button>
             </div>
@@ -852,6 +864,41 @@ async function wsSend(isTest) {
       (j.failed && j.failed.length ? '<br>Did not send: ' + j.failed.map(f => `${esc(f.name)} (${esc(f.error)})`).join('; ') + '<br>Press Send again to retry only those people.' : '');
   } catch (e) { out.textContent = e.message; }
   finally { go.disabled = tb.disabled = false; }
+}
+function ilParse(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).filter(l => !/^email\b.*(full_?name|name)/i.test(l)).map(l => {
+    const cells = l.split(/\t|,/).map(c => c.trim()).filter(Boolean);
+    const email = cells.find(c => c.includes('@')) || '';
+    const phone = cells.find(c => c !== email && /^(p:)?[+()\d][\d\s().+-]{6,}$/i.test(c)) || '';
+    const name = cells.filter(c => c !== email && c !== phone).join(' ');
+    return { name, email, phone };
+  });
+}
+async function ilImport() {
+  const out = document.getElementById('ilOut'), btn = document.getElementById('ilGo');
+  const people = ilParse(document.getElementById('ilRows').value), source = document.getElementById('ilSource').value.trim() || 'Meta Lead Form';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  if (!people.length) { out.textContent = 'Paste at least one lead.'; return; }
+  const post = async extra => {
+    const r = await fetch('/api/admin/import-leads', { method: 'POST', headers: adminHeaders(), body: JSON.stringify({ source, people, ...extra }) });
+    if (r.status === 401) { doLogout(); throw new Error('Your session expired. Please sign in again.'); }
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Something went wrong.'); return j;
+  };
+  btn.disabled = true; out.textContent = 'Checking the list…';
+  try {
+    const pre = await post({ dryRun: true });
+    const skipNote = pre.skipped.length ? `\n\nSkipped (${pre.skipped.length}):\n` + pre.skipped.map(s => `• ${s.name}: ${s.reason}`).join('\n') : '';
+    if (!pre.wouldAdd.length) { out.innerHTML = 'Nothing new to add.<br>' + pre.skipped.map(s => `${esc(s.name)}: ${esc(s.reason)}`).join('<br>'); return; }
+    if (!confirm(`Add ${pre.wouldAdd.length} new ${pre.wouldAdd.length === 1 ? 'lead' : 'leads'} as "${source}" and post one Slack summary?\n\nNo one will be emailed.${skipNote}`)) { out.textContent = 'Cancelled. Nothing was added.'; return; }
+    out.textContent = 'Importing…';
+    const j = await post({});
+    out.innerHTML = `<strong>${j.added} of ${pre.wouldAdd.length} added as ${esc(j.label)}.</strong>` +
+      (j.skipped.length ? '<br>Skipped: ' + j.skipped.map(s => `${esc(s.name)} (${esc(s.reason)})`).join('; ') : '') +
+      (j.failed.length ? '<br>Could not save: ' + j.failed.map(f => `${esc(f.name)} (${esc(f.error)})`).join('; ') : '') +
+      (j.added ? '<br>Refresh the Contacts list to see them.' : '');
+    if (j.added && typeof loadDB === 'function') { try { await loadDB(); } catch (e) {} }
+  } catch (e) { out.textContent = e.message; }
+  finally { btn.disabled = false; }
 }
 async function wmAdd() {
   const date = document.getElementById('wmDate').value;
